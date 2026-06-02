@@ -35,6 +35,10 @@ yarn-error.log*
 .env.local
 !.env.example
 
+# google service account (never commit)
+google-service-account.json
+*-service-account*.json
+
 # prisma local db
 /prisma/*.db
 /prisma/*.db-journal

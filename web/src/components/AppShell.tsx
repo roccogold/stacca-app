@@ -11,7 +11,8 @@ type AppShellProps = {
 export function AppShell({ children, showNav }: AppShellProps) {
   const pathname = usePathname();
   const navVisible = showNav ?? !pathname.startsWith("/aggiungi");
-  const contentPad = navVisible ? 96 : 120;
+  const fabVisible = pathname === "/";
+  const contentPad = navVisible ? (fabVisible ? 176 : 96) : 120;
 
   return (
     <div className="app-shell">

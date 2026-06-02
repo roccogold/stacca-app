@@ -2,10 +2,12 @@ import Link from "next/link";
 import { EntryCardLink } from "@/components/EntryCardLink";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { SubmitMonthPanel } from "@/components/SubmitMonthPanel";
+import { getMonthSubmission } from "@/lib/month-lock";
 import { requireUser } from "@/lib/auth";
 import {
   formatHoursIt,
   formatShortWeekday,
+  formatWeekdayLong,
   monthTitle,
   parseISODate,
 } from "@/lib/format";
@@ -38,10 +40,13 @@ export default async function MesePage({
   }
 
   const prefix = monthKey(y, m);
-  const entries = await prisma.timeEntry.findMany({
-    where: { userId: user.id, date: { startsWith: prefix } },
-    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-  });
+  const [entries, submission] = await Promise.all([
+    prisma.timeEntry.findMany({
+      where: { userId: user.id, date: { startsWith: prefix } },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+    }),
+    getMonthSubmission(user.id, prefix),
+  ]);
 
   const totalsByDay: Record<string, number> = {};
   for (const e of entries) {
@@ -49,11 +54,17 @@ export default async function MesePage({
   }
 
   const monthTotal = entries.reduce((a, e) => a + e.hours, 0);
-  const distinctDays = Object.keys(totalsByDay).length;
+
+  const dayEntries = selectedDay
+    ? entries.filter((e) => e.date === selectedDay)
+    : [];
+  const dayTotal = selectedDay ? (totalsByDay[selectedDay] ?? 0) : 0;
+  const statsEntries = selectedDay ? dayEntries : entries;
+  const statsTotal = selectedDay ? dayTotal : monthTotal;
 
   const byMansione = new Map<string, number>();
   const byLuogo = new Map<string, number>();
-  for (const e of entries) {
+  for (const e of statsEntries) {
     byMansione.set(e.mansione, (byMansione.get(e.mansione) ?? 0) + e.hours);
     byLuogo.set(e.luogo, (byLuogo.get(e.luogo) ?? 0) + e.hours);
   }
@@ -79,6 +90,19 @@ export default async function MesePage({
   }
   const dates = [...grouped.keys()].sort((a, b) => (a < b ? 1 : -1));
 
+  const selectedDayDate = selectedDay ? parseISODate(selectedDay) : null;
+  const vociDayLabel =
+    dayEntries.length === 1 ? "1 voce" : `${dayEntries.length} voci`;
+
+  const monthSubmitted = !!submission;
+  const submittedAtLabel = submission
+    ? submission.submittedAt.toLocaleDateString("it-IT", {
+        day: "numeric",
+        month: "long",
+        timeZone: "Europe/Rome",
+      })
+    : null;
+
   return (
     <>
       <MonthCalendar
@@ -95,23 +119,51 @@ export default async function MesePage({
         <div className="card card--accent card--mese">
           <div className="card--mese__top">
             <div>
-              <div className="card--oggi__label">MESE</div>
-              <div className="card--oggi__num">{formatHoursIt(monthTotal)}</div>
-              <div className="card--oggi__unit">
-                ore · {distinctDays}{" "}
-                {distinctDays === 1 ? "giorno lavorato" : "giorni lavorati"}
-              </div>
+              {selectedDay && selectedDayDate ? (
+                <>
+                  <div className="card--oggi__label capitalize">
+                    {formatWeekdayLong(selectedDayDate)}
+                  </div>
+                  <div className="card--oggi__num">
+                    {formatHoursIt(dayTotal)}{" "}
+                    <span className="card--oggi__num-unit">ore</span>
+                  </div>
+                  {dayEntries.length > 0 && (
+                    <div className="card--oggi__unit">{vociDayLabel}</div>
+                  )}
+                  {dayEntries.length === 0 && (
+                    <div className="card--oggi__unit">nessuna voce</div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="card--oggi__label">MESE</div>
+                  <div className="card--oggi__num">
+                    {formatHoursIt(monthTotal)}{" "}
+                    <span className="card--oggi__num-unit">ore</span>
+                  </div>
+                </>
+              )}
             </div>
-            <span className="badge badge--on-accent">Aperto</span>
+            <span
+              className={
+                monthSubmitted ? "badge badge--submitted-accent" : "badge badge--on-accent"
+              }
+            >
+              {monthSubmitted ? "Inviato" : "Aperto"}
+            </span>
           </div>
         </div>
       </section>
 
       <SubmitMonthPanel
+        month={prefix}
         monthLabel={monthLabel}
         monthTotal={monthTotal}
         hasEntries={entries.length > 0}
         canSubmit={canSubmit}
+        submitted={monthSubmitted}
+        submittedAt={submittedAtLabel}
       />
 
       {mansioniSorted.length > 0 && (
@@ -119,7 +171,7 @@ export default async function MesePage({
           <h2 className="section-title section-title--inset">Per mansione</h2>
           <div className="card card--stats">
             {mansioniSorted.map(([label, hrs]) => {
-              const pct = monthTotal > 0 ? (hrs / monthTotal) * 100 : 0;
+              const pct = statsTotal > 0 ? (hrs / statsTotal) * 100 : 0;
               return (
                 <div key={label} className="stat-row">
                   <div className="stat-row__top">
@@ -144,7 +196,7 @@ export default async function MesePage({
           <h2 className="section-title section-title--inset">Per luogo</h2>
           <div className="card card--stats">
             {luoghiSorted.map(([label, hrs]) => {
-              const pct = monthTotal > 0 ? (hrs / monthTotal) * 100 : 0;
+              const pct = statsTotal > 0 ? (hrs / statsTotal) * 100 : 0;
               return (
                 <div key={label} className="stat-row">
                   <div className="stat-row__top">
@@ -165,14 +217,19 @@ export default async function MesePage({
       )}
 
       <section className="block">
-        <h2 className="section-title section-title--inset">
-          {selectedDay
-            ? (() => {
-                const d = parseISODate(selectedDay);
-                return d ? `Voci del ${formatShortWeekday(d)}` : "Voci del giorno";
-              })()
-            : "Tutte le voci"}
-        </h2>
+        <div className="section-title-row">
+          <h2 className="section-title section-title--inset">
+            Voci
+          </h2>
+          {selectedDay && !monthSubmitted && (
+            <Link
+              href={`/aggiungi?date=${selectedDay}`}
+              className="section-title-row__action"
+            >
+              + Altra voce
+            </Link>
+          )}
+        </div>
         {dates.length === 0 ? (
           <p className="empty-list">Nessuna voce.</p>
         ) : (
@@ -193,7 +250,8 @@ export default async function MesePage({
                     {list.map((e) => (
                       <li key={e.id}>
                         <EntryCardLink
-                          href={`/aggiungi?edit=${e.id}`}
+                          href={monthSubmitted ? undefined : `/aggiungi?edit=${e.id}`}
+                          readOnly={monthSubmitted}
                           hours={e.hours}
                           mansione={e.mansione}
                           luogo={e.luogo}

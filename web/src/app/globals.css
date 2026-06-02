@@ -737,6 +737,34 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   background: currentColor;
 }
 
+.sync-status__dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.sync-status__dot--online {
+  background: oklch(0.58 0.16 145);
+  box-shadow: 0 0 0 3px oklch(0.58 0.16 145 / 0.18);
+  animation: sync-blink 2s ease-in-out infinite;
+}
+
+.sync-status__dot--offline {
+  background: var(--destructive);
+  box-shadow: 0 0 0 3px oklch(0.55 0.2 27 / 0.15);
+}
+
+@keyframes sync-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
 /* ============================================
    Login screen
    ============================================ */
@@ -800,13 +828,130 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   margin-bottom: 20px;
 }
 
-.login-form__error {
+.login-form__alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  font-size: 14px;
+  line-height: 1.45;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.login-form__alert--error {
+  background: var(--card);
+  color: var(--text);
+}
+
+.login-form__alert--error .login-form__alert-icon {
+  color: var(--primary);
+}
+
+.login-form__alert--success {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.login-form__alert--success .login-form__alert-icon {
+  color: var(--olive);
+}
+
+.login-form__alert-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+}
+
+.login-form__alert-text {
+  flex: 1;
+  margin: 0;
+}
+
+.input--invalid {
+  border-color: oklch(0.72 0.08 27);
+}
+
+.input--invalid:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 .login-form__submit {
   margin-top: 8px;
   height: 56px;
+}
+
+.login-form__intro {
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.login-form__success {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 14px;
+  text-align: center;
+}
+
+.login-form__links {
+  margin: 20px 0 0;
+  text-align: center;
+}
+
+.login-form__link {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.app-footer {
+  margin-top: 32px;
+  padding: 0 8px 8px;
+  text-align: center;
+}
+
+.app-footer__text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.app-footer__link {
+  color: var(--text-soft);
+  text-decoration: none;
+}
+
+.app-footer__link:hover {
+  color: var(--primary);
+}
+
+.login-form__back {
+  display: block;
+  margin-top: 16px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.login-page__title {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 24px;
+  color: var(--ink);
 }
 
 .login-footer {
@@ -1317,6 +1462,33 @@ a.card {
   letter-spacing: 0.05em;
 }
 
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-title-row .section-title--inset {
+  margin-bottom: 0;
+}
+
+.section-title-row__action {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.form-hint {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 /* OGGI / MESE summary cards */
 .card--oggi,
 .card--mese {
@@ -1345,6 +1517,12 @@ a.card {
   font-size: 48px;
   font-weight: 800;
   line-height: 1;
+}
+
+.card--oggi__num-unit {
+  font-size: 18px;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
 .card--oggi__unit {
@@ -1428,6 +1606,14 @@ a.card {
 
 .entry-card:active {
   background: var(--accent);
+}
+
+.entry-card--readonly {
+  cursor: default;
+}
+
+.entry-card--readonly:active {
+  background: var(--card);
 }
 
 .entry-card--compact {
@@ -1727,6 +1913,23 @@ a.card {
   font-size: 14px;
   line-height: 1.45;
   align-items: flex-start;
+}
+
+.callout--muted {
+  background: var(--card-soft);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.45;
+  align-items: flex-start;
+}
+
+.badge--submitted-accent {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 10px;
+  letter-spacing: 0.5px;
 }
 
 .callout__icon {

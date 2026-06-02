@@ -4,6 +4,7 @@ import { DailyInspiration } from "@/components/DailyInspiration";
 import { EntryCardLink } from "@/components/EntryCardLink";
 import { StaccaLogo } from "@/components/StaccaLogo";
 import { ProfileIconLink } from "@/components/ProfileIconLink";
+import { getMonthSubmission } from "@/lib/month-lock";
 import { requireUser } from "@/lib/auth";
 import { formatHoursIt, formatWeekdayLong, parseISODate, todayISO } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -14,7 +15,7 @@ export default async function HomePage() {
   const now = new Date();
   const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const [todayEntries, monthEntries] = await Promise.all([
+  const [todayEntries, monthEntries, monthSubmission] = await Promise.all([
     prisma.timeEntry.findMany({
       where: { userId: user.id, date: today },
       orderBy: { createdAt: "asc" },
@@ -22,6 +23,7 @@ export default async function HomePage() {
     prisma.timeEntry.findMany({
       where: { userId: user.id, date: { startsWith: monthPrefix } },
     }),
+    getMonthSubmission(user.id, monthPrefix),
   ]);
 
   const todayTotal = todayEntries.reduce((a, e) => a + e.hours, 0);
@@ -70,12 +72,20 @@ export default async function HomePage() {
 
       {todayEntries.length > 0 && (
         <section className="block">
-          <h2 className="section-title section-title--inset">Le voci di oggi</h2>
+          <div className="section-title-row">
+            <h2 className="section-title section-title--inset">Le voci di oggi</h2>
+            {!monthSubmission && (
+              <Link href="/aggiungi" className="section-title-row__action">
+                + Altra voce
+              </Link>
+            )}
+          </div>
           <ul className="entry-list">
             {todayEntries.map((e) => (
               <li key={e.id}>
                 <EntryCardLink
-                  href={`/aggiungi?edit=${e.id}`}
+                  href={monthSubmission ? undefined : `/aggiungi?edit=${e.id}`}
+                  readOnly={!!monthSubmission}
                   hours={e.hours}
                   mansione={e.mansione}
                   luogo={e.luogo}
@@ -93,13 +103,17 @@ export default async function HomePage() {
             <div className="month-teaser__title capitalize">{monthTitleCase}</div>
             <div className="month-teaser__sub">{formatHoursIt(monthTotal)} ore totali</div>
           </div>
-          <span className="badge badge--open">Aperto</span>
+          <span className={monthSubmission ? "badge badge--locked" : "badge badge--open"}>
+            {monthSubmission ? "Inviato" : "Aperto"}
+          </span>
         </Link>
       </section>
 
-      <Link href="/aggiungi" className="fab" aria-label="Aggiungi ore">
-        <Plus size={32} strokeWidth={2.5} />
-      </Link>
+      {!monthSubmission && (
+        <Link href="/aggiungi" className="fab" aria-label="Aggiungi ore">
+          <Plus size={32} strokeWidth={2.5} />
+        </Link>
+      )}
     </>
   );
 }

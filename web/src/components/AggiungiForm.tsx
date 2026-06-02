@@ -15,6 +15,8 @@ import { formatHoursIt, todayISO } from "@/lib/format";
 
 type Props = {
   initial: TimeEntry | null;
+  presetDate?: string;
+  locked?: boolean;
 };
 
 function clampStep(h: number, delta: number): number {
@@ -22,10 +24,10 @@ function clampStep(h: number, delta: number): number {
   return Math.min(24, Math.max(0, n));
 }
 
-export function AggiungiForm({ initial }: Props) {
+export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
   const router = useRouter();
   const editId = initial?.id ?? null;
-  const [date, setDate] = useState(initial?.date ?? todayISO());
+  const [date, setDate] = useState(initial?.date ?? presetDate ?? todayISO());
   const [hours, setHours] = useState(initial?.hours ?? 8);
   const [mansione, setMansione] = useState(initial?.mansione ?? MANSIONI[0] ?? "");
   const [luogo, setLuogo] = useState(initial?.luogo ?? LUOGHI_VIGNE[0] ?? "");
@@ -86,30 +88,38 @@ export function AggiungiForm({ initial }: Props) {
           <ArrowLeft size={20} />
         </Link>
         <h1 className="form-header__title">
-          {editId ? "Modifica voce" : "Aggiungi ore"}
+          {locked ? "Voce (sola lettura)" : editId ? "Modifica voce" : "Aggiungi ore"}
         </h1>
       </header>
 
       <main className="form-body">
+        {locked && (
+          <p className="form-hint">Mese già inviato — non puoi modificare questa voce.</p>
+        )}
+        {!editId && !locked && (
+          <p className="form-hint">
+            Puoi salvare più voci per lo stesso giorno — una per ogni mansione e luogo.
+          </p>
+        )}
         <div className="field">
           <label className="field-label field-label--plain" htmlFor="data">
             Data
           </label>
-          <input className="input input--lg" id="data" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input className="input input--lg" id="data" type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={locked} />
         </div>
 
         <div className="field">
           <span className="field-label field-label--plain">Ore</span>
           <div className="stepper-card">
             <div className="stepper">
-              <button type="button" className="stepper__btn" aria-label="Diminuisci" onClick={() => setHours((h) => clampStep(h, -0.5))}>
+              <button type="button" className="stepper__btn" aria-label="Diminuisci" onClick={() => setHours((h) => clampStep(h, -0.5))} disabled={locked}>
                 −
               </button>
               <div className="stepper__value">
                 <span className="stepper__num">{formatHoursIt(hours)}</span>
                 <span className="stepper__unit">ore</span>
               </div>
-              <button type="button" className="stepper__btn" aria-label="Aumenta" onClick={() => setHours((h) => clampStep(h, 0.5))}>
+              <button type="button" className="stepper__btn" aria-label="Aumenta" onClick={() => setHours((h) => clampStep(h, 0.5))} disabled={locked}>
                 +
               </button>
             </div>
@@ -120,6 +130,7 @@ export function AggiungiForm({ initial }: Props) {
                   type="button"
                   className={`chip chip--pill${hours === c ? " chip--active" : ""}`}
                   onClick={() => setHours(c)}
+                  disabled={locked}
                 >
                   {formatHoursIt(c)}
                 </button>
@@ -132,7 +143,7 @@ export function AggiungiForm({ initial }: Props) {
           <label className="field-label field-label--plain" htmlFor="mansione">
             Mansione
           </label>
-          <select className="select select--lg" id="mansione" value={mansione} onChange={(e) => setMansione(e.target.value)} required>
+          <select className="select select--lg" id="mansione" value={mansione} onChange={(e) => setMansione(e.target.value)} required disabled={locked}>
             {MANSIONI.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
@@ -143,7 +154,7 @@ export function AggiungiForm({ initial }: Props) {
           <label className="field-label field-label--plain" htmlFor="luogo">
             Luogo
           </label>
-          <select className="select select--lg" id="luogo" value={luogo} onChange={(e) => setLuogo(e.target.value)} required>
+          <select className="select select--lg" id="luogo" value={luogo} onChange={(e) => setLuogo(e.target.value)} required disabled={locked}>
             <optgroup label="Vigne">
               {LUOGHI_VIGNE.map((l) => (
                 <option key={l} value={l}>{l}</option>
@@ -168,18 +179,20 @@ export function AggiungiForm({ initial }: Props) {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={3}
+            disabled={locked}
           />
         </div>
 
         {error && <p className="field-error">{error}</p>}
 
-        {editId && (
+        {editId && !locked && (
           <button type="button" className="btn btn--danger-outline btn--block" onClick={remove} disabled={loading}>
             Elimina voce
           </button>
         )}
       </main>
 
+      {!locked && (
       <div className="form-footer">
         <div className="form-footer__inner">
           <button
@@ -192,6 +205,7 @@ export function AggiungiForm({ initial }: Props) {
           </button>
         </div>
       </div>
+      )}
     </>
   );
 }

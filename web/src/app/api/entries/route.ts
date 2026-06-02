@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { LUOGHI, MANSIONI } from "@/lib/constants";
+import { assertMonthEditable } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, type SessionData } from "@/lib/session";
 
@@ -74,6 +75,14 @@ export async function POST(req: Request) {
   }
   if (!luogo || !LUOGHI.includes(luogo as (typeof LUOGHI)[number])) {
     return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });
+  }
+
+  const lock = await assertMonthEditable(userId, date);
+  if (lock.locked) {
+    return NextResponse.json(
+      { error: "Mese già inviato. Non puoi aggiungere voci." },
+      { status: 403 },
+    );
   }
 
   const entry = await prisma.timeEntry.create({

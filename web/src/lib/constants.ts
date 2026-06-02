@@ -17,7 +17,7 @@ export const MANSIONI = [
 ] as const;
 
 export const LUOGHI_VIGNE = [
-  "Anfi Nuovo Lato Corzanello",
+  "Anfiteatro Nuovo Lato Corzanello",
   "Anfiteatro Lato Bosco",
   "Cabernet Piaggia",
   "Capraio F9",
@@ -48,7 +48,7 @@ export const LUOGHI_VIGNE = [
   "Vigna Grande Nuova (Tre Borri)",
 ] as const;
 
-export const LUOGHI_ALTRO = ["Cantina", "Officina", "Altro"] as const;
+export const LUOGHI_ALTRO = ["Cantina", "Magazzino", "Officina", "Ufficio", "Altro"] as const;
 
 export const LUOGHI = [...LUOGHI_VIGNE, ...LUOGHI_ALTRO] as const;
 

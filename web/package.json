@@ -9,10 +9,16 @@
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "db:seed": "npx tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",
+    "bcryptjs": "^3.0.3",
+    "googleapis": "^173.0.0",
     "iron-session": "^8.0.4",
     "lucide-react": "^1.17.0",
     "next": "16.2.4",
@@ -21,12 +27,14 @@
     "resend": "^6.12.2"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "prisma": "5.22.0",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }

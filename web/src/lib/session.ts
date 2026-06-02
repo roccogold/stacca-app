@@ -5,6 +5,7 @@ export type SessionData = {
   handle?: string;
   displayName?: string;
   isLoggedIn: boolean;
+  mustChangePassword?: boolean;
 };
 
 export const defaultSession: SessionData = {

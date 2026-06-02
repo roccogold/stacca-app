@@ -74,7 +74,7 @@ Login → Home (today) → Add/edit hours → Month view → End-of-month submit
 - Month grid Mon–Sun, dots on days with logged hours, tap day to filter list below.
 - Prev/next month arrows.
 
-**Month total card (red accent):** total hours + days worked. Badge: **Aperto** or **Inviato** (locked).
+**Month total card (red accent):** total hours. Badge: **Aperto** or **Inviato** (text only, no icon).
 
 **Stats cards:**
 - **Per mansione** — horizontal bars, hours per task.

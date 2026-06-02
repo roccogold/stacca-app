@@ -8,11 +8,29 @@ datasource db {
 }
 
 model User {
-  id          String      @id @default(cuid())
-  handle      String      @unique
-  displayName String
-  entries     TimeEntry[]
-  createdAt   DateTime    @default(now())
+  id                 String      @id @default(cuid())
+  handle             String      @unique
+  displayName        String
+  email              String?     @unique
+  passwordHash       String?
+  mustChangePassword Boolean     @default(false)
+  resetCodeHash      String?
+  resetCodeExpiresAt DateTime?
+  entries            TimeEntry[]
+  monthSubmissions   MonthSubmission[]
+  createdAt          DateTime    @default(now())
+}
+
+model MonthSubmission {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month       String
+  totalHours  Float
+  submittedAt DateTime @default(now())
+
+  @@unique([userId, month])
+  @@index([userId])
 }
 
 model TimeEntry {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, LogOut, MessageSquare, Wifi } from "lucide-react";
+import { AppFooter } from "@/components/AppFooter";
 import { BottomSheet } from "@/components/BottomSheet";
 import { logoutAction } from "@/app/(main)/actions";
 
@@ -14,6 +15,19 @@ export function ProfiloClient({ firstName }: Props) {
   const [feedback, setFeedback] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    setOnline(navigator.onLine);
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
 
   async function sendFeedback() {
     if (!feedback.trim() || loading) return;
@@ -59,10 +73,14 @@ export function ProfiloClient({ firstName }: Props) {
           <div className="account-row">
             <Wifi size={20} className="account-row__icon account-row__icon--olive" aria-hidden />
             <div className="account-row__body">
-              <div className="account-row__title">Sincronizzazione</div>
-              <div className="account-row__sub">Online</div>
+              <div className="account-row__title">Connessione</div>
+              <div className="account-row__sub">{online ? "Online" : "Offline"}</div>
             </div>
-            <span className="badge badge--ok">OK</span>
+            <span
+              className={`sync-status__dot${online ? " sync-status__dot--online" : " sync-status__dot--offline"}`}
+              role="status"
+              aria-label={online ? "Online" : "Offline"}
+            />
           </div>
         </div>
       </section>
@@ -113,6 +131,8 @@ export function ProfiloClient({ firstName }: Props) {
           </button>
         </div>
       </BottomSheet>
+
+      <AppFooter />
     </>
   );
 }

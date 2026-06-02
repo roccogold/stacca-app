@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { LUOGHI, MANSIONI } from "@/lib/constants";
+import { assertMonthEditable, monthFromDate } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, type SessionData } from "@/lib/session";
 
@@ -26,6 +27,14 @@ export async function PATCH(
   });
   if (!existing) {
     return NextResponse.json({ error: "Voce non trovata" }, { status: 404 });
+  }
+
+  const existingLock = await assertMonthEditable(userId, existing.date);
+  if (existingLock.locked) {
+    return NextResponse.json(
+      { error: "Mese già inviato. Non puoi modificare questa voce." },
+      { status: 403 },
+    );
   }
 
   let body: Partial<{
@@ -70,6 +79,17 @@ export async function PATCH(
     data.note = body.note?.trim() || null;
   }
 
+  const nextDate = (data.date as string | undefined) ?? existing.date;
+  if (monthFromDate(nextDate) !== monthFromDate(existing.date)) {
+    const nextLock = await assertMonthEditable(userId, nextDate);
+    if (nextLock.locked) {
+      return NextResponse.json(
+        { error: "Non puoi spostare voci in un mese già inviato." },
+        { status: 403 },
+      );
+    }
+  }
+
   const entry = await prisma.timeEntry.update({
     where: { id },
     data,
@@ -93,6 +113,14 @@ export async function DELETE(
   });
   if (!existing) {
     return NextResponse.json({ error: "Voce non trovata" }, { status: 404 });
+  }
+
+  const lock = await assertMonthEditable(userId, existing.date);
+  if (lock.locked) {
+    return NextResponse.json(
+      { error: "Mese già inviato. Non puoi eliminare questa voce." },
+      { status: 403 },
+    );
   }
 
   await prisma.timeEntry.delete({ where: { id } });
