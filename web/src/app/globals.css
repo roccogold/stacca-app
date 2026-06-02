@@ -1861,7 +1861,8 @@ a.card {
 }
 
 .form-body .field-control,
-.form-body .field > .stepper-card {
+.form-body .field > .stepper-card,
+.form-body .field > .date-card {
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -1884,6 +1885,61 @@ a.card {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+}
+
+.date-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 56px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: none;
+}
+
+.date-card--disabled {
+  opacity: 0.65;
+}
+
+.date-card__value {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+.date-card__icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.date-card__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.date-card__input:disabled {
+  cursor: not-allowed;
 }
 
 .form-body .input[type="date"] {

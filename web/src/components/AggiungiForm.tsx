@@ -1,7 +1,7 @@
 "use client";
 
 import type { TimeEntry } from "@prisma/client";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useTransition, useState } from "react";
@@ -11,7 +11,7 @@ import {
   LUOGHI_VIGNE,
   MANSIONI,
 } from "@/lib/constants";
-import { formatHoursIt, stepHours, todayISO } from "@/lib/format";
+import { formatHoursIt, formatDateField, stepHours, todayISO } from "@/lib/format";
 
 type Props = {
   initial: TimeEntry | null;
@@ -120,8 +120,18 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
           <label className="field-label field-label--plain" htmlFor="data">
             Data
           </label>
-          <div className="field-control">
-            <input className="input input--lg" id="data" type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={locked} />
+          <div className={`date-card${locked ? " date-card--disabled" : ""}`}>
+            <span className="date-card__value">{formatDateField(date)}</span>
+            <Calendar size={20} className="date-card__icon" aria-hidden />
+            <input
+              className="date-card__input"
+              id="data"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              disabled={locked}
+              aria-label="Data"
+            />
           </div>
         </div>
 

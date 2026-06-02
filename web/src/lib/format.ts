@@ -59,6 +59,17 @@ export function formatShortWeekday(d: Date): string {
   });
 }
 
+/** Compact label for the date picker card, e.g. "2 giu 2026". */
+export function formatDateField(iso: string): string {
+  const d = parseISODate(iso);
+  if (!d) return iso;
+  return d.toLocaleDateString(it, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export function monthTitle(year: number, monthIndex0: number): string {
   const d = new Date(year, monthIndex0, 1);
   return d.toLocaleDateString(it, { month: "long", year: "numeric" });
