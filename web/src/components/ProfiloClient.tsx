@@ -15,10 +15,11 @@ export function ProfiloClient({ firstName }: Props) {
   const [feedback, setFeedback] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [online, setOnline] = useState(true);
+  const [online, setOnline] = useState(
+    () => typeof navigator !== "undefined" && navigator.onLine,
+  );
 
   useEffect(() => {
-    setOnline(navigator.onLine);
     const on = () => setOnline(true);
     const off = () => setOnline(false);
     window.addEventListener("online", on);
