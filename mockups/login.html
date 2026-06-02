@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#FBF7F0" />
+  <title>Stacca — Accedi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="no-nav">
+
+  <div class="login-wrap">
+    <div class="login-brand">
+      <div style="display:flex;justify-content:center;margin-bottom:16px">
+        <img src="stacca-icon.svg" alt="" width="72" height="72" />
+      </div>
+      <div class="login-brand__name">Stacca</div>
+      <div class="login-brand__tag">Apri il tuo diario delle ore.</div>
+    </div>
+
+    <form>
+      <div class="field">
+        <label class="field-label" for="username">Nome utente</label>
+        <input class="input" id="username" type="text" autocomplete="username" placeholder="es. claudio" value="claudio" />
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="password">Password</label>
+        <input class="input" id="password" type="password" autocomplete="current-password" placeholder="••••••••" value="password" />
+      </div>
+
+      <button class="btn btn--primary btn--block btn--lg" type="button" onclick="window.location.href='home.html'">
+        Entra
+      </button>
+    </form>
+
+    <div class="login-footer">
+      Hai dimenticato la password? Chiedi a Gianni.
+    </div>
+  </div>
+
+</body>
+</html>

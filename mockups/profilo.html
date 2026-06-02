@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#FBF7F0" />
+  <title>Stacca — Profilo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <a href="home.html" class="btn-icon" aria-label="Indietro">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    <h1 class="app-header__title">Profilo</h1>
+    <div style="width:44px"></div>
+  </header>
+
+  <main class="screen" style="padding-top:8px">
+
+    <!-- Worker card -->
+    <div class="card center" style="padding:32px 20px">
+      <div style="width:80px;height:80px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:32px;margin-bottom:12px">
+        CP
+      </div>
+      <div style="font-family:var(--font-serif);font-size:24px;line-height:1.2">Paval Claudiu</div>
+      <div class="muted" style="font-size:14px;margin-top:4px">@claudio · Operaio</div>
+    </div>
+
+    <!-- Quick stats -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">2026 finora</h2>
+      </div>
+      <div class="row" style="justify-content:space-around;padding:8px 0">
+        <div class="center">
+          <div style="font-family:var(--font-serif);font-size:32px;line-height:1">632</div>
+          <div class="muted" style="font-size:12px;margin-top:2px">ore totali</div>
+        </div>
+        <div style="width:1px;background:var(--border);align-self:stretch"></div>
+        <div class="center">
+          <div style="font-family:var(--font-serif);font-size:32px;line-height:1">4</div>
+          <div class="muted" style="font-size:12px;margin-top:2px">mesi inviati</div>
+        </div>
+        <div style="width:1px;background:var(--border);align-self:stretch"></div>
+        <div class="center">
+          <div style="font-family:var(--font-serif);font-size:32px;line-height:1">11</div>
+          <div class="muted" style="font-size:12px;margin-top:2px">luoghi</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="section-title">Account</h3>
+    <div class="card" style="padding:0">
+      <a href="feedback.html" class="row-between" style="padding:18px 20px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit">
+        <div class="row" style="gap:14px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span>Invia feedback</span>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-soft)"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <a href="#" class="row-between" style="padding:18px 20px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit">
+        <div class="row" style="gap:14px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Cambia password</span>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-soft)"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <a href="#" class="row-between" style="padding:18px 20px;border-bottom:1px solid var(--border);text-decoration:none;color:inherit">
+        <div class="row" style="gap:14px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span>Sincronizzazione</span>
+        </div>
+        <span class="muted" style="font-size:13px">Aggiornato ora</span>
+      </a>
+      <a href="#" class="row-between" style="padding:18px 20px;text-decoration:none;color:inherit">
+        <div class="row" style="gap:14px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Aiuto</span>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-soft)"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+    </div>
+
+    <button class="btn btn--secondary btn--block" type="button" style="margin-top:24px;color:var(--primary)" onclick="window.location.href='login.html'">
+      Esci
+    </button>
+
+    <p class="center muted" style="font-size:12px;margin-top:20px">
+      Stacca v0.1 · Corzano e Paterno
+    </p>
+
+  </main>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav__inner">
+      <a href="home.html" class="bottom-nav__item">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        Oggi
+      </a>
+      <a href="mese.html" class="bottom-nav__item">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Mese
+      </a>
+      <a href="profilo.html" class="bottom-nav__item bottom-nav__item--active">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>
+        Profilo
+      </a>
+    </div>
+  </nav>
+
+</body>
+</html>

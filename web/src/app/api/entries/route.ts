@@ -1,0 +1,91 @@
+import { NextResponse } from "next/server";
+import { getIronSession } from "iron-session";
+import { cookies } from "next/headers";
+import { LUOGHI, MANSIONI } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
+import { sessionOptions, type SessionData } from "@/lib/session";
+
+async function getUserId(): Promise<string | null> {
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
+  if (!session.isLoggedIn || !session.userId) return null;
+  return session.userId;
+}
+
+export async function GET(req: Request) {
+  const userId = await getUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Non autenticato" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const month = searchParams.get("month");
+  const date = searchParams.get("date");
+
+  if (date) {
+    const entries = await prisma.timeEntry.findMany({
+      where: { userId, date },
+      orderBy: { createdAt: "asc" },
+    });
+    return NextResponse.json({ entries });
+  }
+
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    const entries = await prisma.timeEntry.findMany({
+      where: { userId, date: { startsWith: month } },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+    });
+    return NextResponse.json({ entries });
+  }
+
+  return NextResponse.json(
+    { error: "Usa ?date=YYYY-MM-DD o ?month=YYYY-MM" },
+    { status: 400 },
+  );
+}
+
+export async function POST(req: Request) {
+  const userId = await getUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Non autenticato" }, { status: 401 });
+  }
+
+  let body: {
+    date?: string;
+    hours?: number;
+    mansione?: string;
+    luogo?: string;
+    note?: string | null;
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "JSON non valido" }, { status: 400 });
+  }
+
+  const { date, hours, mansione, luogo, note } = body;
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json({ error: "Data non valida" }, { status: 400 });
+  }
+  if (typeof hours !== "number" || hours <= 0 || hours > 24) {
+    return NextResponse.json({ error: "Ore non valide" }, { status: 400 });
+  }
+  if (!mansione || !MANSIONI.includes(mansione as (typeof MANSIONI)[number])) {
+    return NextResponse.json({ error: "Mansione non valida" }, { status: 400 });
+  }
+  if (!luogo || !LUOGHI.includes(luogo as (typeof LUOGHI)[number])) {
+    return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });
+  }
+
+  const entry = await prisma.timeEntry.create({
+    data: {
+      userId,
+      date,
+      hours,
+      mansione,
+      luogo,
+      note: note?.trim() || null,
+    },
+  });
+
+  return NextResponse.json({ entry });
+}

@@ -1,0 +1,4 @@
+# Lovable clone (synced from separate GitHub repo)
+lovable/*
+!lovable/README.md
+!lovable/.gitkeep

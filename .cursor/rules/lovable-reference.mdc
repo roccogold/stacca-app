@@ -1,0 +1,47 @@
+---
+description: Use lovable/ folder as UI reference when aligning web/ with Lovable mockups
+globs: web/src/**/*
+alwaysApply: false
+---
+
+# Lovable → Next.js reference
+
+When the user asks to align UI with Lovable, or when editing files under `web/src/`:
+
+## Source of truth
+
+- **Reference (read-only):** `lovable/repo/src/` — cloned from Lovable GitHub export
+- **Target (runnable app):** `web/src/` — Next.js App Router + Prisma
+
+If `lovable/repo/src/` is missing, tell the user to follow `lovable/README.md` (GitHub connect + clone).
+
+## How to port
+
+1. Read the matching Lovable route/component first
+2. Copy **layout, spacing, copy, colors** — not the router or store
+3. Map TanStack Router `Link`/`useLocation` → Next.js `Link`/`usePathname`
+4. Map Tailwind classes → existing CSS in `web/src/app/globals.css` (or add minimal CSS)
+5. Keep server data (Prisma, `requireUser`, APIs) in Next pages — UI only from Lovable
+
+## Do not copy as-is
+
+- `lib/stacca-store.ts`, TanStack Router, Vite config
+- Do not replace `web/` with the Lovable repo
+
+## Key file pairs
+
+| Lovable | web |
+|---------|-----|
+| `src/styles.css` | `src/app/globals.css` |
+| `src/components/BottomNav.tsx` | `src/components/BottomNav.tsx` |
+| `src/components/AppShell.tsx` | `src/components/AppShell.tsx` |
+| `src/components/StaccaLogo.tsx` | `src/components/StaccaLogo.tsx` |
+| `src/routes/index.tsx` | `src/app/(main)/page.tsx` |
+| `src/routes/mese.tsx` | `src/app/(main)/mese/page.tsx` |
+| `src/routes/profilo.tsx` | `src/app/(main)/profilo/page.tsx` |
+| `src/routes/aggiungi.tsx` | `src/components/AggiungiForm.tsx` |
+| `src/routes/login.tsx` | `src/app/login/page.tsx` |
+
+## Brand
+
+App name is **Stacca** everywhere — not Gino. Logo assets live in `web/public/stacca/`.

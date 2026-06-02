@@ -1,0 +1,42 @@
+import type { Metadata, Viewport } from "next";
+import { Bricolage_Grotesque, DM_Sans } from "next/font/google";
+import "./globals.css";
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-display",
+  axes: ["opsz"],
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["700"],
+  variable: "--font-logo",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: "Stacca",
+  description: "Registro ore — Corzano e Paterno",
+  applicationName: "Stacca",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#FBF7F0",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="it" className={`${bricolage.variable} ${dmSans.variable}`}>
+      <body className={bricolage.className}>{children}</body>
+    </html>
+  );
+}

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stacca — Mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #EDE6D6;
+      --panel: #FFFFFF;
+      --primary: #7A2E2E;
+      --primary-soft: #F2E4E0;
+      --text: #2A2520;
+      --muted: #8B8278;
+      --border: #E0D6C2;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .layout {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* ============ Sidebar ============ */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .brand {
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sub {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      padding: 4px 8px 0;
+      margin-bottom: 18px;
+    }
+
+    .nav-section {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 12px 8px 6px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      margin-bottom: 2px;
+      transition: background 0.12s ease;
+    }
+    .nav-item:hover { background: var(--primary-soft); }
+    .nav-item.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    .nav-item small {
+      font-size: 10px;
+      opacity: 0.5;
+      font-weight: 400;
+    }
+    .nav-item.active small { opacity: 0.7; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 12px 8px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ============ Stage ============ */
+    .stage {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .phone-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      max-height: 100%;
+    }
+
+    .phone {
+      /* Aspect ratio matches iPhone 14: 390 x 844 */
+      width: 360px;
+      aspect-ratio: 390 / 780;
+      max-height: calc(100vh - 80px);
+      background: #1a1a1a;
+      border-radius: 44px;
+      padding: 10px;
+      box-shadow:
+        0 0 0 2px #2a2a2a,
+        0 24px 48px rgba(42, 37, 32, 0.18),
+        0 6px 16px rgba(42, 37, 32, 0.10);
+      position: relative;
+      flex-shrink: 1;
+    }
+    .phone__notch {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 96px;
+      height: 24px;
+      background: #1a1a1a;
+      border-radius: 0 0 16px 16px;
+      z-index: 2;
+    }
+    .phone__screen {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 34px;
+      background: #FBF7F0;
+      display: block;
+    }
+    .stage__caption {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.4px;
+    }
+
+    /* ============ Narrow preview panes ============ */
+    @media (max-width: 720px) {
+      .sidebar { width: 180px; }
+      .phone { width: 300px; }
+    }
+    @media (max-width: 560px) {
+      .layout { flex-direction: column; }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 40%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .stage { padding: 16px; }
+      .phone { width: min(280px, 80vw); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h1 class="brand">
+        <img src="stacca-icon.svg" alt="" width="28" height="28" style="vertical-align:-6px;margin-right:8px" />
+        Stacca
+      </h1>
+      <div class="sub">Mockups · v0.1</div>
+
+      <div class="nav-section">Operaio</div>
+      <button class="nav-item active" data-src="login.html">Login <small>1</small></button>
+      <button class="nav-item" data-src="home.html">Oggi <small>2</small></button>
+      <button class="nav-item" data-src="aggiungi.html">Aggiungi ore <small>3</small></button>
+      <button class="nav-item" data-src="mese.html">Mese in corso <small>4</small></button>
+      <button class="nav-item" data-src="mese-passato.html">Mese inviato <small>5</small></button>
+      <button class="nav-item" data-src="profilo.html">Profilo <small>6</small></button>
+      <button class="nav-item" data-src="feedback.html">Feedback <small>7</small></button>
+
+      <div class="nav-section">Brand</div>
+      <a class="nav-item" href="nomi.html" style="text-decoration:none">20 nomi + loghi</a>
+
+      <div class="sidebar-footer">
+        Apri qualsiasi file direttamente sul telefono per testare il tap.
+      </div>
+    </aside>
+
+    <main class="stage">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="phone__notch"></div>
+          <iframe class="phone__screen" id="frame" src="login.html" title="Mockup preview"></iframe>
+        </div>
+        <div class="stage__caption" id="caption">Login · 390 × 844</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const items = document.querySelectorAll('.nav-item');
+    const frame = document.getElementById('frame');
+    const caption = document.getElementById('caption');
+    items.forEach(btn => {
+      btn.addEventListener('click', () => {
+        items.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        frame.src = btn.dataset.src;
+        const label = btn.textContent.replace(/\d+\s*$/, '').trim();
+        caption.textContent = label + ' · 390 × 844';
+      });
+    });
+  </script>
+
+</body>
+</html>

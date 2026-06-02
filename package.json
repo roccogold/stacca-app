@@ -1,0 +1,8 @@
+{
+  "name": "proj-ore",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix web",
+    "sync:lovable": "test -d lovable/repo/.git && git -C lovable/repo pull || echo 'Clone Lovable first — see lovable/README.md'"
+  }
+}
