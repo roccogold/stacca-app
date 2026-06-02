@@ -1,7 +1,11 @@
+import { CuriositaText } from "@/components/CuriositaText";
+import { getCuriositaForWeek } from "@/lib/curiosita-settimana";
 import { fetchSanCascianoWeather } from "@/lib/weather";
 
 export async function DailyInspiration() {
   const weather = await fetchSanCascianoWeather();
+  const curiosita = getCuriositaForWeek();
+
   if (!weather) return null;
 
   return (
@@ -17,6 +21,10 @@ export async function DailyInspiration() {
             </div>
             <div className="weather-card__cond">{weather.label}</div>
           </div>
+        </div>
+        <div className="weather-card__detto">
+          <span className="weather-card__detto-label">Lo sapevi?</span>
+          <CuriositaText text={curiosita} />
         </div>
       </div>
     </section>
