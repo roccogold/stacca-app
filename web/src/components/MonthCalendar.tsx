@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { daysInMonth, mondayWeekdayIndex, todayISO } from "@/lib/format";
+import { daysInMonth, formatHoursIt, mondayWeekdayIndex, todayISO } from "@/lib/format";
 
 type Props = {
   year: number;
   month: number;
+  monthTotal: number;
   totalsByDay: Record<string, number>;
   selectedDay: string | null;
   prevHref: string;
@@ -18,6 +19,7 @@ const DOW_KEYS = ["lun", "mar", "mer", "gio", "ven", "sab", "dom"] as const;
 export function MonthCalendar({
   year,
   month,
+  monthTotal,
   totalsByDay,
   selectedDay,
   prevHref,
@@ -82,6 +84,11 @@ export function MonthCalendar({
             })}
           </div>
         </div>
+        <p className="cal-month-total">
+          {monthTotal > 0
+            ? `${formatHoursIt(monthTotal)} ore totali nel mese`
+            : "Nessuna ora nel mese"}
+        </p>
       </section>
     </>
   );

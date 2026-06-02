@@ -108,6 +108,7 @@ export default async function MesePage({
       <MonthCalendar
         year={y}
         month={m}
+        monthTotal={monthTotal}
         totalsByDay={totalsByDay}
         selectedDay={selectedDay}
         prevHref={prevHref}
