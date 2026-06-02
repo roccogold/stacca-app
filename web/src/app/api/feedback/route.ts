@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import { sendEmail } from "@/lib/email";
+import { getFeedbackToEmail, sendEmail } from "@/lib/email";
 import { sessionOptions, type SessionData } from "@/lib/session";
 
 const MAX_LEN = 4000;
@@ -30,17 +30,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Messaggio troppo lungo." }, { status: 400 });
   }
 
-  const to = process.env.FEEDBACK_TO_EMAIL;
-  if (!to) {
-    return NextResponse.json(
-      {
-        error:
-          "Invio email non configurato. Imposta FEEDBACK_TO_EMAIL nel file .env (vedi .env.example).",
-      },
-      { status: 503 },
-    );
-  }
-
+  const to = getFeedbackToEmail();
   const sent = await sendEmail({
     to,
     subject: `[Stacca] Feedback da ${session.displayName || session.handle}`,

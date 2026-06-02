@@ -171,17 +171,22 @@ export default async function MesePage({
           <h2 className="section-title section-title--inset">Per lavorazione</h2>
           <div className="card card--stats">
             {mansioniSorted.map(([label, hrs]) => {
-              const pct = statsTotal > 0 ? (hrs / statsTotal) * 100 : 0;
+              const maxHrs = mansioniSorted[0][1];
+              const barPct = maxHrs > 0 ? (hrs / maxHrs) * 100 : 0;
+              const sharePct =
+                statsTotal > 0 ? Math.round((hrs / statsTotal) * 100) : 0;
               return (
                 <div key={label} className="stat-row">
                   <div className="stat-row__top">
                     <span className="stat-row__label">{label}</span>
-                    <span className="stat-row__value">{formatHoursIt(hrs)} h</span>
+                    <span className="stat-row__value">
+                      {formatHoursIt(hrs)} h · {sharePct}%
+                    </span>
                   </div>
                   <div className="stat-row__bar">
                     <div
                       className="stat-row__bar-fill stat-row__bar-fill--olive"
-                      style={{ width: `${pct}%` }}
+                      style={{ width: `${barPct}%` }}
                     />
                   </div>
                 </div>
@@ -196,17 +201,22 @@ export default async function MesePage({
           <h2 className="section-title section-title--inset">Per luogo</h2>
           <div className="card card--stats">
             {luoghiSorted.map(([label, hrs]) => {
-              const pct = statsTotal > 0 ? (hrs / statsTotal) * 100 : 0;
+              const maxHrs = luoghiSorted[0][1];
+              const barPct = maxHrs > 0 ? (hrs / maxHrs) * 100 : 0;
+              const sharePct =
+                statsTotal > 0 ? Math.round((hrs / statsTotal) * 100) : 0;
               return (
                 <div key={label} className="stat-row">
                   <div className="stat-row__top">
                     <span className="stat-row__label">{label}</span>
-                    <span className="stat-row__value">{formatHoursIt(hrs)} h</span>
+                    <span className="stat-row__value">
+                      {formatHoursIt(hrs)} h · {sharePct}%
+                    </span>
                   </div>
                   <div className="stat-row__bar">
                     <div
                       className="stat-row__bar-fill stat-row__bar-fill--olive"
-                      style={{ width: `${pct}%` }}
+                      style={{ width: `${barPct}%` }}
                     />
                   </div>
                 </div>

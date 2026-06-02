@@ -53,7 +53,7 @@ export function FeedbackForm() {
           required
           minLength={3}
           maxLength={4000}
-          placeholder="Es.: vorrei un promemoria alle 17…"
+          placeholder="Cosa vuoi dire? Idee, bug, cose da migliorare…"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />

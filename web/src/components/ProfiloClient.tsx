@@ -14,6 +14,7 @@ export function ProfiloClient({ firstName }: Props) {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [online, setOnline] = useState(
     () => typeof navigator !== "undefined" && navigator.onLine,
@@ -33,19 +34,26 @@ export function ProfiloClient({ firstName }: Props) {
   async function sendFeedback() {
     if (!feedback.trim() || loading) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: feedback.trim() }),
       });
-      if (!res.ok) return;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "Errore nell'invio");
+        return;
+      }
       setSent(true);
       setTimeout(() => {
         setFeedback("");
         setSent(false);
         setFeedbackOpen(false);
       }, 1400);
+    } catch {
+      setError("Connessione assente. Riprova.");
     } finally {
       setLoading(false);
     }
@@ -63,7 +71,10 @@ export function ProfiloClient({ firstName }: Props) {
           <button
             type="button"
             className="account-row account-row--btn"
-            onClick={() => setFeedbackOpen(true)}
+            onClick={() => {
+              setError(null);
+              setFeedbackOpen(true);
+            }}
           >
             <MessageSquare size={20} className="account-row__icon" aria-hidden />
             <div className="account-row__body">
@@ -99,15 +110,16 @@ export function ProfiloClient({ firstName }: Props) {
         open={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
         title="Invia feedback"
-        subtitle="Cosa vuoi dire all'admin?"
+        subtitle="Il messaggio arriva a chi gestisce l'app."
       >
         <textarea
           className="textarea sheet__textarea"
           rows={5}
-          placeholder="Scrivi qui…"
+          placeholder="Cosa vuoi dire? Idee, bug, cose da migliorare…"
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
         />
+        {error && <p className="field-error">{error}</p>}
         <div className="sheet__actions">
           <button
             type="button"

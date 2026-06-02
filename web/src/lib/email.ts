@@ -10,6 +10,10 @@ export function getFromAddress() {
   return process.env.EMAIL_FROM || process.env.FEEDBACK_FROM_EMAIL || "onboarding@resend.dev";
 }
 
+export function getFeedbackToEmail() {
+  return process.env.FEEDBACK_TO_EMAIL?.trim() || "roccogold23@gmail.com";
+}
+
 export async function sendEmail(opts: {
   to: string;
   subject: string;
