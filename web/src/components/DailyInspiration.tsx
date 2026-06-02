@@ -1,10 +1,12 @@
 import { CuriositaText } from "@/components/CuriositaText";
-import { getCuriositaForWeek } from "@/lib/curiosita-settimana";
+import { getCuriositaForWeekCached } from "@/lib/curiosita-settimana";
 import { fetchSanCascianoWeather } from "@/lib/weather";
 
 export async function DailyInspiration() {
-  const weather = await fetchSanCascianoWeather();
-  const curiosita = getCuriositaForWeek();
+  const [weather, curiosita] = await Promise.all([
+    fetchSanCascianoWeather(),
+    getCuriositaForWeekCached(),
+  ]);
 
   if (!weather) return null;
 
