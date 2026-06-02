@@ -10,6 +10,6 @@
     <circle cx="60" cy="71" r="22" fill="#FBF7F0" clip-path="url(#staccaHorizon)"/>
     <line x1="22" y1="71" x2="98" y2="71" stroke="#FBF7F0" stroke-width="8.5" stroke-linecap="round"/>
   </g>
-  <!-- wordmark — requires DM Sans 700 (Inter fallback); outline before print -->
-  <text x="120" y="180" text-anchor="middle" font-family="'DM Sans','Inter',sans-serif" font-size="50" font-weight="700" fill="#2A2520" letter-spacing="-1.8">Stacca</text>
+  <!-- wordmark — Sen 800 -->
+  <text x="120" y="180" text-anchor="middle" font-family="'Sen',sans-serif" font-size="50" font-weight="800" fill="#3D4A35" letter-spacing="-1.5">Stacca</text>
 </svg>

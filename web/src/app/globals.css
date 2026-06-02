@@ -1172,11 +1172,11 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
 }
 
 .stacca-logo__word {
-  font-family: var(--font-logo), "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  font-weight: 700;
+  font-family: var(--font-logo), "Sen", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
   font-size: var(--stacca-word-size, 21px);
-  letter-spacing: -0.035em;
-  color: var(--stacca-ink);
+  letter-spacing: -0.03em;
+  color: var(--stacca-olive);
   line-height: 1;
 }
 
@@ -1489,6 +1489,12 @@ a.card {
   color: var(--text-muted);
 }
 
+.form-hint--tight {
+  margin: 8px 0 10px;
+  font-size: 13px;
+  text-align: center;
+}
+
 /* OGGI / MESE summary cards */
 .card--oggi,
 .card--mese {
@@ -1773,7 +1779,7 @@ a.card {
 }
 
 .chips--pills {
-  justify-content: flex-start;
+  justify-content: center;
   gap: 8px;
 }
 

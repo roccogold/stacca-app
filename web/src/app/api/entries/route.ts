@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { LUOGHI, MANSIONI } from "@/lib/constants";
+import { isQuarterHour } from "@/lib/format";
 import { assertMonthEditable } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, type SessionData } from "@/lib/session";
@@ -67,11 +68,11 @@ export async function POST(req: Request) {
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return NextResponse.json({ error: "Data non valida" }, { status: 400 });
   }
-  if (typeof hours !== "number" || hours <= 0 || hours > 24) {
+  if (typeof hours !== "number" || !isQuarterHour(hours)) {
     return NextResponse.json({ error: "Ore non valide" }, { status: 400 });
   }
   if (!mansione || !MANSIONI.includes(mansione as (typeof MANSIONI)[number])) {
-    return NextResponse.json({ error: "Mansione non valida" }, { status: 400 });
+    return NextResponse.json({ error: "Lavorazione non valida" }, { status: 400 });
   }
   if (!luogo || !LUOGHI.includes(luogo as (typeof LUOGHI)[number])) {
     return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });

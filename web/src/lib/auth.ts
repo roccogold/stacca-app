@@ -11,9 +11,7 @@ export async function requireLoggedIn() {
     where: { id: session.userId },
   });
   if (!user) {
-    session.destroy();
-    await session.save();
-    redirect("/login");
+    redirect("/api/auth/logout");
   }
   return user;
 }

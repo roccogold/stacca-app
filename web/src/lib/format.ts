@@ -1,7 +1,19 @@
 const it = "it-IT";
 
+export const HOUR_STEP = 0.25;
+
+export function stepHours(h: number, delta: number): number {
+  const n = Math.round((h + delta) / HOUR_STEP) * HOUR_STEP;
+  return Math.min(24, Math.max(0, n));
+}
+
+export function isQuarterHour(h: number): boolean {
+  return h > 0 && h <= 24 && Math.abs(h / HOUR_STEP - Math.round(h / HOUR_STEP)) < 1e-9;
+}
+
 export function formatHoursIt(n: number): string {
-  return n.toLocaleString(it, { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+  const v = Math.round(n / HOUR_STEP) * HOUR_STEP;
+  return v.toLocaleString(it, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 export function parseHoursInput(s: string): number | null {

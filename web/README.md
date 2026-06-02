@@ -19,7 +19,8 @@ After `npm run db:seed`, check the terminal output for email + password (format 
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `DATABASE_URL` | yes | Default `file:./dev.db` (SQLite under `prisma/`) |
+| `DATABASE_URL` | yes | Supabase **Transaction pooler** (port 6543, `?pgbouncer=true`) |
+| `DIRECT_URL` | yes | Supabase **Direct** connection (port 5432) — used for migrations |
 | `SESSION_SECRET` | yes | 32+ characters ([iron-session](https://github.com/vvo/iron-session)) |
 | `RESEND_API_KEY` | for email | [Resend](https://resend.com) API key — reset password + feedback |
 | `EMAIL_FROM` | for email | Sender address. Test: `onboarding@resend.dev`. Production: `noreply@tuodominio.it` |
@@ -62,18 +63,75 @@ Free tier: 3,000 emails/month — enough for this app.
 4. Crea service account → **Keys → Add key → JSON** (salva il file)
 5. Crea un **Google Sheet** con tab **Ore** (o cambia `GOOGLE_SHEETS_TAB`)
 6. **Condividi** il foglio con l'email del service account (tipo `xxx@xxx.iam.gserviceaccount.com`) come **Editor**
-7. In `web/.env`:
+7. In `web/.env` (local) or Vercel env (production):
    ```
    GOOGLE_SHEETS_ID=   # dall'URL: docs.google.com/spreadsheets/d/QUESTO_ID/edit
    GOOGLE_SHEETS_TAB=Ore
+   GOOGLE_SERVICE_ACCOUNT_JSON=./google-service-account.json   # local only
+   ```
+   On **Vercel**, use either the full JSON inline in `GOOGLE_SERVICE_ACCOUNT_JSON`, or:
+   ```
    GOOGLE_SERVICE_ACCOUNT_EMAIL=...@....iam.gserviceaccount.com
    GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
    ```
-   (`private_key` dal JSON — tieni le `\n`)
 
 Colonne scritte automaticamente: Data, Nome, Email, Ore, Mansione, Luogo, Note, Mese, Inviato il.
 
 Dopo **Invia mese**: badge **Inviato**, voci in sola lettura, righe su Sheets.
+
+## Deploy — Supabase + Vercel
+
+### 1. Supabase
+
+1. [supabase.com](https://supabase.com) → **New project** (name: `stacca`, region: EU)
+2. Save the database password
+3. **Project Settings → Database → Connection string**
+4. Copy **Transaction pooler** → `DATABASE_URL` (port **6543**, add `?pgbouncer=true` if missing)
+5. Copy **Direct connection** → `DIRECT_URL` (port **5432**)
+
+### 2. Local `.env`
+
+Update `web/.env` with the two Supabase URLs + keep existing Resend/Google vars.
+
+Run migrations and seed:
+
+```bash
+cd web
+npx prisma migrate deploy
+npm run db:seed
+npm run dev
+```
+
+### 3. Vercel
+
+1. [vercel.com](https://vercel.com) → **Add New Project** → import `roccogold/stacca-app`
+2. **Root Directory:** `web`
+3. **Environment variables** (Production):
+
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | Supabase transaction pooler (6543) |
+| `DIRECT_URL` | Supabase direct (5432) |
+| `SESSION_SECRET` | New random string (`openssl rand -base64 32`) |
+| `RESEND_API_KEY` | Your Resend key |
+| `EMAIL_FROM` | `onboarding@resend.dev` (or verified domain) |
+| `FEEDBACK_TO_EMAIL` | Admin email |
+| `GOOGLE_SHEETS_ID` | Sheet ID |
+| `GOOGLE_SHEETS_TAB` | `Ore` |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | From JSON `client_email` |
+| `GOOGLE_PRIVATE_KEY` | From JSON `private_key` (keep `\n`) |
+
+4. **Deploy** — build runs `prisma migrate deploy` automatically
+5. Seed production DB once from your machine:
+
+```bash
+cd web
+DATABASE_URL="..." DIRECT_URL="..." npm run db:seed
+```
+
+### 4. Test
+
+Open the Vercel URL → login → add entries → **Invia mese** → check Google Sheet.
 
 ## Scripts
 
@@ -85,7 +143,3 @@ Dopo **Invia mese**: badge **Inviato**, voci in sola lettura, righe su Sheets.
 ## Static mockups
 
 HTML/CSS prototypes live in [`../mockups/`](../mockups/).
-
-## Not implemented yet
-
-- Deploy to Vercel + Postgres (Supabase)

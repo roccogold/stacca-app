@@ -16,26 +16,45 @@ export type SheetEntryRow = {
   submittedAt: string;
 };
 
+function parseServiceAccountJson(raw: string): {
+  client_email?: string;
+  private_key?: string;
+} | null {
+  try {
+    return JSON.parse(raw) as { client_email?: string; private_key?: string };
+  } catch {
+    return null;
+  }
+}
+
 function loadServiceAccountCredentials():
   | { ok: true; email: string; key: string }
   | { ok: false; error: string } {
-  const jsonPath = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
-  if (jsonPath) {
-    try {
-      const fullPath = path.resolve(process.cwd(), jsonPath);
-      const creds = JSON.parse(fs.readFileSync(fullPath, "utf8")) as {
-        client_email?: string;
-        private_key?: string;
-      };
-      const email = creds.client_email?.trim();
-      const key = creds.private_key?.trim();
+  const jsonSetting = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
+  if (jsonSetting) {
+    const fromEnv =
+      jsonSetting.startsWith("{") ? parseServiceAccountJson(jsonSetting) : null;
+
+    if (fromEnv) {
+      const email = fromEnv.client_email?.trim();
+      const key = fromEnv.private_key?.trim();
       if (email && key) return { ok: true, email, key };
-    } catch {
-      return {
-        ok: false,
-        error:
-          "Impossibile leggere GOOGLE_SERVICE_ACCOUNT_JSON. Verifica il percorso del file.",
-      };
+    } else {
+      try {
+        const fullPath = path.resolve(process.cwd(), jsonSetting);
+        const creds = parseServiceAccountJson(
+          fs.readFileSync(fullPath, "utf8"),
+        );
+        const email = creds?.client_email?.trim();
+        const key = creds?.private_key?.trim();
+        if (email && key) return { ok: true, email, key };
+      } catch {
+        return {
+          ok: false,
+          error:
+            "Impossibile leggere GOOGLE_SERVICE_ACCOUNT_JSON. Verifica percorso file o JSON inline.",
+        };
+      }
     }
   }
 
@@ -170,7 +189,7 @@ export async function ensureSheetHeader(): Promise<void> {
             "Nome",
             "Email",
             "Ore",
-            "Mansione",
+            "Lavorazione",
             "Luogo",
             "Note",
             "Mese",

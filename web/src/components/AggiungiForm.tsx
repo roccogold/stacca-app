@@ -11,7 +11,7 @@ import {
   LUOGHI_VIGNE,
   MANSIONI,
 } from "@/lib/constants";
-import { formatHoursIt, todayISO } from "@/lib/format";
+import { formatHoursIt, stepHours, todayISO } from "@/lib/format";
 
 type Props = {
   initial: TimeEntry | null;
@@ -20,17 +20,16 @@ type Props = {
 };
 
 function clampStep(h: number, delta: number): number {
-  const n = Math.round((h + delta) * 2) / 2;
-  return Math.min(24, Math.max(0, n));
+  return stepHours(h, delta);
 }
 
 export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
   const router = useRouter();
   const editId = initial?.id ?? null;
   const [date, setDate] = useState(initial?.date ?? presetDate ?? todayISO());
-  const [hours, setHours] = useState(initial?.hours ?? 8);
-  const [mansione, setMansione] = useState(initial?.mansione ?? MANSIONI[0] ?? "");
-  const [luogo, setLuogo] = useState(initial?.luogo ?? LUOGHI_VIGNE[0] ?? "");
+  const [hours, setHours] = useState(initial?.hours ?? 0);
+  const [mansione, setMansione] = useState(initial?.mansione ?? "");
+  const [luogo, setLuogo] = useState(initial?.luogo ?? "");
   const [note, setNote] = useState(initial?.note ?? "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -98,7 +97,7 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
         )}
         {!editId && !locked && (
           <p className="form-hint">
-            Puoi salvare più voci per lo stesso giorno — una per ogni mansione e luogo.
+            Puoi salvare più voci per lo stesso giorno — una per ogni lavorazione e luogo.
           </p>
         )}
         <div className="field">
@@ -112,25 +111,27 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
           <span className="field-label field-label--plain">Ore</span>
           <div className="stepper-card">
             <div className="stepper">
-              <button type="button" className="stepper__btn" aria-label="Diminuisci" onClick={() => setHours((h) => clampStep(h, -0.5))} disabled={locked}>
+              <button type="button" className="stepper__btn" aria-label="Diminuisci" onClick={() => setHours((h) => clampStep(h, -0.25))} disabled={locked}>
                 −
               </button>
               <div className="stepper__value">
                 <span className="stepper__num">{formatHoursIt(hours)}</span>
                 <span className="stepper__unit">ore</span>
               </div>
-              <button type="button" className="stepper__btn" aria-label="Aumenta" onClick={() => setHours((h) => clampStep(h, 0.5))} disabled={locked}>
+              <button type="button" className="stepper__btn" aria-label="Aumenta" onClick={() => setHours((h) => clampStep(h, 0.25))} disabled={locked}>
                 +
               </button>
             </div>
+            <p className="form-hint form-hint--tight">Usa +/− per i quarti d&apos;ora</p>
             <div className="chips chips--pills">
               {HOUR_CHIPS.map((c) => (
                 <button
                   key={c}
                   type="button"
-                  className={`chip chip--pill${hours === c ? " chip--active" : ""}`}
+                  className={`chip chip--pill${Math.abs(hours - c) < 0.001 ? " chip--active" : ""}`}
                   onClick={() => setHours(c)}
                   disabled={locked}
+                  aria-label={`${formatHoursIt(c)} ore`}
                 >
                   {formatHoursIt(c)}
                 </button>
@@ -140,10 +141,11 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
         </div>
 
         <div className="field">
-          <label className="field-label field-label--plain" htmlFor="mansione">
-            Mansione
+          <label className="field-label field-label--plain" htmlFor="lavorazione">
+            Lavorazione
           </label>
-          <select className="select select--lg" id="mansione" value={mansione} onChange={(e) => setMansione(e.target.value)} required disabled={locked}>
+          <select className="select select--lg" id="lavorazione" value={mansione} onChange={(e) => setMansione(e.target.value)} required disabled={locked}>
+            <option value="" disabled hidden />
             {MANSIONI.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
@@ -155,14 +157,15 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
             Luogo
           </label>
           <select className="select select--lg" id="luogo" value={luogo} onChange={(e) => setLuogo(e.target.value)} required disabled={locked}>
+            <option value="" disabled hidden />
             <optgroup label="Vigne">
               {LUOGHI_VIGNE.map((l) => (
-                <option key={l} value={l}>{l}</option>
+                <option key={`vigne-${l}`} value={l}>{l}</option>
               ))}
             </optgroup>
             <optgroup label="Altro">
               {LUOGHI_ALTRO.map((l) => (
-                <option key={l} value={l}>{l}</option>
+                <option key={`altro-${l}`} value={l}>{l}</option>
               ))}
             </optgroup>
           </select>
@@ -199,7 +202,7 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
             type="button"
             className="btn btn--primary btn--block btn--sheet"
             onClick={save}
-            disabled={loading || hours <= 0}
+            disabled={loading || hours <= 0 || !mansione || !luogo}
           >
             {loading ? "Salvataggio…" : editId ? "Aggiorna voce" : "Salva voce"}
           </button>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, DM_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Sen } from "next/font/google";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -9,9 +9,9 @@ const bricolage = Bricolage_Grotesque({
   display: "swap",
 });
 
-const dmSans = DM_Sans({
+const senLogo = Sen({
   subsets: ["latin"],
-  weight: ["700"],
+  weight: ["800"],
   variable: "--font-logo",
   display: "swap",
 });
@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it" className={`${bricolage.variable} ${dmSans.variable}`}>
+    <html lang="it" className={`${bricolage.variable} ${senLogo.variable}`}>
       <body className={bricolage.className}>{children}</body>
     </html>
   );

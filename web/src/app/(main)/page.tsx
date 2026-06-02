@@ -56,7 +56,7 @@ export default async function HomePage() {
           <div className="card--oggi__label">OGGI</div>
           {todayEntries.length === 0 ? (
             <p className="card--oggi__empty">
-              Oggi è ancora vuoto — tocca <strong>+</strong> per metterci le ore.
+              Oggi è ancora vuoto — tocca <strong>+</strong> per inserire le ore.
             </p>
           ) : (
             <div className="card--oggi__filled">

@@ -168,7 +168,7 @@ export default async function MesePage({
 
       {mansioniSorted.length > 0 && (
         <section className="block">
-          <h2 className="section-title section-title--inset">Per mansione</h2>
+          <h2 className="section-title section-title--inset">Per lavorazione</h2>
           <div className="card card--stats">
             {mansioniSorted.map(([label, hrs]) => {
               const pct = statsTotal > 0 ? (hrs / statsTotal) * 100 : 0;
