@@ -1,23 +1,83 @@
-# proj-ore — Stacca (ore in vigna)
+# Stacca — registro ore in vigna
 
-- **`web/`** — production Next.js app: login, oggi, aggiungi ore, mese (calendario + statistiche), profilo, **invio feedback** (email con Resend se configurato).
-- **`lovable/`** — reference UI cloned from Lovable GitHub (see [lovable/README.md](lovable/README.md)).
-- **`mockups/`** — static HTML/CSS reference and early layouts.
+App mobile-first per operai di Corzano e Paterno.
+
+| Cartella | Cosa fa |
+|----------|---------|
+| **`web/`** | App vera (Next.js + Prisma) — **questa la deployi** |
+| **`lovable/repo/`** | Copia locale del design Lovable — **solo riferimento, non la modifichi a mano** |
+| **`mockups/`** | HTML statici early-stage |
 
 ## Quick start
-
-See [web/README.md](web/README.md).
 
 ```bash
 cd web && cp .env.example .env && npm install && npx prisma migrate dev && npm run dev
 ```
 
-Then open `/login`.
+Apri `/login`. Dettagli in [web/README.md](web/README.md).
 
-## Lovable as UI reference
+---
 
-1. Connect project on Lovable → GitHub ([docs](https://docs.lovable.dev/integrations/github))
-2. Clone into `lovable/` — full steps in [lovable/README.md](lovable/README.md)
-3. In Cursor: **Add Folder to Workspace** → `lovable/`
-4. Update: `npm run sync:lovable`
-5. Ask: *“allinea home a lovable”* (or any screen)
+## Workflow (come lavori tu)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  stacca-app (GitHub)  ←  il TUO progetto, push qui      │
+│  web/ · mockups/ · docs                                 │
+└─────────────────────────────────────────────────────────┘
+         ▲
+         │  git push (ogni tuo cambio)
+         │
+    proj-ore/  (questa cartella)
+
+
+┌─────────────────────────────────────────────────────────┐
+│  stacca-lovable (GitHub)  ←  solo design Lovable          │
+│  Lovable pusha qui in automatico quando modifichi lì    │
+└─────────────────────────────────────────────────────────┘
+         │
+         │  npm run sync:lovable  (quando Lovable ha cambiato)
+         ▼
+    lovable/repo/  (copia locale per confronto)
+         │
+         │  chiedi a Cursor: "allinea X a lovable"
+         ▼
+    web/  (porti layout/CSS/copy nel codice vero)
+```
+
+### In pratica
+
+1. **Sviluppi e pushi** solo **`stacca-app`** — tutto ciò che conta (backend, logiche, deploy).
+2. **Su Lovable** fai prove di UI/design → finisce da sola su **`stacca-lovable`**.
+3. Quando ti piace qualcosa su Lovable:
+   ```bash
+   npm run sync:lovable
+   ```
+4. Mi chiedi, ad esempio:
+   - *"Lovable ha cambiato la home — allinea `web/`"*
+   - *"Copia il nuovo stile del calendario da lovable"*
+
+Io leggo `lovable/repo/`, porto **solo UI** in `web/` (non router, non store Lovable).
+
+### Cosa non fare
+
+- Non editare `lovable/repo/` a mano — al prossimo sync si sovrascrive.
+- Non aspettarti che Lovable aggiorni `web/` da solo — il passaggio lo facciamo noi su richiesta.
+- Non mischiare le due repo in una sola (Lovable sovrascriverebbe il codice Next.js).
+
+---
+
+## GitHub
+
+| Repo | Ruolo |
+|------|--------|
+| **[stacca-app](https://github.com/roccogold/stacca-app)** | Progetto principale — **creala e pusha qui** |
+| **[stacca-lovable](https://github.com/roccogold/stacca-lovable)** | Export Lovable — collegata in Lovable Settings → Git |
+
+Dopo aver creato `stacca-app` (repo vuota, private):
+
+```bash
+git push -u origin main
+```
+
+(`origin` è già configurato su `stacca-app`.)
