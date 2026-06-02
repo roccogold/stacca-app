@@ -455,11 +455,13 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
 
 /* Hours stepper */
 .stepper-card {
+  width: 100%;
+  box-sizing: border-box;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 20px 16px 16px;
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 
 .stepper {
@@ -1760,6 +1762,25 @@ a.card {
 
 .form-body {
   padding: 16px 20px 120px;
+}
+
+.form-body .field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.form-body .field > .input,
+.form-body .field > .select,
+.form-body .field > .textarea,
+.form-body .field > .stepper-card {
+  width: 100%;
+  max-width: 100%;
+}
+
+.form-body .input[type="date"] {
+  min-width: 0;
 }
 
 .field-label--plain {
