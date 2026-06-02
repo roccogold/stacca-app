@@ -4,7 +4,7 @@ import type { TimeEntry } from "@prisma/client";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useTransition, useState } from "react";
 import {
   HOUR_CHIPS,
   LUOGHI_ALTRO,
@@ -25,6 +25,7 @@ function clampStep(h: number, delta: number): number {
 
 export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
   const router = useRouter();
+  const [, startTransition] = useTransition();
   const editId = initial?.id ?? null;
   const [date, setDate] = useState(initial?.date ?? presetDate ?? todayISO());
   const [hours, setHours] = useState(initial?.hours ?? 0);
@@ -33,6 +34,18 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
   const [note, setNote] = useState(initial?.note ?? "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    router.prefetch("/");
+  }, [router]);
+
+  function goHome() {
+    document.dispatchEvent(new Event("stacca:navigate"));
+    startTransition(() => {
+      router.replace("/");
+    });
+    void router.refresh();
+  }
 
   async function save() {
     setError(null);
@@ -54,11 +67,13 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(typeof data.error === "string" ? data.error : "Errore nel salvataggio");
+        setLoading(false);
         return;
       }
-      router.push("/");
-      router.refresh();
-    } finally {
+      goHome();
+      return;
+    } catch {
+      setError("Errore nel salvataggio");
       setLoading(false);
     }
   }
@@ -71,11 +86,12 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError(typeof data.error === "string" ? data.error : "Errore");
+        setLoading(false);
         return;
       }
-      router.push("/");
-      router.refresh();
-    } finally {
+      goHome();
+    } catch {
+      setError("Errore");
       setLoading(false);
     }
   }
@@ -104,21 +120,23 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
           <label className="field-label field-label--plain" htmlFor="data">
             Data
           </label>
-          <input className="input input--lg" id="data" type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={locked} />
+          <div className="field-control">
+            <input className="input input--lg" id="data" type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={locked} />
+          </div>
         </div>
 
         <div className="field">
           <span className="field-label field-label--plain">Ore</span>
           <div className="stepper-card">
             <div className="stepper">
-              <button type="button" className="stepper__btn" aria-label="Diminuisci" onClick={() => setHours((h) => clampStep(h, -0.25))} disabled={locked}>
+              <button type="button" className="stepper__btn" aria-label="Diminuisci" onClick={() => setHours((h) => clampStep(h, -0.25))} disabled={locked || loading}>
                 −
               </button>
               <div className="stepper__value">
                 <span className="stepper__num">{formatHoursIt(hours)}</span>
                 <span className="stepper__unit">ore</span>
               </div>
-              <button type="button" className="stepper__btn" aria-label="Aumenta" onClick={() => setHours((h) => clampStep(h, 0.25))} disabled={locked}>
+              <button type="button" className="stepper__btn" aria-label="Aumenta" onClick={() => setHours((h) => clampStep(h, 0.25))} disabled={locked || loading}>
                 +
               </button>
             </div>
@@ -144,46 +162,52 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
           <label className="field-label field-label--plain" htmlFor="lavorazione">
             Lavorazione
           </label>
-          <select className="select select--lg" id="lavorazione" value={mansione} onChange={(e) => setMansione(e.target.value)} required disabled={locked}>
-            <option value="" disabled hidden />
-            {MANSIONI.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+          <div className="field-control">
+            <select className="select select--lg" id="lavorazione" value={mansione} onChange={(e) => setMansione(e.target.value)} required disabled={locked}>
+              <option value="" disabled hidden />
+              {MANSIONI.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="field">
           <label className="field-label field-label--plain" htmlFor="luogo">
             Luogo
           </label>
-          <select className="select select--lg" id="luogo" value={luogo} onChange={(e) => setLuogo(e.target.value)} required disabled={locked}>
-            <option value="" disabled hidden />
-            <optgroup label="Vigne">
-              {LUOGHI_VIGNE.map((l) => (
-                <option key={`vigne-${l}`} value={l}>{l}</option>
-              ))}
-            </optgroup>
-            <optgroup label="Altro">
-              {LUOGHI_ALTRO.map((l) => (
-                <option key={`altro-${l}`} value={l}>{l}</option>
-              ))}
-            </optgroup>
-          </select>
+          <div className="field-control">
+            <select className="select select--lg" id="luogo" value={luogo} onChange={(e) => setLuogo(e.target.value)} required disabled={locked}>
+              <option value="" disabled hidden />
+              <optgroup label="Vigne">
+                {LUOGHI_VIGNE.map((l) => (
+                  <option key={`vigne-${l}`} value={l}>{l}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Altro">
+                {LUOGHI_ALTRO.map((l) => (
+                  <option key={`altro-${l}`} value={l}>{l}</option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
         </div>
 
         <div className="field">
           <label className="field-label field-label--plain" htmlFor="note">
             Note (opzionale)
           </label>
-          <textarea
-            className="textarea"
-            id="note"
-            placeholder="Qualcosa da ricordare?"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={3}
-            disabled={locked}
-          />
+          <div className="field-control">
+            <textarea
+              className="textarea"
+              id="note"
+              placeholder="Qualcosa da ricordare?"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              disabled={locked}
+            />
+          </div>
         </div>
 
         {error && <p className="field-error">{error}</p>}

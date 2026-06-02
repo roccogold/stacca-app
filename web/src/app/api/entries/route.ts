@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { LUOGHI, MANSIONI } from "@/lib/constants";
@@ -96,6 +97,9 @@ export async function POST(req: Request) {
       note: note?.trim() || null,
     },
   });
+
+  revalidatePath("/");
+  revalidatePath("/mese");
 
   return NextResponse.json({ entry });
 }

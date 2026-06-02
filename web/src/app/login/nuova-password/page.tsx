@@ -1,11 +1,11 @@
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { StaccaLogo } from "@/components/StaccaLogo";
-import { requireLoggedIn } from "@/lib/auth";
+import { requireLoggedInSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function NuovaPasswordPage() {
-  const user = await requireLoggedIn();
-  if (!user.mustChangePassword) {
+  const session = await requireLoggedInSession();
+  if (!session.mustChangePassword) {
     redirect("/");
   }
 

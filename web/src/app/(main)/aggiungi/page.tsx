@@ -11,6 +11,7 @@ export default async function AggiungiPage({
 }) {
   const user = await requireUser();
   const { edit, date } = await searchParams;
+
   const initial = edit
     ? await prisma.timeEntry.findFirst({
         where: { id: edit, userId: user.id },

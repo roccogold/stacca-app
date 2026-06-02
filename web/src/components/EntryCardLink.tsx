@@ -46,7 +46,7 @@ export function EntryCardLink({
   }
 
   return (
-    <Link href={href} className={`entry-card${compact ? " entry-card--compact" : ""}`}>
+    <Link href={href} prefetch className={`entry-card${compact ? " entry-card--compact" : ""}`}>
       {content}
     </Link>
   );

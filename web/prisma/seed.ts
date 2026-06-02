@@ -1,50 +1,39 @@
 import { PrismaClient } from "@prisma/client";
 import { demoPasswordForHandle, hashSecret } from "../src/lib/password";
+import { WORKERS } from "./workers.local";
 
 const prisma = new PrismaClient();
-
-/**
- * Dipendenti — modifica email e suffix prima del deploy.
- * Password demo: {handle}-{suffix}
- */
-const WORKERS: {
-  handle: string;
-  displayName: string;
-  email: string;
-  suffix: string;
-}[] = [
-  {
-    handle: "rocco",
-    displayName: "Rocco",
-    email: "roccogold23@gmail.com",
-    suffix: "847392651",
-  },
-  // { handle: "marco", displayName: "Marco", email: "marco@...", suffix: "XXXXXXXXX" },
-];
 
 async function main() {
   for (const w of WORKERS) {
     const password = demoPasswordForHandle(w.handle, w.suffix);
     const passwordHash = await hashSecret(password);
-    await prisma.user.upsert({
-      where: { handle: w.handle },
-      create: {
+    const email = w.email.toLowerCase();
+
+    const existing = await prisma.user.findUnique({ where: { handle: w.handle } });
+
+    if (existing) {
+      await prisma.user.update({
+        where: { handle: w.handle },
+        data: {
+          displayName: w.displayName,
+          email,
+        },
+      });
+      console.log(`✓ ${w.displayName} — ${email} — aggiornato (password invariata)`);
+      continue;
+    }
+
+    await prisma.user.create({
+      data: {
         handle: w.handle,
         displayName: w.displayName,
-        email: w.email.toLowerCase(),
+        email,
         passwordHash,
         mustChangePassword: true,
-      },
-      update: {
-        displayName: w.displayName,
-        email: w.email.toLowerCase(),
-        passwordHash,
-        mustChangePassword: true,
-        resetCodeHash: null,
-        resetCodeExpiresAt: null,
       },
     });
-    console.log(`✓ ${w.displayName} — ${w.email} — demo: ${password}`);
+    console.log(`✓ ${w.displayName} — ${email} — nuovo — demo: ${password}`);
   }
 }
 

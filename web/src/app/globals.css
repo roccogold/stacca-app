@@ -98,6 +98,7 @@ body {
 .app-shell__main {
   max-width: 28rem;
   margin: 0 auto;
+  overflow-x: clip;
 }
 
 body.no-nav {
@@ -363,8 +364,7 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   bottom: 0;
   left: 0;
   right: 0;
-  background: color-mix(in oklch, var(--background) 95%, transparent);
-  backdrop-filter: blur(8px);
+  background: var(--background);
   border-top: 1px solid var(--border);
   padding: 16px 20px calc(16px + var(--safe-bottom));
   z-index: 30;
@@ -683,6 +683,14 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   color: var(--primary);
 }
 
+.bottom-nav__item:active {
+  opacity: 0.65;
+}
+
+.bottom-nav__icon--pending {
+  opacity: 0.45;
+}
+
 .bottom-nav__item svg {
   display: block;
   flex-shrink: 0;
@@ -880,6 +888,34 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
 .input--invalid:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.input-password {
+  position: relative;
+}
+
+.input-password__input {
+  padding-right: 48px;
+}
+
+.input-password__toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input-password__toggle:active {
+  background: var(--card-soft);
 }
 
 .login-form__submit {
@@ -1566,6 +1602,7 @@ a.card {
 
 .month-teaser:active {
   background: var(--accent);
+  transform: scale(0.99);
 }
 
 .month-teaser__label {
@@ -1614,6 +1651,54 @@ a.card {
 
 .entry-card:active {
   background: var(--accent);
+  transform: scale(0.99);
+}
+
+/* Route / page loading feedback */
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 100;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--primary) 35%,
+    var(--primary) 65%,
+    transparent
+  );
+  animation: route-progress 0.9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes route-progress {
+  0% { transform: translateX(-100%); opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0.6; }
+}
+
+.page-loading {
+  padding: 24px 20px;
+}
+
+.page-loading__pulse {
+  height: 120px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(
+    90deg,
+    var(--card-soft) 0%,
+    var(--card) 50%,
+    var(--card-soft) 100%
+  );
+  background-size: 200% 100%;
+  animation: page-loading-pulse 1s ease-in-out infinite;
+}
+
+@keyframes page-loading-pulse {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 .entry-card--readonly {
@@ -1762,6 +1847,9 @@ a.card {
 
 .form-body {
   padding: 16px 20px 120px;
+  max-width: 100%;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 
 .form-body .field {
@@ -1769,18 +1857,49 @@ a.card {
   flex-direction: column;
   align-items: stretch;
   min-width: 0;
-}
-
-.form-body .field > .input,
-.form-body .field > .select,
-.form-body .field > .textarea,
-.form-body .field > .stepper-card {
-  width: 100%;
   max-width: 100%;
 }
 
-.form-body .input[type="date"] {
+.form-body .field-control,
+.form-body .field > .stepper-card {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
+}
+
+.form-body .field-control {
+  overflow: hidden;
+}
+
+.form-body .field-control > .input,
+.form-body .field-control > .select,
+.form-body .field-control > .textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.form-body .field > .stepper-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.form-body .input[type="date"] {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  -webkit-min-logical-width: 0;
+}
+
+.form-body .input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+.form-body .input[type="date"]::-webkit-datetime-edit,
+.form-body .input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
 }
 
 .field-label--plain {

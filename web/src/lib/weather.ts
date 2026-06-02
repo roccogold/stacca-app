@@ -53,7 +53,7 @@ async function fetchPlaceNameRaw(): Promise<string> {
   url.searchParams.set("format", "json");
 
   try {
-    const res = await fetch(url.toString(), { cache: "no-store" });
+    const res = await fetch(url.toString(), { next: { revalidate: 60 * 60 * 24 * 7 } });
     if (!res.ok) return PLACE_FALLBACK;
 
     const data = (await res.json()) as {
@@ -78,7 +78,7 @@ async function fetchSanCascianoWeatherRaw(): Promise<WeatherSnapshot | null> {
 
   try {
     const [res, place] = await Promise.all([
-      fetch(url.toString(), { cache: "no-store" }),
+      fetch(url.toString(), { next: { revalidate: WEATHER_SLOT_HOURS * 60 * 60 } }),
       fetchPlaceName(),
     ]);
     if (!res.ok) return null;

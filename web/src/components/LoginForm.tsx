@@ -1,18 +1,24 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useTransition, useState } from "react";
 import Link from "next/link";
 import { FormAlert } from "@/components/FormAlert";
+import { PasswordInput } from "@/components/PasswordInput";
 
 export function LoginForm() {
   const router = useRouter();
+  const [, startTransition] = useTransition();
   const searchParams = useSearchParams();
   const resetOk = searchParams.get("reset") === "ok";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    router.prefetch("/");
+  }, [router]);
 
   function clearError() {
     setError((current) => (current ? null : current));
@@ -35,15 +41,17 @@ export function LoginForm() {
             ? data.error
             : "Email o password non corretti",
         );
+        setLoading(false);
         return;
       }
-      if (data.mustChangePassword) {
-        router.push("/login/nuova-password");
-      } else {
-        router.push("/");
-      }
-      router.refresh();
-    } finally {
+      const dest = data.mustChangePassword ? "/login/nuova-password" : "/";
+      document.dispatchEvent(new Event("stacca:navigate"));
+      startTransition(() => {
+        router.replace(dest);
+      });
+      void router.refresh();
+    } catch {
+      setError("Errore di connessione");
       setLoading(false);
     }
   }
@@ -78,20 +86,15 @@ export function LoginForm() {
         <label className="field-label field-label--plain" htmlFor="password">
           Password
         </label>
-        <input
-          className={`input input--lg${error ? " input--invalid" : ""}`}
+        <PasswordInput
           id="password"
-          name="password"
-          type="password"
           autoComplete="current-password"
-          placeholder="••••••"
           value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
+          onChange={(v) => {
+            setPassword(v);
             clearError();
           }}
-          aria-invalid={error ? true : undefined}
-          required
+          invalid={!!error}
         />
       </div>
       {error && <FormAlert variant="error">{error}</FormAlert>}

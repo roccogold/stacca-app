@@ -13,7 +13,19 @@ Open [http://localhost:3000/login](http://localhost:3000/login).
 
 ## Demo login (seed)
 
-After `npm run db:seed`, check the terminal output for email + password (format `{handle}-{suffix}`).
+1. Copy `prisma/workers.example.ts` → `prisma/workers.local.ts` (gitignored)
+2. Fill in real emails and suffixes
+3. Run `npm run db:seed` — **new** workers get demo password `{handle}-{suffix}`; existing workers keep their password (only name/email updated)
+
+Never commit `workers.local.ts`.
+
+**Forgot password (admin reset):**
+
+```bash
+npm run db:reset-password -- arianna
+```
+
+Prints the temporary demo password; worker must change it on next login.
 
 ## Environment
 
@@ -28,7 +40,7 @@ After `npm run db:seed`, check the terminal output for email + password (format 
 
 ## Auth
 
-- Login: **email + password** (each worker has a row in `prisma/seed.ts`)
+- Login: **email + password** (each worker has a row in `prisma/workers.local.ts`)
 - First login: forced password change
 - Forgot password: 6-digit code via email (needs `RESEND_API_KEY`)
 
@@ -51,7 +63,7 @@ With `onboarding@resend.dev`, Resend only delivers to the email you used to sign
 
 1. **Domains** → Add `corzanoepaterno.com` (or your domain) → add DNS records
 2. Set `EMAIL_FROM=noreply@corzanoepaterno.com`
-3. Add all workers in `prisma/seed.ts` with their real emails → `npm run db:seed`
+3. Add all workers in `prisma/workers.local.ts` → `npm run db:seed`
 
 Free tier: 3,000 emails/month — enough for this app.
 
@@ -137,7 +149,8 @@ Open the Vercel URL → login → add entries → **Invia mese** → check Googl
 
 - `npm run dev` — development
 - `npm run build` — production build
-- `npm run db:seed` — upsert workers from `prisma/seed.ts`
+- `npm run db:seed` — add/update workers from `prisma/workers.local.ts` (password unchanged for existing)
+- `npm run db:reset-password -- <handle>` — reset one worker to demo password
 - `npm run db:migrate` — Prisma migrate
 
 ## Static mockups

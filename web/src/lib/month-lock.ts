@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 
 export function monthFromDate(date: string): string {
@@ -8,11 +9,11 @@ export function isValidMonthKey(month: string): boolean {
   return /^\d{4}-\d{2}$/.test(month);
 }
 
-export async function getMonthSubmission(userId: string, month: string) {
+export const getMonthSubmission = cache(async (userId: string, month: string) => {
   return prisma.monthSubmission.findUnique({
     where: { userId_month: { userId, month } },
   });
-}
+});
 
 export async function isMonthLocked(userId: string, month: string): Promise<boolean> {
   const sub = await getMonthSubmission(userId, month);

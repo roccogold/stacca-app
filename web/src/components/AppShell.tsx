@@ -2,6 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { BottomNav } from "@/components/BottomNav";
+import { PrefetchRoutes } from "@/components/PrefetchRoutes";
+import { RouteProgress } from "@/components/RouteProgress";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -16,6 +18,8 @@ export function AppShell({ children, showNav }: AppShellProps) {
 
   return (
     <div className="app-shell">
+      <RouteProgress />
+      <PrefetchRoutes />
       <div
         className="app-shell__main"
         style={{ paddingBottom: `calc(${contentPad}px + var(--safe-bottom))` }}

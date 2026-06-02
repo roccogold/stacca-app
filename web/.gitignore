@@ -43,6 +43,9 @@ google-service-account.json
 /prisma/*.db
 /prisma/*.db-journal
 
+# worker emails (real addresses — use workers.example.ts as template)
+/prisma/workers.local.ts
+
 # vercel
 .vercel
 

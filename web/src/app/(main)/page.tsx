@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { Plus } from "lucide-react";
 import { DailyInspiration } from "@/components/DailyInspiration";
 import { EntryCardLink } from "@/components/EntryCardLink";
@@ -15,19 +16,20 @@ export default async function HomePage() {
   const now = new Date();
   const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const [todayEntries, monthEntries, monthSubmission] = await Promise.all([
+  const [todayEntries, monthAgg, monthSubmission] = await Promise.all([
     prisma.timeEntry.findMany({
       where: { userId: user.id, date: today },
       orderBy: { createdAt: "asc" },
     }),
-    prisma.timeEntry.findMany({
+    prisma.timeEntry.aggregate({
       where: { userId: user.id, date: { startsWith: monthPrefix } },
+      _sum: { hours: true },
     }),
     getMonthSubmission(user.id, monthPrefix),
   ]);
 
   const todayTotal = todayEntries.reduce((a, e) => a + e.hours, 0);
-  const monthTotal = monthEntries.reduce((a, e) => a + e.hours, 0);
+  const monthTotal = monthAgg._sum.hours ?? 0;
   const todayLabel = parseISODate(today);
   const greeting = user.displayName.split(" ")[0] || user.displayName;
   const monthName = now.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
@@ -49,7 +51,9 @@ export default async function HomePage() {
         </p>
       </section>
 
-      <DailyInspiration />
+      <Suspense fallback={null}>
+        <DailyInspiration />
+      </Suspense>
 
       <section className="block">
         <div className="card card--accent card--oggi">
@@ -110,7 +114,7 @@ export default async function HomePage() {
       </section>
 
       {!monthSubmission && (
-        <Link href="/aggiungi" className="fab" aria-label="Aggiungi ore">
+        <Link href="/aggiungi" prefetch className="fab" aria-label="Aggiungi ore">
           <Plus size={32} strokeWidth={2.5} />
         </Link>
       )}

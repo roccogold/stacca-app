@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:seed": "npx tsx prisma/seed.ts"
+    "db:seed": "npx tsx prisma/seed.ts",
+    "db:reset-password": "npx tsx prisma/reset-worker-password.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
