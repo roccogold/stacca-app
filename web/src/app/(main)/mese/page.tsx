@@ -6,10 +6,10 @@ import { getMonthSubmission } from "@/lib/month-lock";
 import { requireUser } from "@/lib/auth";
 import {
   formatHoursIt,
-  formatShortWeekday,
-  formatWeekdayLong,
+  formatShortWeekdayFromISO,
+  formatWeekdayLongFromISO,
   monthTitle,
-  parseISODate,
+  romeCalendarParts,
   sharePercentages,
 } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -25,9 +25,9 @@ export default async function MesePage({
 }) {
   const user = await requireUser();
   const sp = await searchParams;
-  const now = new Date();
-  const y = sp.y ? Number(sp.y) : now.getFullYear();
-  const m = sp.m ? Number(sp.m) : now.getMonth() + 1;
+  const rome = romeCalendarParts();
+  const y = sp.y ? Number(sp.y) : rome.y;
+  const m = sp.m ? Number(sp.m) : rome.m;
   const selectedDay =
     sp.d && /^\d{4}-\d{2}-\d{2}$/.test(sp.d) ? sp.d : null;
 
@@ -96,7 +96,6 @@ export default async function MesePage({
   }
   const dates = [...grouped.keys()].sort((a, b) => (a < b ? 1 : -1));
 
-  const selectedDayDate = selectedDay ? parseISODate(selectedDay) : null;
   const lavoriDayLabel =
     dayEntries.length === 1 ? "1 lavoro" : `${dayEntries.length} lavori`;
 
@@ -123,10 +122,10 @@ export default async function MesePage({
 
       <section className="block">
         <div className="card card--accent card--oggi">
-          {selectedDay && selectedDayDate ? (
+          {selectedDay ? (
             <>
               <div className="card--oggi__label capitalize">
-                {formatWeekdayLong(selectedDayDate)}
+                {formatWeekdayLongFromISO(selectedDay)}
               </div>
               <div className="card--oggi__filled">
                 <span className="card--oggi__num--duration">{formatHoursIt(dayTotal)}</span>
@@ -238,12 +237,11 @@ export default async function MesePage({
             {dates.map((date) => {
               const list = grouped.get(date)!;
               const dayTotal = list.reduce((a, e) => a + e.hours, 0);
-              const d = parseISODate(date);
               return (
                 <div key={date} className="entry-group">
                   <div className="entry-group__head">
                     <span className="entry-group__date capitalize">
-                      {d ? formatShortWeekday(d) : date}
+                      {formatShortWeekdayFromISO(date)}
                     </span>
                     <span className="entry-group__total">{formatHoursIt(dayTotal)}</span>
                   </div>

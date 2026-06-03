@@ -184,8 +184,20 @@ export function parseISODate(s: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function formatWeekdayLong(d: Date): string {
+/** Noon UTC on calendar day — safe anchor for Europe/Rome formatting. */
+function isoDateAnchorUtc(iso: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return null;
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12));
+}
+
+const romeDateFmt = { timeZone: "Europe/Rome" as const };
+
+export function formatWeekdayLongFromISO(iso: string): string {
+  const d = isoDateAnchorUtc(iso);
+  if (!d) return iso;
   return d.toLocaleDateString(it, {
+    ...romeDateFmt,
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -193,8 +205,30 @@ export function formatWeekdayLong(d: Date): string {
   });
 }
 
+export function formatWeekdayLong(d: Date): string {
+  return d.toLocaleDateString(it, {
+    ...romeDateFmt,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export function formatShortWeekdayFromISO(iso: string): string {
+  const d = isoDateAnchorUtc(iso);
+  if (!d) return iso;
+  return d.toLocaleDateString(it, {
+    ...romeDateFmt,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
 export function formatShortWeekday(d: Date): string {
   return d.toLocaleDateString(it, {
+    ...romeDateFmt,
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -203,11 +237,20 @@ export function formatShortWeekday(d: Date): string {
 
 /** Compact label for the date picker card, e.g. "2 giu 2026". */
 export function formatDateField(iso: string): string {
-  const d = parseISODate(iso);
+  const d = isoDateAnchorUtc(iso);
   if (!d) return iso;
   return d.toLocaleDateString(it, {
+    ...romeDateFmt,
     day: "numeric",
     month: "short",
+    year: "numeric",
+  });
+}
+
+export function formatMonthYearIt(at = new Date()): string {
+  return at.toLocaleDateString(it, {
+    ...romeDateFmt,
+    month: "long",
     year: "numeric",
   });
 }

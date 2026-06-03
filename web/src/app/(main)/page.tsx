@@ -7,14 +7,20 @@ import { StaccaLogo } from "@/components/StaccaLogo";
 import { ProfileIconLink } from "@/components/ProfileIconLink";
 import { getMonthSubmission } from "@/lib/month-lock";
 import { requireUser } from "@/lib/auth";
-import { formatHoursIt, formatWeekdayLong, parseISODate, todayISO } from "@/lib/format";
+import {
+  formatHoursIt,
+  formatMonthYearIt,
+  formatWeekdayLongFromISO,
+  romeCalendarParts,
+  todayISO,
+} from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
 export default async function HomePage() {
   const user = await requireUser();
   const today = todayISO();
-  const now = new Date();
-  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const { y: romeY, m: romeM } = romeCalendarParts();
+  const monthPrefix = `${romeY}-${String(romeM).padStart(2, "0")}`;
 
   const [todayEntries, monthAgg, monthSubmission] = await Promise.all([
     prisma.timeEntry.findMany({
@@ -30,10 +36,8 @@ export default async function HomePage() {
 
   const todayTotal = todayEntries.reduce((a, e) => a + e.hours, 0);
   const monthTotal = monthAgg._sum.hours ?? 0;
-  const todayLabel = parseISODate(today);
   const greeting = user.displayName.split(" ")[0] || user.displayName;
-  const monthName = now.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
-  const monthTitleCase = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  const monthTitleCase = formatMonthYearIt().replace(/^\w/, (c) => c.toUpperCase());
   const lavoriLabel =
     todayEntries.length === 1 ? "1 lavoro" : `${todayEntries.length} lavori`;
 
@@ -47,7 +51,7 @@ export default async function HomePage() {
       <section className="block block--home-intro">
         <h1 className="h1">Ciao, {greeting}</h1>
         <p className="date-line capitalize">
-          {todayLabel ? formatWeekdayLong(todayLabel) : today}
+          {formatWeekdayLongFromISO(today)}
         </p>
         <Suspense fallback={null}>
           <DailyInspiration />
