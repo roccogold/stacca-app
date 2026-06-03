@@ -57,15 +57,17 @@ export function stepBreakMinutes(current: number, delta: number, max: number): n
   return Math.min(max, Math.max(0, Math.round(current + delta)));
 }
 
-/** e.g. "8 ore", "5 ore 3 min", "45 min" */
+const nbsp = "\u00A0";
+
+/** e.g. "8 ore", "5 ore 3 min", "45 min" — nbsp keeps duration on one line in UI */
 export function formatHoursIt(n: number): string {
   const totalMin = Math.round(n * 60);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
-  if (totalMin <= 0) return "0 ore";
-  if (m === 0) return `${h.toLocaleString(it)} ore`;
-  if (h === 0) return `${m} min`;
-  return `${h.toLocaleString(it)} ore ${m} min`;
+  if (totalMin <= 0) return `0${nbsp}ore`;
+  if (m === 0) return `${h.toLocaleString(it)}${nbsp}ore`;
+  if (h === 0) return `${m}${nbsp}min`;
+  return `${h.toLocaleString(it)}${nbsp}ore${nbsp}${m}${nbsp}min`;
 }
 
 export function parseHoursInput(s: string): number | null {

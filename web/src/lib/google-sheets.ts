@@ -171,7 +171,7 @@ export async function appendRowsToSheet(
   const config = getServiceAccountConfig();
   if (!config.ok) return { ok: true, skipped: true };
 
-  const tab = process.env.GOOGLE_SHEETS_TAB?.trim() || "Ore";
+  const tab = process.env.GOOGLE_SHEETS_TAB?.trim() || "Ore Totali";
   const range = `${tab}!A:K`;
 
   const sheets = getSheetsClient(config);
@@ -240,7 +240,7 @@ export async function deleteUserRowsFromSheet(match: {
     return { ok: false, error: "Email o nome richiesti." };
   }
 
-  const tab = process.env.GOOGLE_SHEETS_TAB?.trim() || "Ore";
+  const tab = process.env.GOOGLE_SHEETS_TAB?.trim() || "Ore Totali";
   const sheets = getSheetsClient(config);
 
   try {
@@ -310,7 +310,7 @@ export async function ensureSheetHeader(): Promise<void> {
   const config = getServiceAccountConfig();
   if (!config.ok) return;
 
-  const tab = process.env.GOOGLE_SHEETS_TAB?.trim() || "Ore";
+  const tab = process.env.GOOGLE_SHEETS_TAB?.trim() || "Ore Totali";
   const sheets = getSheetsClient(config);
 
   try {

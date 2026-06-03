@@ -73,12 +73,12 @@ Free tier: 3,000 emails/month — enough for this app.
 2. **APIs & Services → Library** → abilita **Google Sheets API**
 3. **APIs & Services → Credentials → Create credentials → Service account**
 4. Crea service account → **Keys → Add key → JSON** (salva il file)
-5. Crea un **Google Sheet** con tab **Ore** (o cambia `GOOGLE_SHEETS_TAB`)
+5. Crea un **Google Sheet** con tab **Ore Totali** (log grezzo; o cambia `GOOGLE_SHEETS_TAB`)
 6. **Condividi** il foglio con l'email del service account (tipo `xxx@xxx.iam.gserviceaccount.com`) come **Editor**
 7. In `web/.env` (local) or Vercel env (production):
    ```
    GOOGLE_SHEETS_ID=   # dall'URL: docs.google.com/spreadsheets/d/QUESTO_ID/edit
-   GOOGLE_SHEETS_TAB=Ore
+   GOOGLE_SHEETS_TAB=Ore Totali
    GOOGLE_SERVICE_ACCOUNT_JSON=./google-service-account.json   # local only
    ```
    On **Vercel**, use either the full JSON inline in `GOOGLE_SERVICE_ACCOUNT_JSON`, or:
@@ -87,22 +87,22 @@ Free tier: 3,000 emails/month — enough for this app.
    GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
    ```
 
-Colonne tab **Ore** (log grezzo dall’app): Data, Nome, Email, Ore (testo), **Ore (h)** (numero per pivot), Lavorazione, Luogo, Note, Mese, Registrato il, Tipo.
+Colonne tab **Ore Totali** (log grezzo dall’app): Data, Nome, Email, Ore (testo), **Ore (h)** (numero per pivot), Lavorazione, Luogo, Note, Mese, Registrato il, Tipo.
 
 - **Ogni salvataggio** → riga `Tipo` = **Voce** (una riga per giorno/lavoro).
 - **Invia mese** → riga `Tipo` = **Chiusura mese** (totale; escluderla dai pivot).
 
 ### Analisi su Google Sheet (pivot, non in app)
 
-L’app scrive solo il log su **Ore**. Report e pivot li costruisci nel foglio:
+L’app scrive solo il log su **Ore Totali**. Report e pivot li costruisci nel foglio:
 
-1. **Un tab per dipendente** (es. `Rocco`, `Arianna`) con dati filtrati dal log:
+1. **Un tab per dipendente** (es. `Ore Rocco`, `Ore Arianna`) con dati filtrati dal log:
    ```text
-   =FILTER(Ore!A2:K; Ore!B2:B="Rocco"; Ore!K2:K="Voce")
+   =FILTER('Ore Totali'!A2:K; 'Ore Totali'!B2:B="Rocco"; 'Ore Totali'!K2:K="Voce")
    ```
    (in locale IT usa `;` al posto di `,` se serve.)
 
-2. **Tab Riepilogo** (o più tab) con **Tabella pivot** sul range `Ore!A:K` (o sul tab dipendente):
+2. **Tab Riepilogo** (o più tab) con **Tabella pivot** sul range `Ore Totali!A:K` (o sul tab dipendente):
    - Filtra **Tipo** = `Voce` (non contare le righe di chiusura mese).
    - Valori: **SUM di Ore (h)** — non la colonna “Ore” testuale.
 
@@ -115,7 +115,7 @@ L’app scrive solo il log su **Ore**. Report e pivot li costruisci nel foglio:
    | Totale ore per dipendente | Nome | Mese | SUM Ore (h) |
    | Dettaglio giorni | Data | Lavorazione | SUM Ore (h) |
 
-4. Se il foglio esisteva prima della colonna **Ore (h)**, aggiorna la riga 1 su **Ore** con l’intestazione completa (o lascia che la prima nuova riga dall’app la crei dopo deploy).
+4. Se il foglio esisteva prima della colonna **Ore (h)**, aggiorna la riga 1 su **Ore Totali** con l’intestazione completa (o lascia che la prima nuova riga dall’app la crei dopo deploy).
 
 Condividi il foglio in sola lettura con chi fa contabilità; il service account resta **Editor** solo per l’app.
 
@@ -157,7 +157,7 @@ npm run dev
 | `EMAIL_FROM` | `onboarding@resend.dev` (or verified domain) |
 | `FEEDBACK_TO_EMAIL` | Admin email |
 | `GOOGLE_SHEETS_ID` | Sheet ID |
-| `GOOGLE_SHEETS_TAB` | `Ore` |
+| `GOOGLE_SHEETS_TAB` | `Ore Totali` |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | From JSON `client_email` |
 | `GOOGLE_PRIVATE_KEY` | From JSON `private_key` (keep `\n`) |
 

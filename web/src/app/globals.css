@@ -739,8 +739,10 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
 }
 
 .card--oggi__num--duration {
-  font-size: clamp(28px, 8vw, 48px);
+  font-size: clamp(22px, 5.8vw, 38px);
   line-height: 1.15;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 
@@ -949,11 +951,17 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   font-weight: 600;
 }
 
-.badge--on-accent {
-  background: rgba(255, 255, 255, 0.18);
+.badge--on-accent,
+.badge--submitted-accent {
+  background: rgba(255, 255, 255, 0.2);
   color: #fff;
-  font-size: 12px;
-  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
 }
 
 .badge--ok {
@@ -1794,19 +1802,48 @@ a.card {
   opacity: 0.85;
 }
 
-.card--oggi__filled,
-.card--mese__top {
+.card--oggi__filled {
   display: flex;
   align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.card--oggi__filled > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.card--mese__top {
+  margin-top: 4px;
+}
+
+.card--mese__hours-row {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-top: 4px;
 }
 
+.card--mese__hours-row .card--oggi__num {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+}
+
+.card--mese__hours-row .badge {
+  flex-shrink: 0;
+}
+
 .card--oggi__num {
-  font-size: 48px;
   font-weight: 800;
   line-height: 1;
+}
+
+.card--oggi__num:not(.card--oggi__num--duration) {
+  font-size: 48px;
 }
 
 .card--oggi__num-unit {
@@ -2384,14 +2421,6 @@ a.card {
   font-size: 14px;
   line-height: 1.45;
   align-items: flex-start;
-}
-
-.badge--submitted-accent {
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
-  font-size: 11px;
-  padding: 4px 10px;
-  letter-spacing: 0.5px;
 }
 
 .callout__icon {

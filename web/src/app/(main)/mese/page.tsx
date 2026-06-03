@@ -124,38 +124,47 @@ export default async function MesePage({
       <section className="block">
         <div className="card card--accent card--mese">
           <div className="card--mese__top">
-            <div>
-              {selectedDay && selectedDayDate ? (
-                <>
-                  <div className="card--oggi__label capitalize">
-                    {formatWeekdayLong(selectedDayDate)}
-                  </div>
+            {selectedDay && selectedDayDate ? (
+              <>
+                <div className="card--oggi__label capitalize">
+                  {formatWeekdayLong(selectedDayDate)}
+                </div>
+                <div className="card--mese__hours-row">
                   <div className="card--oggi__num">
                     <span className="card--oggi__num--duration">{formatHoursIt(dayTotal)}</span>
                   </div>
-                  {dayEntries.length > 0 && (
-                    <div className="card--oggi__unit">{lavoriDayLabel}</div>
-                  )}
-                  {dayEntries.length === 0 && (
-                    <div className="card--oggi__unit">nessun lavoro</div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <div className="card--oggi__label">MESE</div>
+                  <span
+                    className={
+                      monthSubmitted ? "badge badge--submitted-accent" : "badge badge--on-accent"
+                    }
+                  >
+                    {monthSubmitted ? "Inviato" : "Aperto"}
+                  </span>
+                </div>
+                {dayEntries.length > 0 && (
+                  <div className="card--oggi__unit">{lavoriDayLabel}</div>
+                )}
+                {dayEntries.length === 0 && (
+                  <div className="card--oggi__unit">nessun lavoro</div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="card--oggi__label">MESE</div>
+                <div className="card--mese__hours-row">
                   <div className="card--oggi__num">
                     <span className="card--oggi__num--duration">{formatHoursIt(monthTotal)}</span>
                   </div>
-                </>
-              )}
-            </div>
-            <span
-              className={
-                monthSubmitted ? "badge badge--submitted-accent" : "badge badge--on-accent"
-              }
-            >
-              {monthSubmitted ? "Inviato" : "Aperto"}
-            </span>
+                  <span
+                    className={
+                      monthSubmitted ? "badge badge--submitted-accent" : "badge badge--on-accent"
+                    }
+                  >
+                    {monthSubmitted ? "Inviato" : "Aperto"}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
