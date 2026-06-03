@@ -22,15 +22,15 @@ export function EntryCardLink({
   const content = (
     <>
       <div className="entry-card__body">
-        <div className="entry-card__row">
-          <span className="entry-card__title">{mansione}</span>
-          <span className="entry-card__hours">{formatHoursIt(hours)}</span>
-        </div>
+        <span className="entry-card__title">{mansione}</span>
         <span className="entry-card__meta">{luogo}</span>
       </div>
-      {!readOnly && (
-        <ChevronRight size={20} className="entry-card__chev" aria-hidden />
-      )}
+      <div className="entry-card__aside">
+        <span className="entry-card__hours">{formatHoursIt(hours)}</span>
+        {!readOnly && (
+          <ChevronRight size={20} className="entry-card__chev" aria-hidden />
+        )}
+      </div>
     </>
   );
 

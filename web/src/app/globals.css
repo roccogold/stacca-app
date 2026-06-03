@@ -1900,7 +1900,7 @@ a.card {
 
 .entry-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 16px;
   background: var(--card);
@@ -1983,15 +1983,8 @@ a.card {
   gap: 4px;
 }
 
-.entry-card__row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .entry-card__title {
-  flex: 1;
+  display: block;
   min-width: 0;
   font-size: 16px;
   font-weight: 600;
@@ -2001,8 +1994,15 @@ a.card {
   text-overflow: ellipsis;
 }
 
-.entry-card__hours {
+.entry-card__aside {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.entry-card__hours {
   font-size: 15px;
   font-weight: 600;
   color: var(--primary);
@@ -2027,7 +2027,6 @@ a.card {
 }
 
 .entry-card__chev {
-  flex-shrink: 0;
   color: var(--text-muted);
 }
 

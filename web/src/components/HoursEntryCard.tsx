@@ -29,7 +29,7 @@ export function HoursEntryCard({
   initialHours,
 }: Props) {
   const seed = initialHours && initialHours > 0 ? initialHours : 0;
-  const defaults = seed > 0 ? defaultTimesFromHours(seed) : { start: "07:00", end: "12:00", breakMinutes: 0 };
+  const defaults = seed > 0 ? defaultTimesFromHours(seed) : { start: "", end: "", breakMinutes: 0 };
 
   const [manualMode, setManualMode] = useState(false);
   const [startTime, setStartTime] = useState(defaults.start);
@@ -59,28 +59,31 @@ export function HoursEntryCard({
 
   const timeError = useMemo(() => {
     if (manualMode) return null;
+    if (!startTime.trim() || !endTime.trim()) return null;
     if (computedHours !== null && isValidWorkHours(computedHours)) return null;
     if (breakMinutes > 0 && computedHours === null) return "La pausa è troppo lunga";
     return "La fine deve essere dopo l'inizio";
-  }, [manualMode, computedHours, breakMinutes]);
+  }, [manualMode, startTime, endTime, computedHours, breakMinutes]);
+
+  function syncHoursFromTimes(start: string, end: string, pause: number) {
+    const h = hoursFromTimeRange(start, end, pause);
+    onHoursChange(h != null && h > 0 ? h : 0);
+  }
 
   function handleStartChange(v: string) {
     setStartTime(v);
-    const h = hoursFromTimeRange(v, endTime, breakMinutes);
-    if (h != null && h > 0) onHoursChange(h);
+    syncHoursFromTimes(v, endTime, breakMinutes);
   }
 
   function handleEndChange(v: string) {
     setEndTime(v);
-    const h = hoursFromTimeRange(startTime, v, breakMinutes);
-    if (h != null && h > 0) onHoursChange(h);
+    syncHoursFromTimes(startTime, v, breakMinutes);
   }
 
   function applyBreak(min: number) {
     const capped = Math.min(maxBreakMinutes, Math.max(0, min));
     setBreakMinutes(capped);
-    const h = hoursFromTimeRange(startTime, endTime, capped);
-    if (h != null && h > 0) onHoursChange(h);
+    syncHoursFromTimes(startTime, endTime, capped);
   }
 
   function handleBreakStep(delta: number) {

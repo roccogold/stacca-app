@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useTransition, useState } from "react";
 import { HoursEntryCard } from "@/components/HoursEntryCard";
 import { LUOGHI_ALTRO, LUOGHI_VIGNE, MANSIONI } from "@/lib/constants";
-import { clampISODate, formatDateField, hoursFromTimeRange, todayISO } from "@/lib/format";
+import { clampISODate, formatDateField, todayISO } from "@/lib/format";
 
 type Props = {
   initial: TimeEntry | null;
@@ -20,7 +20,7 @@ type Props = {
 
 function initialHoursValue(existing: number | undefined): number {
   if (existing != null && existing > 0) return existing;
-  return hoursFromTimeRange("07:00", "12:00", 0) ?? 0;
+  return 0;
 }
 
 export function AggiungiForm({
