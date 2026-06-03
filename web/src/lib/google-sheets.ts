@@ -5,7 +5,10 @@ import type { TimeEntry, User } from "@prisma/client";
 import { formatHoursIt } from "@/lib/format";
 import { monthFromDate } from "@/lib/month-lock";
 
+const ENTRY_ID_COL = 11;
+
 export type SheetEntryRow = {
+  entryId?: string;
   date: string;
   displayName: string;
   email: string;
@@ -35,7 +38,16 @@ function rowToValues(r: SheetEntryRow): (string | number)[] {
     r.month,
     r.recordedAt,
     r.tipo,
+    r.entryId ?? "",
   ];
+}
+
+function sheetTabName(): string {
+  return process.env.GOOGLE_SHEETS_TAB?.trim() || "Ore Totali";
+}
+
+function sheetDataRange(): string {
+  return `${sheetTabName()}!A:L`;
 }
 
 export function buildEntrySheetRow(
@@ -44,6 +56,7 @@ export function buildEntrySheetRow(
   recordedAt = new Date(),
 ): SheetEntryRow {
   return {
+    entryId: entry.id,
     date: entry.date,
     displayName: user.displayName,
     email: user.email ?? "",
@@ -171,16 +184,13 @@ export async function appendRowsToSheet(
   const config = getServiceAccountConfig();
   if (!config.ok) return { ok: true, skipped: true };
 
-  const tab = process.env.GOOGLE_SHEETS_TAB?.trim() || "Ore Totali";
-  const range = `${tab}!A:K`;
-
   const sheets = getSheetsClient(config);
   const values = rows.map(rowToValues);
 
   try {
     await sheets.spreadsheets.values.append({
       spreadsheetId: config.sheetId,
-      range,
+      range: `${sheetTabName()}!A:L`,
       valueInputOption: "USER_ENTERED",
       insertDataOption: "INSERT_ROWS",
       requestBody: { values },
@@ -195,13 +205,162 @@ export async function appendRowsToSheet(
   }
 }
 
-/** One row per saved work entry (day by day). */
+function parseSheetHours(value: unknown): number | null {
+  const n = Number(String(value ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+function legacyRowMatchesEntry(
+  row: unknown[],
+  user: Pick<User, "email">,
+  snapshot: TimeEntry,
+): boolean {
+  if (String(row[ENTRY_ID_COL] ?? "").trim()) return false;
+  if (String(row[0] ?? "") !== snapshot.date) return false;
+  if (String(row[2] ?? "").trim().toLowerCase() !== (user.email ?? "").trim().toLowerCase()) {
+    return false;
+  }
+  if (String(row[10] ?? "") !== "Voce") return false;
+  if (String(row[5] ?? "") !== snapshot.mansione) return false;
+  if (String(row[6] ?? "") !== snapshot.luogo) return false;
+  const h = parseSheetHours(row[4]);
+  if (h == null || Math.abs(h - snapshot.hours) > 0.01) return false;
+  return true;
+}
+
+function findEntryRowIndex(
+  rows: unknown[][],
+  entryId: string,
+  user: Pick<User, "email">,
+  legacySnapshot?: TimeEntry,
+): number | null {
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][ENTRY_ID_COL] ?? "").trim() === entryId) return i;
+  }
+  if (legacySnapshot) {
+    for (let i = 1; i < rows.length; i++) {
+      if (legacyRowMatchesEntry(rows[i], user, legacySnapshot)) return i;
+    }
+  }
+  return null;
+}
+
+async function getTabSheetId(
+  sheets: ReturnType<typeof getSheetsClient>,
+  spreadsheetId: string,
+  tab: string,
+): Promise<number | null> {
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: "sheets.properties",
+  });
+  const sheet = meta.data.sheets?.find((s) => s.properties?.title === tab);
+  const sheetId = sheet?.properties?.sheetId;
+  return sheetId == null ? null : sheetId;
+}
+
+/** Create or update the row for this entry (matched by ID column). */
+export async function upsertEntryToSheet(
+  user: Pick<User, "displayName" | "email">,
+  entry: TimeEntry,
+  options?: { previous?: TimeEntry },
+): Promise<{ ok: true; skipped?: boolean } | { ok: false; error: string }> {
+  const config = getServiceAccountConfig();
+  if (!config.ok) return { ok: true, skipped: true };
+
+  await ensureSheetHeader();
+
+  const tab = sheetTabName();
+  const sheets = getSheetsClient(config);
+  const row = buildEntrySheetRow(user, entry, new Date());
+
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: config.sheetId,
+      range: sheetDataRange(),
+    });
+    const rows = (res.data.values ?? []) as unknown[][];
+    const idx = findEntryRowIndex(rows, entry.id, user, options?.previous);
+
+    if (idx != null) {
+      const sheetRow = idx + 1;
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: config.sheetId,
+        range: `${tab}!A${sheetRow}:L${sheetRow}`,
+        valueInputOption: "USER_ENTERED",
+        requestBody: { values: [rowToValues(row)] },
+      });
+      return { ok: true };
+    }
+
+    return appendRowsToSheet([row]);
+  } catch (err) {
+    console.error("[google-sheets] upsert", err);
+    return {
+      ok: false,
+      error: "Errore nell'invio a Google Sheets. Riprova più tardi.",
+    };
+  }
+}
+
+/** @deprecated Use upsertEntryToSheet */
 export async function appendEntryToSheet(
   user: Pick<User, "displayName" | "email">,
   entry: TimeEntry,
 ): Promise<{ ok: true; skipped?: boolean } | { ok: false; error: string }> {
-  await ensureSheetHeader();
-  return appendRowsToSheet([buildEntrySheetRow(user, entry)]);
+  return upsertEntryToSheet(user, entry);
+}
+
+/** Remove the sheet row for this entry. */
+export async function deleteEntryFromSheet(
+  user: Pick<User, "email">,
+  entry: TimeEntry,
+): Promise<{ ok: true; skipped?: boolean } | { ok: false; error: string }> {
+  const config = getServiceAccountConfig();
+  if (!config.ok) return { ok: true, skipped: true };
+
+  const tab = sheetTabName();
+  const sheets = getSheetsClient(config);
+
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: config.sheetId,
+      range: sheetDataRange(),
+    });
+    const rows = (res.data.values ?? []) as unknown[][];
+    const idx = findEntryRowIndex(rows, entry.id, user, entry);
+    if (idx == null) return { ok: true };
+
+    const sheetId = await getTabSheetId(sheets, config.sheetId, tab);
+    if (sheetId == null) {
+      return { ok: false, error: `Tab "${tab}" non trovato nel foglio.` };
+    }
+
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: config.sheetId,
+      requestBody: {
+        requests: [
+          {
+            deleteDimension: {
+              range: {
+                sheetId,
+                dimension: "ROWS",
+                startIndex: idx,
+                endIndex: idx + 1,
+              },
+            },
+          },
+        ],
+      },
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[google-sheets] delete-entry", err);
+    return {
+      ok: false,
+      error: "Errore nella rimozione da Google Sheets.",
+    };
+  }
 }
 
 /** Single closure row when the worker submits the month. */
@@ -240,23 +399,18 @@ export async function deleteUserRowsFromSheet(match: {
     return { ok: false, error: "Email o nome richiesti." };
   }
 
-  const tab = process.env.GOOGLE_SHEETS_TAB?.trim() || "Ore Totali";
+  const tab = sheetTabName();
   const sheets = getSheetsClient(config);
 
   try {
-    const meta = await sheets.spreadsheets.get({
-      spreadsheetId: config.sheetId,
-      fields: "sheets.properties",
-    });
-    const sheet = meta.data.sheets?.find((s) => s.properties?.title === tab);
-    const sheetId = sheet?.properties?.sheetId;
+    const sheetId = await getTabSheetId(sheets, config.sheetId, tab);
     if (sheetId == null) {
       return { ok: false, error: `Tab "${tab}" non trovato nel foglio.` };
     }
 
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: config.sheetId,
-      range: `${tab}!A:K`,
+      range: sheetDataRange(),
     });
     const rows = res.data.values ?? [];
     if (rows.length <= 1) {
@@ -310,21 +464,21 @@ export async function ensureSheetHeader(): Promise<void> {
   const config = getServiceAccountConfig();
   if (!config.ok) return;
 
-  const tab = process.env.GOOGLE_SHEETS_TAB?.trim() || "Ore Totali";
+  const tab = sheetTabName();
   const sheets = getSheetsClient(config);
 
   try {
     const existing = await sheets.spreadsheets.values.get({
       spreadsheetId: config.sheetId,
-      range: `${tab}!A1:K1`,
+      range: `${tab}!A1:L1`,
     });
 
     const header = existing.data.values?.[0] ?? [];
-    if (header.length >= 11) return;
+    if (header.length >= 12) return;
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: config.sheetId,
-      range: `${tab}!A1:K1`,
+      range: `${tab}!A1:L1`,
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [
@@ -340,6 +494,7 @@ export async function ensureSheetHeader(): Promise<void> {
             "Mese",
             "Registrato il",
             "Tipo",
+            "ID",
           ],
         ],
       },

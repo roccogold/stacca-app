@@ -1,8 +1,12 @@
 import { AggiungiForm } from "@/components/AggiungiForm";
 import { requireUser } from "@/lib/auth";
-import { isMonthLocked, monthFromDate } from "@/lib/month-lock";
+import {
+  assertEntryDateAllowed,
+  currentMonthDateBoundsRome,
+  currentMonthLabelRome,
+} from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
-import { todayISO } from "@/lib/format";
+import { clampISODate, todayISO } from "@/lib/format";
 
 export default async function AggiungiPage({
   searchParams,
@@ -21,10 +25,20 @@ export default async function AggiungiPage({
   const presetDate =
     !edit && date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined;
 
-  const targetDate = initial?.date ?? presetDate ?? todayISO();
-  const locked = await isMonthLocked(user.id, monthFromDate(targetDate));
+  const bounds = currentMonthDateBoundsRome();
+  const rawDate = initial?.date ?? presetDate ?? todayISO();
+  const targetDate = clampISODate(rawDate, bounds.min, bounds.max);
+  const allowed = await assertEntryDateAllowed(user.id, targetDate);
+  const locked = !allowed.ok;
 
   return (
-    <AggiungiForm initial={initial} presetDate={presetDate} locked={locked} />
+    <AggiungiForm
+      initial={initial}
+      presetDate={targetDate}
+      locked={locked}
+      minDate={bounds.min}
+      maxDate={bounds.max}
+      monthLabel={currentMonthLabelRome()}
+    />
   );
 }

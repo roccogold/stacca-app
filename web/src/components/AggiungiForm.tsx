@@ -7,12 +7,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useTransition, useState } from "react";
 import { HoursEntryCard } from "@/components/HoursEntryCard";
 import { LUOGHI_ALTRO, LUOGHI_VIGNE, MANSIONI } from "@/lib/constants";
-import { formatDateField, hoursFromTimeRange, todayISO } from "@/lib/format";
+import { clampISODate, formatDateField, hoursFromTimeRange, todayISO } from "@/lib/format";
 
 type Props = {
   initial: TimeEntry | null;
   presetDate?: string;
   locked?: boolean;
+  minDate: string;
+  maxDate: string;
+  monthLabel: string;
 };
 
 function initialHoursValue(existing: number | undefined): number {
@@ -20,11 +23,23 @@ function initialHoursValue(existing: number | undefined): number {
   return hoursFromTimeRange("07:00", "12:00", 0) ?? 0;
 }
 
-export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
+export function AggiungiForm({
+  initial,
+  presetDate,
+  locked = false,
+  minDate,
+  maxDate,
+  monthLabel,
+}: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const editId = initial?.id ?? null;
-  const [date, setDate] = useState(initial?.date ?? presetDate ?? todayISO());
+  const defaultDate = clampISODate(
+    initial?.date ?? presetDate ?? todayISO(),
+    minDate,
+    maxDate,
+  );
+  const [date, setDate] = useState(defaultDate);
   const [hours, setHours] = useState(() => initialHoursValue(initial?.hours));
   const [mansione, setMansione] = useState(initial?.mansione ?? "");
   const [luogo, setLuogo] = useState(initial?.luogo ?? "");
@@ -110,7 +125,8 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
         )}
         {!editId && !locked && (
           <p className="form-hint">
-            Puoi salvare più lavori per lo stesso giorno — uno per ogni lavorazione e luogo.
+            Puoi inserire ore solo per <span className="capitalize">{monthLabel}</span> — più
+            lavori per lo stesso giorno se cambiano lavorazione o luogo.
           </p>
         )}
         <div className="field">
@@ -125,7 +141,11 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
               id="data"
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              min={minDate}
+              max={maxDate}
+              onChange={(e) =>
+                setDate(clampISODate(e.target.value, minDate, maxDate))
+              }
               disabled={locked}
               aria-label="Data"
             />

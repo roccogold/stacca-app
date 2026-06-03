@@ -87,9 +87,10 @@ Free tier: 3,000 emails/month — enough for this app.
    GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
    ```
 
-Colonne tab **Ore Totali** (log grezzo dall’app): Data, Nome, Email, Ore (testo), **Ore (h)** (numero per pivot), Lavorazione, Luogo, Note, Mese, Registrato il, Tipo.
+Colonne tab **Ore Totali** (log grezzo dall’app): Data, Nome, Email, Ore (testo), **Ore (h)** (numero per pivot), Lavorazione, Luogo, Note, Mese, Registrato il, Tipo, **ID**.
 
-- **Ogni salvataggio** → riga `Tipo` = **Voce** (una riga per giorno/lavoro).
+- **Ogni salvataggio** → riga `Tipo` = **Voce** (una riga per lavoro; colonna **ID** = id voce in app).
+- **Modifica / elimina** in app → aggiorna o rimuove la stessa riga su Sheet (per **ID**; righe vecchie senza ID ancora aggiornabili se data/lavorazione/luogo/ore coincidono).
 - **Invia mese** → riga `Tipo` = **Chiusura mese** (totale; escluderla dai pivot).
 
 ### Analisi su Google Sheet (pivot, non in app)
@@ -98,11 +99,11 @@ L’app scrive solo il log su **Ore Totali**. Report e pivot li costruisci nel f
 
 1. **Un tab per dipendente** (es. `Ore Rocco`, `Ore Arianna`) con dati filtrati dal log:
    ```text
-   =FILTER('Ore Totali'!A2:K; 'Ore Totali'!B2:B="Rocco"; 'Ore Totali'!K2:K="Voce")
+   =FILTER('Ore Totali'!A2:L; 'Ore Totali'!B2:B="Rocco"; 'Ore Totali'!K2:K="Voce")
    ```
    (in locale IT usa `;` al posto di `,` se serve.)
 
-2. **Tab Riepilogo** (o più tab) con **Tabella pivot** sul range `Ore Totali!A:K` (o sul tab dipendente):
+2. **Tab Riepilogo** (o più tab) con **Tabella pivot** sul range `Ore Totali!A:L` (o sul tab dipendente; escludi colonna ID dai pivot se non serve):
    - Filtra **Tipo** = `Voce` (non contare le righe di chiusura mese).
    - Valori: **SUM di Ore (h)** — non la colonna “Ore” testuale.
 

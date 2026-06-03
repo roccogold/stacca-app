@@ -144,9 +144,30 @@ export function formatTimeIt(t: string): string {
   return minutesToTime(m);
 }
 
+/** Calendar day in Europe/Rome (matches worker-facing dates in Italy). */
+export function romeCalendarParts(at = new Date()): { y: number; m: number; d: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(at);
+  return {
+    y: Number(parts.find((p) => p.type === "year")?.value),
+    m: Number(parts.find((p) => p.type === "month")?.value),
+    d: Number(parts.find((p) => p.type === "day")?.value),
+  };
+}
+
 export function todayISO(): string {
-  const d = new Date();
-  return toISODate(d);
+  const { y, m, d } = romeCalendarParts();
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+export function clampISODate(date: string, min: string, max: string): string {
+  if (date < min) return min;
+  if (date > max) return max;
+  return date;
 }
 
 export function toISODate(d: Date): string {

@@ -1,8 +1,38 @@
 import { cache } from "react";
+import { romeCalendarParts } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
 export function monthFromDate(date: string): string {
   return date.slice(0, 7);
+}
+
+/** First and last calendar day of the current month (Europe/Rome). */
+export function currentMonthDateBoundsRome(): { min: string; max: string } {
+  const { y, m } = romeCalendarParts();
+  const mm = String(m).padStart(2, "0");
+  const last = new Date(y, m, 0).getDate();
+  return {
+    min: `${y}-${mm}-01`,
+    max: `${y}-${mm}-${String(last).padStart(2, "0")}`,
+  };
+}
+
+export function currentMonthKeyRome(): string {
+  const { y, m } = romeCalendarParts();
+  return `${y}-${String(m).padStart(2, "0")}`;
+}
+
+export function isDateInCurrentMonthRome(date: string): boolean {
+  return monthFromDate(date) === currentMonthKeyRome();
+}
+
+export function currentMonthLabelRome(): string {
+  const { y, m } = romeCalendarParts();
+  return new Date(y, m - 1, 1).toLocaleDateString("it-IT", {
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Rome",
+  });
 }
 
 export function isValidMonthKey(month: string): boolean {
@@ -26,4 +56,25 @@ export async function assertMonthEditable(userId: string, date: string) {
     return { locked: true as const, month };
   }
   return { locked: false as const, month };
+}
+
+/** Month not submitted and date within current calendar month (Rome). */
+export async function assertEntryDateAllowed(
+  userId: string,
+  date: string,
+): Promise<{ ok: true; month: string } | { ok: false; error: string }> {
+  if (!isDateInCurrentMonthRome(date)) {
+    return {
+      ok: false,
+      error: `Puoi inserire ore solo nel mese in corso (${currentMonthLabelRome()}).`,
+    };
+  }
+  const lock = await assertMonthEditable(userId, date);
+  if (lock.locked) {
+    return {
+      ok: false,
+      error: "Mese già inviato. Non puoi aggiungere o modificare lavori.",
+    };
+  }
+  return { ok: true, month: lock.month };
 }

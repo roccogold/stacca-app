@@ -4,9 +4,12 @@ import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { LUOGHI, MANSIONI } from "@/lib/constants";
 import { isValidWorkHours } from "@/lib/format";
-import { assertMonthEditable, monthFromDate } from "@/lib/month-lock";
+import { assertEntryDateAllowed } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
-import { syncEntryToGoogleSheet } from "@/lib/sync-entry-sheet";
+import {
+  removeEntryFromGoogleSheet,
+  syncEntryToGoogleSheet,
+} from "@/lib/sync-entry-sheet";
 import { sessionOptions, type SessionData } from "@/lib/session";
 
 async function getUserId(): Promise<string | null> {
@@ -32,12 +35,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Lavoro non trovato" }, { status: 404 });
   }
 
-  const existingLock = await assertMonthEditable(userId, existing.date);
-  if (existingLock.locked) {
-    return NextResponse.json(
-      { error: "Mese già inviato. Non puoi modificare questo lavoro." },
-      { status: 403 },
-    );
+  const existingAllowed = await assertEntryDateAllowed(userId, existing.date);
+  if (!existingAllowed.ok) {
+    return NextResponse.json({ error: existingAllowed.error }, { status: 403 });
   }
 
   let body: Partial<{
@@ -83,13 +83,10 @@ export async function PATCH(
   }
 
   const nextDate = (data.date as string | undefined) ?? existing.date;
-  if (monthFromDate(nextDate) !== monthFromDate(existing.date)) {
-    const nextLock = await assertMonthEditable(userId, nextDate);
-    if (nextLock.locked) {
-      return NextResponse.json(
-        { error: "Non puoi spostare lavori in un mese già inviato." },
-        { status: 403 },
-      );
+  if (nextDate !== existing.date) {
+    const nextAllowed = await assertEntryDateAllowed(userId, nextDate);
+    if (!nextAllowed.ok) {
+      return NextResponse.json({ error: nextAllowed.error }, { status: 403 });
     }
   }
 
@@ -98,8 +95,18 @@ export async function PATCH(
     data,
   });
 
-  const sheet = await syncEntryToGoogleSheet(userId, entry);
+  const sheet = await syncEntryToGoogleSheet(userId, entry, { previous: existing });
   if (!sheet.ok) {
+    await prisma.timeEntry.update({
+      where: { id },
+      data: {
+        date: existing.date,
+        hours: existing.hours,
+        mansione: existing.mansione,
+        luogo: existing.luogo,
+        note: existing.note,
+      },
+    });
     return NextResponse.json({ error: sheet.error }, { status: 503 });
   }
 
@@ -126,12 +133,14 @@ export async function DELETE(
     return NextResponse.json({ error: "Lavoro non trovato" }, { status: 404 });
   }
 
-  const lock = await assertMonthEditable(userId, existing.date);
-  if (lock.locked) {
-    return NextResponse.json(
-      { error: "Mese già inviato. Non puoi eliminare questo lavoro." },
-      { status: 403 },
-    );
+  const deleteAllowed = await assertEntryDateAllowed(userId, existing.date);
+  if (!deleteAllowed.ok) {
+    return NextResponse.json({ error: deleteAllowed.error }, { status: 403 });
+  }
+
+  const sheet = await removeEntryFromGoogleSheet(userId, existing);
+  if (!sheet.ok) {
+    return NextResponse.json({ error: sheet.error }, { status: 503 });
   }
 
   await prisma.timeEntry.delete({ where: { id } });

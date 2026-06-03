@@ -4,7 +4,7 @@ import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { LUOGHI, MANSIONI } from "@/lib/constants";
 import { isValidWorkHours } from "@/lib/format";
-import { assertMonthEditable } from "@/lib/month-lock";
+import { assertEntryDateAllowed } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
 import { syncEntryToGoogleSheet } from "@/lib/sync-entry-sheet";
 import { sessionOptions, type SessionData } from "@/lib/session";
@@ -80,12 +80,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });
   }
 
-  const lock = await assertMonthEditable(userId, date);
-  if (lock.locked) {
-    return NextResponse.json(
-      { error: "Mese già inviato. Non puoi aggiungere lavori." },
-      { status: 403 },
-    );
+  const allowed = await assertEntryDateAllowed(userId, date);
+  if (!allowed.ok) {
+    return NextResponse.json({ error: allowed.error }, { status: 403 });
   }
 
   const entry = await prisma.timeEntry.create({
