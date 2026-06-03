@@ -1,5 +1,6 @@
 const it = "it-IT";
 
+/** Manual stepper / chips still use quarter-hour steps. */
 export const HOUR_STEP = 0.25;
 
 export function stepHours(h: number, delta: number): number {
@@ -7,13 +8,64 @@ export function stepHours(h: number, delta: number): number {
   return Math.min(24, Math.max(0, n));
 }
 
-export function isQuarterHour(h: number): boolean {
-  return h > 0 && h <= 24 && Math.abs(h / HOUR_STEP - Math.round(h / HOUR_STEP)) < 1e-9;
+/** +/- 1 minute (manual mode). */
+export function stepHoursByMinutes(h: number, deltaMinutes: number): number {
+  const mins = Math.round(h * 60) + deltaMinutes;
+  return Math.min(24 * 60, Math.max(0, mins)) / 60;
 }
 
+/** Stored hours: positive, max 24h, minute precision. */
+export function isValidWorkHours(h: number): boolean {
+  if (typeof h !== "number" || h <= 0 || h > 24) return false;
+  const mins = Math.round(h * 60);
+  return mins > 0 && mins <= 24 * 60 && Math.abs(h * 60 - mins) < 0.02;
+}
+
+/** @deprecated Use isValidWorkHours */
+export function isQuarterHour(h: number): boolean {
+  return isValidWorkHours(h);
+}
+
+/** Integer % per part, always sums to 100 (largest remainder). */
+export function sharePercentages(parts: number[], total: number): number[] {
+  if (total <= 0 || parts.length === 0) return parts.map(() => 0);
+  const exact = parts.map((p) => (p / total) * 100);
+  const floors = exact.map((e) => Math.floor(e));
+  let rest = 100 - floors.reduce((a, b) => a + b, 0);
+  const order = exact
+    .map((e, i) => ({ i, frac: e - floors[i] }))
+    .sort((a, b) => b.frac - a.frac);
+  const out = [...floors];
+  for (let k = 0; k < rest; k++) {
+    out[order[k % order.length].i] += 1;
+  }
+  return out;
+}
+
+/** Pausa: "0", "45 min", "1 h", "1 h 5 min" */
+export function formatBreakMinutesIt(minutes: number): string {
+  const m = Math.max(0, Math.round(minutes));
+  if (m === 0) return "0";
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  if (h === 0) return `${min} min`;
+  if (min === 0) return `${h} h`;
+  return `${h} h ${min} min`;
+}
+
+export function stepBreakMinutes(current: number, delta: number, max: number): number {
+  return Math.min(max, Math.max(0, Math.round(current + delta)));
+}
+
+/** e.g. "8 ore", "5 ore 3 min", "45 min" */
 export function formatHoursIt(n: number): string {
-  const v = Math.round(n / HOUR_STEP) * HOUR_STEP;
-  return v.toLocaleString(it, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  const totalMin = Math.round(n * 60);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (totalMin <= 0) return "0 ore";
+  if (m === 0) return `${h.toLocaleString(it)} ore`;
+  if (h === 0) return `${m} min`;
+  return `${h.toLocaleString(it)} ore ${m} min`;
 }
 
 export function parseHoursInput(s: string): number | null {
@@ -21,6 +73,73 @@ export function parseHoursInput(s: string): number | null {
   const v = Number(t);
   if (Number.isNaN(v) || v < 0 || v > 24) return null;
   return v;
+}
+
+const DAY_MINUTES = 24 * 60;
+
+/** "07:30" → minutes from midnight, or null if invalid. */
+export function parseTimeToMinutes(t: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t.trim());
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+  return h * 60 + min;
+}
+
+export function minutesToTime(totalMins: number): string {
+  const m = ((totalMins % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES;
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+
+/** Worked minutes from start/end (end may be next day) minus break. */
+export function workedMinutesFromTimeRange(
+  start: string,
+  end: string,
+  breakMinutes: number,
+): number | null {
+  const s = parseTimeToMinutes(start);
+  let e = parseTimeToMinutes(end);
+  if (s === null || e === null) return null;
+  if (breakMinutes < 0) return null;
+  if (e <= s) e += DAY_MINUTES;
+  const workMin = e - s - breakMinutes;
+  if (workMin <= 0 || workMin > 24 * 60) return null;
+  return workMin;
+}
+
+/** Worked hours from start/end (minute precision). */
+export function hoursFromTimeRange(
+  start: string,
+  end: string,
+  breakMinutes: number,
+): number | null {
+  const workMin = workedMinutesFromTimeRange(start, end, breakMinutes);
+  if (workMin === null) return null;
+  return Math.round(workMin * 100) / 6000;
+}
+
+/** Guess start/end from stored hours (editing entries without saved times). */
+export function defaultTimesFromHours(hours: number): {
+  start: string;
+  end: string;
+  breakMinutes: number;
+} {
+  const startMin = 7 * 60;
+  const workMin = Math.round(hours * 60);
+  return {
+    start: minutesToTime(startMin),
+    end: minutesToTime(startMin + workMin),
+    breakMinutes: 0,
+  };
+}
+
+export function formatTimeIt(t: string): string {
+  const m = parseTimeToMinutes(t);
+  if (m === null) return t;
+  return minutesToTime(m);
 }
 
 export function todayISO(): string {

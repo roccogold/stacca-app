@@ -10,6 +10,7 @@ import {
   formatWeekdayLong,
   monthTitle,
   parseISODate,
+  sharePercentages,
 } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -59,18 +60,23 @@ export default async function MesePage({
     ? entries.filter((e) => e.date === selectedDay)
     : [];
   const dayTotal = selectedDay ? (totalsByDay[selectedDay] ?? 0) : 0;
-  const statsEntries = selectedDay ? dayEntries : entries;
-  const statsTotal = selectedDay ? dayTotal : monthTotal;
-
   const byMansione = new Map<string, number>();
   const byLuogo = new Map<string, number>();
-  for (const e of statsEntries) {
+  for (const e of entries) {
     byMansione.set(e.mansione, (byMansione.get(e.mansione) ?? 0) + e.hours);
     byLuogo.set(e.luogo, (byLuogo.get(e.luogo) ?? 0) + e.hours);
   }
 
   const mansioniSorted = [...byMansione.entries()].sort((a, b) => b[1] - a[1]);
   const luoghiSorted = [...byLuogo.entries()].sort((a, b) => b[1] - a[1]);
+  const mansioniSharePct = sharePercentages(
+    mansioniSorted.map(([, hrs]) => hrs),
+    monthTotal,
+  );
+  const luoghiSharePct = sharePercentages(
+    luoghiSorted.map(([, hrs]) => hrs),
+    monthTotal,
+  );
 
   const prev = m === 1 ? { y: y - 1, m: 12 } : { y, m: m - 1 };
   const next = m === 12 ? { y: y + 1, m: 1 } : { y, m: m + 1 };
@@ -91,8 +97,8 @@ export default async function MesePage({
   const dates = [...grouped.keys()].sort((a, b) => (a < b ? 1 : -1));
 
   const selectedDayDate = selectedDay ? parseISODate(selectedDay) : null;
-  const vociDayLabel =
-    dayEntries.length === 1 ? "1 voce" : `${dayEntries.length} voci`;
+  const lavoriDayLabel =
+    dayEntries.length === 1 ? "1 lavoro" : `${dayEntries.length} lavori`;
 
   const monthSubmitted = !!submission;
   const submittedAtLabel = submission
@@ -108,7 +114,6 @@ export default async function MesePage({
       <MonthCalendar
         year={y}
         month={m}
-        monthTotal={monthTotal}
         totalsByDay={totalsByDay}
         selectedDay={selectedDay}
         prevHref={prevHref}
@@ -126,22 +131,20 @@ export default async function MesePage({
                     {formatWeekdayLong(selectedDayDate)}
                   </div>
                   <div className="card--oggi__num">
-                    {formatHoursIt(dayTotal)}{" "}
-                    <span className="card--oggi__num-unit">ore</span>
+                    <span className="card--oggi__num--duration">{formatHoursIt(dayTotal)}</span>
                   </div>
                   {dayEntries.length > 0 && (
-                    <div className="card--oggi__unit">{vociDayLabel}</div>
+                    <div className="card--oggi__unit">{lavoriDayLabel}</div>
                   )}
                   {dayEntries.length === 0 && (
-                    <div className="card--oggi__unit">nessuna voce</div>
+                    <div className="card--oggi__unit">nessun lavoro</div>
                   )}
                 </>
               ) : (
                 <>
                   <div className="card--oggi__label">MESE</div>
                   <div className="card--oggi__num">
-                    {formatHoursIt(monthTotal)}{" "}
-                    <span className="card--oggi__num-unit">ore</span>
+                    <span className="card--oggi__num--duration">{formatHoursIt(monthTotal)}</span>
                   </div>
                 </>
               )}
@@ -167,21 +170,19 @@ export default async function MesePage({
         submittedAt={submittedAtLabel}
       />
 
-      {mansioniSorted.length > 0 && (
+      {!selectedDay && mansioniSorted.length > 0 && (
         <section className="block">
           <h2 className="section-title section-title--inset">Per lavorazione</h2>
           <div className="card card--stats">
-            {mansioniSorted.map(([label, hrs]) => {
-              const maxHrs = mansioniSorted[0][1];
-              const barPct = maxHrs > 0 ? (hrs / maxHrs) * 100 : 0;
-              const sharePct =
-                statsTotal > 0 ? Math.round((hrs / statsTotal) * 100) : 0;
+            {mansioniSorted.map(([label, hrs], i) => {
+              const sharePct = mansioniSharePct[i] ?? 0;
+              const barPct = sharePct;
               return (
                 <div key={label} className="stat-row">
                   <div className="stat-row__top">
                     <span className="stat-row__label">{label}</span>
                     <span className="stat-row__value">
-                      {formatHoursIt(hrs)} h · {sharePct}%
+                      {formatHoursIt(hrs)} · {sharePct}%
                     </span>
                   </div>
                   <div className="stat-row__bar">
@@ -197,21 +198,19 @@ export default async function MesePage({
         </section>
       )}
 
-      {luoghiSorted.length > 0 && (
+      {!selectedDay && luoghiSorted.length > 0 && (
         <section className="block">
           <h2 className="section-title section-title--inset">Per luogo</h2>
           <div className="card card--stats">
-            {luoghiSorted.map(([label, hrs]) => {
-              const maxHrs = luoghiSorted[0][1];
-              const barPct = maxHrs > 0 ? (hrs / maxHrs) * 100 : 0;
-              const sharePct =
-                statsTotal > 0 ? Math.round((hrs / statsTotal) * 100) : 0;
+            {luoghiSorted.map(([label, hrs], i) => {
+              const sharePct = luoghiSharePct[i] ?? 0;
+              const barPct = sharePct;
               return (
                 <div key={label} className="stat-row">
                   <div className="stat-row__top">
                     <span className="stat-row__label">{label}</span>
                     <span className="stat-row__value">
-                      {formatHoursIt(hrs)} h · {sharePct}%
+                      {formatHoursIt(hrs)} · {sharePct}%
                     </span>
                   </div>
                   <div className="stat-row__bar">
@@ -228,21 +227,9 @@ export default async function MesePage({
       )}
 
       <section className="block">
-        <div className="section-title-row">
-          <h2 className="section-title section-title--inset">
-            Voci
-          </h2>
-          {selectedDay && !monthSubmitted && (
-            <Link
-              href={`/aggiungi?date=${selectedDay}`}
-              className="section-title-row__action"
-            >
-              + Altra voce
-            </Link>
-          )}
-        </div>
+        <h2 className="section-title section-title--inset">Lavori</h2>
         {dates.length === 0 ? (
-          <p className="empty-list">Nessuna voce.</p>
+          <p className="empty-list">Nessun lavoro.</p>
         ) : (
           <div className="entry-groups">
             {dates.map((date) => {
@@ -255,7 +242,7 @@ export default async function MesePage({
                     <span className="entry-group__date capitalize">
                       {d ? formatShortWeekday(d) : date}
                     </span>
-                    <span className="entry-group__total">{formatHoursIt(dayTotal)} ore</span>
+                    <span className="entry-group__total">{formatHoursIt(dayTotal)}</span>
                   </div>
                   <ul className="entry-list">
                     {list.map((e) => (

@@ -53,5 +53,14 @@ export const LUOGHI_ALTRO = ["Cantina", "Magazzino", "Officina", "Ufficio", "Alt
 
 export const LUOGHI = [...LUOGHI_VIGNE, ...LUOGHI_ALTRO] as const;
 
-/** Quick-pick hours for common farm shifts. */
+/** Quick-pick hours for common farm shifts (manual entry mode). */
 export const HOUR_CHIPS = [2, 4, 6, 8] as const;
+
+/** Quick-pick break durations (flexible stepper can go beyond 60). */
+export const BREAK_PRESETS = [
+  { minutes: 0, label: "0" },
+  { minutes: 15, label: "15m" },
+  { minutes: 30, label: "30m" },
+  { minutes: 45, label: "45m" },
+  { minutes: 60, label: "1h" },
+] as const;

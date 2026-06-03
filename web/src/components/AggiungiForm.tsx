@@ -5,13 +5,9 @@ import { ArrowLeft, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useTransition, useState } from "react";
-import {
-  HOUR_CHIPS,
-  LUOGHI_ALTRO,
-  LUOGHI_VIGNE,
-  MANSIONI,
-} from "@/lib/constants";
-import { formatHoursIt, formatDateField, stepHours, todayISO } from "@/lib/format";
+import { HoursEntryCard } from "@/components/HoursEntryCard";
+import { LUOGHI_ALTRO, LUOGHI_VIGNE, MANSIONI } from "@/lib/constants";
+import { formatDateField, hoursFromTimeRange, todayISO } from "@/lib/format";
 
 type Props = {
   initial: TimeEntry | null;
@@ -19,8 +15,9 @@ type Props = {
   locked?: boolean;
 };
 
-function clampStep(h: number, delta: number): number {
-  return stepHours(h, delta);
+function initialHoursValue(existing: number | undefined): number {
+  if (existing != null && existing > 0) return existing;
+  return hoursFromTimeRange("07:00", "12:00", 0) ?? 0;
 }
 
 export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
@@ -28,7 +25,7 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
   const [, startTransition] = useTransition();
   const editId = initial?.id ?? null;
   const [date, setDate] = useState(initial?.date ?? presetDate ?? todayISO());
-  const [hours, setHours] = useState(initial?.hours ?? 0);
+  const [hours, setHours] = useState(() => initialHoursValue(initial?.hours));
   const [mansione, setMansione] = useState(initial?.mansione ?? "");
   const [luogo, setLuogo] = useState(initial?.luogo ?? "");
   const [note, setNote] = useState(initial?.note ?? "");
@@ -79,7 +76,7 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
   }
 
   async function remove() {
-    if (!editId || !confirm("Vuoi davvero eliminare questa voce?")) return;
+    if (!editId || !confirm("Vuoi davvero eliminare questo lavoro?")) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/entries/${editId}`, { method: "DELETE" });
@@ -103,17 +100,17 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
           <ArrowLeft size={20} />
         </Link>
         <h1 className="form-header__title">
-          {locked ? "Voce (sola lettura)" : editId ? "Modifica voce" : "Aggiungi ore"}
+          {locked ? "Lavoro (sola lettura)" : editId ? "Modifica lavoro" : "Aggiungi ore"}
         </h1>
       </header>
 
       <main className="form-body">
         {locked && (
-          <p className="form-hint">Mese già inviato — non puoi modificare questa voce.</p>
+          <p className="form-hint">Mese già inviato — non puoi modificare questo lavoro.</p>
         )}
         {!editId && !locked && (
           <p className="form-hint">
-            Puoi salvare più voci per lo stesso giorno — una per ogni lavorazione e luogo.
+            Puoi salvare più lavori per lo stesso giorno — uno per ogni lavorazione e luogo.
           </p>
         )}
         <div className="field">
@@ -135,38 +132,12 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
           </div>
         </div>
 
-        <div className="field">
-          <span className="field-label field-label--plain">Ore</span>
-          <div className="stepper-card">
-            <div className="stepper">
-              <button type="button" className="stepper__btn" aria-label="Diminuisci" onClick={() => setHours((h) => clampStep(h, -0.25))} disabled={locked || loading}>
-                −
-              </button>
-              <div className="stepper__value">
-                <span className="stepper__num">{formatHoursIt(hours)}</span>
-                <span className="stepper__unit">ore</span>
-              </div>
-              <button type="button" className="stepper__btn" aria-label="Aumenta" onClick={() => setHours((h) => clampStep(h, 0.25))} disabled={locked || loading}>
-                +
-              </button>
-            </div>
-            <p className="form-hint form-hint--tight">Usa +/− per i quarti d&apos;ora</p>
-            <div className="chips chips--pills">
-              {HOUR_CHIPS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`chip chip--pill${Math.abs(hours - c) < 0.001 ? " chip--active" : ""}`}
-                  onClick={() => setHours(c)}
-                  disabled={locked}
-                  aria-label={`${formatHoursIt(c)} ore`}
-                >
-                  {formatHoursIt(c)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <HoursEntryCard
+          hours={hours}
+          onHoursChange={setHours}
+          disabled={locked || loading}
+          initialHours={initial?.hours}
+        />
 
         <div className="field">
           <label className="field-label field-label--plain" htmlFor="lavorazione">
@@ -224,7 +195,7 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
 
         {editId && !locked && (
           <button type="button" className="btn btn--danger-outline btn--block" onClick={remove} disabled={loading}>
-            Elimina voce
+            Elimina lavoro
           </button>
         )}
       </main>
@@ -238,7 +209,7 @@ export function AggiungiForm({ initial, presetDate, locked = false }: Props) {
             onClick={save}
             disabled={loading || hours <= 0 || !mansione || !luogo}
           >
-            {loading ? "Salvataggio…" : editId ? "Aggiorna voce" : "Salva voce"}
+            {loading ? "Salvataggio…" : editId ? "Aggiorna lavoro" : "Salva lavoro"}
           </button>
         </div>
       </div>

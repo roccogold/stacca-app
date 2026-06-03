@@ -1,3 +1,6 @@
+/** Versione mostrata in profilo/login — aggiornare a ogni release visibile agli utenti. */
+export const APP_VERSION = "1.0";
+
 export function AppFooter() {
   return (
     <footer className="app-footer">
@@ -11,6 +14,11 @@ export function AppFooter() {
         >
           Fattoria Corzano e Paterno
         </a>
+        <span className="app-footer__sep" aria-hidden>
+          {" "}
+          ·{" "}
+        </span>
+        <span className="app-footer__version">Versione {APP_VERSION}</span>
       </p>
     </footer>
   );

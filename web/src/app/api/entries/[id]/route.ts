@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { LUOGHI, MANSIONI } from "@/lib/constants";
-import { isQuarterHour } from "@/lib/format";
+import { isValidWorkHours } from "@/lib/format";
 import { assertMonthEditable, monthFromDate } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, type SessionData } from "@/lib/session";
@@ -28,13 +28,13 @@ export async function PATCH(
     where: { id, userId },
   });
   if (!existing) {
-    return NextResponse.json({ error: "Voce non trovata" }, { status: 404 });
+    return NextResponse.json({ error: "Lavoro non trovato" }, { status: 404 });
   }
 
   const existingLock = await assertMonthEditable(userId, existing.date);
   if (existingLock.locked) {
     return NextResponse.json(
-      { error: "Mese già inviato. Non puoi modificare questa voce." },
+      { error: "Mese già inviato. Non puoi modificare questo lavoro." },
       { status: 403 },
     );
   }
@@ -60,7 +60,7 @@ export async function PATCH(
     data.date = body.date;
   }
   if (body.hours !== undefined) {
-    if (typeof body.hours !== "number" || !isQuarterHour(body.hours)) {
+    if (typeof body.hours !== "number" || !isValidWorkHours(body.hours)) {
       return NextResponse.json({ error: "Ore non valide" }, { status: 400 });
     }
     data.hours = body.hours;
@@ -86,7 +86,7 @@ export async function PATCH(
     const nextLock = await assertMonthEditable(userId, nextDate);
     if (nextLock.locked) {
       return NextResponse.json(
-        { error: "Non puoi spostare voci in un mese già inviato." },
+        { error: "Non puoi spostare lavori in un mese già inviato." },
         { status: 403 },
       );
     }
@@ -117,13 +117,13 @@ export async function DELETE(
     where: { id, userId },
   });
   if (!existing) {
-    return NextResponse.json({ error: "Voce non trovata" }, { status: 404 });
+    return NextResponse.json({ error: "Lavoro non trovato" }, { status: 404 });
   }
 
   const lock = await assertMonthEditable(userId, existing.date);
   if (lock.locked) {
     return NextResponse.json(
-      { error: "Mese già inviato. Non puoi eliminare questa voce." },
+      { error: "Mese già inviato. Non puoi eliminare questo lavoro." },
       { status: 403 },
     );
   }

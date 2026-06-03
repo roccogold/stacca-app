@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
   if (entries.length === 0) {
     return NextResponse.json(
-      { error: "Nessuna voce da inviare per questo mese." },
+      { error: "Nessun lavoro da inviare per questo mese." },
       { status: 400 },
     );
   }

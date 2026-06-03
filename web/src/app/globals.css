@@ -61,6 +61,7 @@
 
   --tap: 56px;
   --safe-bottom: env(safe-area-inset-bottom, 0);
+  --section-gap: 16px;
 }
 
 * {
@@ -515,6 +516,238 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   margin-left: 0;
 }
 
+/* Hours: start / end / break */
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.field-label-row .field-label {
+  margin: 0;
+}
+
+.field-label-row__link {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Orario card (aggiungi — Lovable-inspired) */
+.orario-card {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 18px 16px 16px;
+  box-shadow: var(--shadow);
+}
+
+.orario-card__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.orario-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.orario-card__field--break {
+  margin-top: 18px;
+}
+
+.orario-card__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.time-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 0 40px 0 14px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+}
+
+.time-slot__input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  outline: none;
+  font-variant-numeric: tabular-nums;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.time-slot__input:disabled {
+  opacity: 0.6;
+}
+
+.time-slot__input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.time-slot__icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-soft);
+  pointer-events: none;
+}
+
+.pausa-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 8px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+}
+
+.pausa-stepper__btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--card);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 1px 3px oklch(0.3 0.04 40 / 0.08);
+}
+
+.pausa-stepper__btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.pausa-stepper__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pausa-stepper__value {
+  flex: 1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.pausa-presets {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pausa-presets__btn {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--secondary);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.pausa-presets__btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.pausa-presets__btn--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-fg);
+}
+
+.pausa-presets__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.orario-card__footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.orario-card__total-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.orario-card__total-value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  text-align: right;
+}
+
+.orario-card__error {
+  margin: 10px 0 0;
+}
+
+.stepper__num--duration {
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.card--oggi__num--duration {
+  font-size: clamp(28px, 8vw, 48px);
+  line-height: 1.15;
+}
+
+
+.form-hint--warn {
+  color: var(--destructive);
+}
+
 /* Quick chips for hours */
 .chips {
   display: flex;
@@ -966,6 +1199,16 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   color: var(--text-muted);
 }
 
+.app-footer__sep,
+.app-footer__version {
+  color: var(--text-soft);
+}
+
+.app-footer__version {
+  font-size: inherit;
+  letter-spacing: 0.02em;
+}
+
 .app-footer__link {
   color: var(--text-soft);
   text-decoration: none;
@@ -1170,7 +1413,7 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
 .date-line {
   font-size: 14px;
   color: var(--text-muted);
-  margin-bottom: 20px;
+  margin: 0;
 }
 
 .screen--tab {
@@ -1340,56 +1583,39 @@ a.card {
 }
 
 /* ============================================
-   Weather card + detto
+   Weather card
    ============================================ */
 
 .weather-card {
-  padding: 18px 20px;
+  width: 100%;
+  padding: 8px 20px;
 }
 
 .weather-card__row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .weather-card__emoji {
-  font-size: 28px;
+  font-size: 20px;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .weather-card__main {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0;
 }
 
 .weather-card__cond {
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-.weather-card__detto {
-  margin: 14px 0 0;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
-
-.weather-card__detto-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: var(--text-soft);
-  margin-bottom: 6px;
-}
-
-.weather-card__detto-text {
-  margin: 0;
   font-size: 12px;
-  line-height: 1.5;
+  font-weight: 400;
+  line-height: 1.2;
   color: var(--text-muted);
+  margin: 0;
 }
 
 /* ============================================
@@ -1494,12 +1720,23 @@ a.card {
 .block--tight { padding-top: 8px; }
 .block--spaced { padding-top: 24px; }
 
+.block--home-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  padding-top: 16px;
+}
+
+.block--home-intro .h1 {
+  margin: 0;
+}
+
 .block .card {
   margin-bottom: 0;
 }
 
 .block + .block {
-  padding-top: 20px;
+  padding-top: var(--section-gap);
 }
 
 .section-title--inset {
@@ -1722,44 +1959,47 @@ a.card {
   padding: 12px;
 }
 
-.entry-card__hours {
-  min-width: 64px;
-  flex-shrink: 0;
-}
-
-.entry-card--compact .entry-card__hours {
-  min-width: 52px;
-}
-
-.entry-card__num {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--ink);
-}
-
-.entry-card--compact .entry-card__num {
-  font-size: 20px;
-}
-
-.entry-card__unit {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-
 .entry-card__body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.entry-card__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .entry-card__title {
+  flex: 1;
+  min-width: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.entry-card__hours {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-card--compact .entry-card__title {
+  font-size: 15px;
+}
+
+.entry-card--compact .entry-card__hours {
+  font-size: 14px;
 }
 
 .entry-card__meta {
@@ -1811,14 +2051,6 @@ a.card {
 
 .cal-card {
   padding: 12px;
-}
-
-.cal-month-total {
-  margin: 10px 4px 0;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-align: center;
 }
 
 .cal-grid {
@@ -1879,6 +2111,7 @@ a.card {
 
 .form-body .field-control,
 .form-body .field > .stepper-card,
+.form-body .field > .orario-card,
 .form-body .field > .date-card {
   width: 100%;
   max-width: 100%;
@@ -1898,7 +2131,8 @@ a.card {
   min-width: 0;
 }
 
-.form-body .field > .stepper-card {
+.form-body .field > .stepper-card,
+.form-body .field > .orario-card {
   width: 100%;
   max-width: 100%;
   min-width: 0;

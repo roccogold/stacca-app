@@ -21,13 +21,12 @@ export function EntryCardLink({
 }: Props) {
   const content = (
     <>
-      <div className="entry-card__hours">
-        <div className="entry-card__num">{formatHoursIt(hours)}</div>
-        <div className="entry-card__unit">ore</div>
-      </div>
       <div className="entry-card__body">
-        <div className="entry-card__title">{mansione}</div>
-        <div className="entry-card__meta">{luogo}</div>
+        <div className="entry-card__row">
+          <span className="entry-card__title">{mansione}</span>
+          <span className="entry-card__hours">{formatHoursIt(hours)}</span>
+        </div>
+        <span className="entry-card__meta">{luogo}</span>
       </div>
       {!readOnly && (
         <ChevronRight size={20} className="entry-card__chev" aria-hidden />

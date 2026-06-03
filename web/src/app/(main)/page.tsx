@@ -34,8 +34,8 @@ export default async function HomePage() {
   const greeting = user.displayName.split(" ")[0] || user.displayName;
   const monthName = now.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
   const monthTitleCase = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-  const vociLabel =
-    todayEntries.length === 1 ? "1 voce" : `${todayEntries.length} voci`;
+  const lavoriLabel =
+    todayEntries.length === 1 ? "1 lavoro" : `${todayEntries.length} lavori`;
 
   return (
     <>
@@ -44,16 +44,15 @@ export default async function HomePage() {
         <ProfileIconLink />
       </header>
 
-      <section className="block block--greeting">
+      <section className="block block--home-intro">
         <h1 className="h1">Ciao, {greeting}</h1>
         <p className="date-line capitalize">
           {todayLabel ? formatWeekdayLong(todayLabel) : today}
         </p>
+        <Suspense fallback={null}>
+          <DailyInspiration />
+        </Suspense>
       </section>
-
-      <Suspense fallback={null}>
-        <DailyInspiration />
-      </Suspense>
 
       <section className="block">
         <div className="card card--accent card--oggi">
@@ -65,10 +64,12 @@ export default async function HomePage() {
           ) : (
             <div className="card--oggi__filled">
               <div>
-                <div className="card--oggi__num">{formatHoursIt(todayTotal)}</div>
-                <div className="card--oggi__unit">ore registrate</div>
+                <div className="card--oggi__num card--oggi__num--duration">
+                  {formatHoursIt(todayTotal)}
+                </div>
+                <div className="card--oggi__unit">registrate</div>
               </div>
-              <span className="badge badge--on-accent">{vociLabel}</span>
+              <span className="badge badge--on-accent">{lavoriLabel}</span>
             </div>
           )}
         </div>
@@ -76,14 +77,7 @@ export default async function HomePage() {
 
       {todayEntries.length > 0 && (
         <section className="block">
-          <div className="section-title-row">
-            <h2 className="section-title section-title--inset">Le voci di oggi</h2>
-            {!monthSubmission && (
-              <Link href="/aggiungi" className="section-title-row__action">
-                + Altra voce
-              </Link>
-            )}
-          </div>
+          <h2 className="section-title section-title--inset">I lavori di oggi</h2>
           <ul className="entry-list">
             {todayEntries.map((e) => (
               <li key={e.id}>
@@ -105,7 +99,7 @@ export default async function HomePage() {
           <div>
             <div className="month-teaser__label">Questo mese</div>
             <div className="month-teaser__title capitalize">{monthTitleCase}</div>
-            <div className="month-teaser__sub">{formatHoursIt(monthTotal)} ore totali</div>
+            <div className="month-teaser__sub">{formatHoursIt(monthTotal)} totali</div>
           </div>
           <span className={monthSubmission ? "badge badge--locked" : "badge badge--open"}>
             {monthSubmission ? "Inviato" : "Aperto"}

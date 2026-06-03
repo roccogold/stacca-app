@@ -38,8 +38,8 @@ export function SubmitMonthPanel({
         <div className="callout callout--muted">
           <Info size={16} className="callout__icon" aria-hidden />
           <span>
-            Mese inviato
-            {submittedAt ? ` il ${submittedAt}` : ""}. Sola lettura.
+            Grazie, mese inviato
+            {submittedAt ? ` il ${submittedAt}` : ""} — sola lettura.
           </span>
         </div>
       </section>
@@ -71,7 +71,9 @@ export function SubmitMonthPanel({
     <section className="block">
       <div className="callout callout--accent">
         <Info size={16} className="callout__icon" aria-hidden />
-        <span>Invia solo a fine mese. Dopo l&apos;invio non potrai più modificare.</span>
+        <span>
+          Invia solo a fine mese, dopo l&apos;invio non potrai più modificare le voci.
+        </span>
       </div>
       <button
         type="button"
@@ -91,9 +93,8 @@ export function SubmitMonthPanel({
         title="Inviare il mese?"
       >
         <p className="sheet__body">
-          Stai per inviare <strong>{formatHoursIt(monthTotal)} ore</strong> di{" "}
-          <span className="capitalize">{monthLabel}</span> su Google Sheets. Dopo
-          l&apos;invio non potrai più modificare le voci.
+          Stai per inviare <strong>{formatHoursIt(monthTotal)}</strong> di{" "}
+          {monthLabel}. Dopo l&apos;invio non potrai più modificare le ore.
         </p>
         {error && (
           <p className="login-form__error" role="alert">

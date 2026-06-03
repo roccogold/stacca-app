@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { LUOGHI, MANSIONI } from "@/lib/constants";
-import { isQuarterHour } from "@/lib/format";
+import { isValidWorkHours } from "@/lib/format";
 import { assertMonthEditable } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, type SessionData } from "@/lib/session";
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return NextResponse.json({ error: "Data non valida" }, { status: 400 });
   }
-  if (typeof hours !== "number" || !isQuarterHour(hours)) {
+  if (typeof hours !== "number" || !isValidWorkHours(hours)) {
     return NextResponse.json({ error: "Ore non valide" }, { status: 400 });
   }
   if (!mansione || !MANSIONI.includes(mansione as (typeof MANSIONI)[number])) {
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
   const lock = await assertMonthEditable(userId, date);
   if (lock.locked) {
     return NextResponse.json(
-      { error: "Mese già inviato. Non puoi aggiungere voci." },
+      { error: "Mese già inviato. Non puoi aggiungere lavori." },
       { status: 403 },
     );
   }
