@@ -31,7 +31,7 @@ export function sharePercentages(parts: number[], total: number): number[] {
   if (total <= 0 || parts.length === 0) return parts.map(() => 0);
   const exact = parts.map((p) => (p / total) * 100);
   const floors = exact.map((e) => Math.floor(e));
-  let rest = 100 - floors.reduce((a, b) => a + b, 0);
+  const rest = 100 - floors.reduce((a, b) => a + b, 0);
   const order = exact
     .map((e, i) => ({ i, frac: e - floors[i] }))
     .sort((a, b) => b.frac - a.frac);

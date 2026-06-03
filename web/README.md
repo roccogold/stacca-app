@@ -87,9 +87,37 @@ Free tier: 3,000 emails/month — enough for this app.
    GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
    ```
 
-Colonne scritte automaticamente: Data, Nome, Email, Ore, Mansione, Luogo, Note, Mese, Inviato il.
+Colonne tab **Ore** (log grezzo dall’app): Data, Nome, Email, Ore (testo), **Ore (h)** (numero per pivot), Lavorazione, Luogo, Note, Mese, Registrato il, Tipo.
 
-Dopo **Invia mese**: badge **Inviato**, voci in sola lettura, righe su Sheets.
+- **Ogni salvataggio** → riga `Tipo` = **Voce** (una riga per giorno/lavoro).
+- **Invia mese** → riga `Tipo` = **Chiusura mese** (totale; escluderla dai pivot).
+
+### Analisi su Google Sheet (pivot, non in app)
+
+L’app scrive solo il log su **Ore**. Report e pivot li costruisci nel foglio:
+
+1. **Un tab per dipendente** (es. `Rocco`, `Arianna`) con dati filtrati dal log:
+   ```text
+   =FILTER(Ore!A2:K; Ore!B2:B="Rocco"; Ore!K2:K="Voce")
+   ```
+   (in locale IT usa `;` al posto di `,` se serve.)
+
+2. **Tab Riepilogo** (o più tab) con **Tabella pivot** sul range `Ore!A:K` (o sul tab dipendente):
+   - Filtra **Tipo** = `Voce` (non contare le righe di chiusura mese).
+   - Valori: **SUM di Ore (h)** — non la colonna “Ore” testuale.
+
+3. **Esempi utili**
+
+   | Domanda | Righe pivot | Colonne pivot | Valori |
+   |---------|-------------|---------------|--------|
+   | Ore per lavorazione nel mese | Mese | Lavorazione | SUM Ore (h) |
+   | Ore in una vigna per mese | Mese | Luogo | SUM Ore (h) |
+   | Totale ore per dipendente | Nome | Mese | SUM Ore (h) |
+   | Dettaglio giorni | Data | Lavorazione | SUM Ore (h) |
+
+4. Se il foglio esisteva prima della colonna **Ore (h)**, aggiorna la riga 1 su **Ore** con l’intestazione completa (o lascia che la prima nuova riga dall’app la crei dopo deploy).
+
+Condividi il foglio in sola lettura con chi fa contabilità; il service account resta **Editor** solo per l’app.
 
 ## Deploy — Supabase + Vercel
 

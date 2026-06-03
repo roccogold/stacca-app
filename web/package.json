@@ -11,7 +11,8 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
-    "db:reset-password": "npx tsx prisma/reset-worker-password.ts"
+    "db:reset-password": "npx tsx prisma/reset-worker-password.ts",
+    "sheets:clear-user": "npx tsx prisma/clear-google-sheets-user.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

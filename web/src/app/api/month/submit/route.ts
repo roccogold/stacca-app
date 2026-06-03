@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import {
-  appendRowsToSheet,
-  buildSheetRows,
-  ensureSheetHeader,
-} from "@/lib/google-sheets";
+import { appendMonthClosureToSheet } from "@/lib/google-sheets";
 import { isValidMonthKey, isMonthLocked } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, type SessionData } from "@/lib/session";
@@ -68,9 +64,12 @@ export async function POST(req: Request) {
   const totalHours = entries.reduce((a, e) => a + e.hours, 0);
   const submittedAt = new Date();
 
-  await ensureSheetHeader();
-  const rows = buildSheetRows(user, entries, month, submittedAt);
-  const sent = await appendRowsToSheet(rows);
+  const sent = await appendMonthClosureToSheet(
+    user,
+    month,
+    totalHours,
+    submittedAt,
+  );
 
   if (!sent.ok) {
     return NextResponse.json({ error: sent.error }, { status: 503 });

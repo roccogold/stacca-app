@@ -6,6 +6,7 @@ import { LUOGHI, MANSIONI } from "@/lib/constants";
 import { isValidWorkHours } from "@/lib/format";
 import { assertMonthEditable } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
+import { syncEntryToGoogleSheet } from "@/lib/sync-entry-sheet";
 import { sessionOptions, type SessionData } from "@/lib/session";
 
 async function getUserId(): Promise<string | null> {
@@ -97,6 +98,12 @@ export async function POST(req: Request) {
       note: note?.trim() || null,
     },
   });
+
+  const sheet = await syncEntryToGoogleSheet(userId, entry);
+  if (!sheet.ok) {
+    await prisma.timeEntry.delete({ where: { id: entry.id } });
+    return NextResponse.json({ error: sheet.error }, { status: 503 });
+  }
 
   revalidatePath("/");
   revalidatePath("/mese");
