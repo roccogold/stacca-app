@@ -63,12 +63,7 @@ export default async function HomePage() {
             </p>
           ) : (
             <div className="card--oggi__filled">
-              <div>
-                <div className="card--oggi__num card--oggi__num--duration">
-                  {formatHoursIt(todayTotal)}
-                </div>
-                <div className="card--oggi__unit">registrate</div>
-              </div>
+              <span className="card--oggi__num--duration">{formatHoursIt(todayTotal)}</span>
               <span className="badge badge--on-accent">{lavoriLabel}</span>
             </div>
           )}
