@@ -84,9 +84,7 @@ export default async function MesePage({
   const nextHref = `/mese?y=${next.y}&m=${next.m}`;
   const monthLabel = monthTitle(y, m - 1);
 
-  const canSubmit =
-    y < now.getFullYear() ||
-    (y === now.getFullYear() && m <= now.getMonth() + 1);
+  const canSubmit = y < rome.y || (y === rome.y && m <= rome.m);
 
   const grouped = new Map<string, typeof entries>();
   for (const e of entries) {
