@@ -10,6 +10,7 @@ type Props = {
   autoComplete?: string;
   invalid?: boolean;
   placeholder?: string;
+  minLength?: number;
 };
 
 export function PasswordInput({
@@ -19,6 +20,7 @@ export function PasswordInput({
   autoComplete,
   invalid,
   placeholder = "••••••",
+  minLength,
 }: Props) {
   const [show, setShow] = useState(false);
 
@@ -34,6 +36,7 @@ export function PasswordInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={invalid || undefined}
+        minLength={minLength}
         required
       />
       <button

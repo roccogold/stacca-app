@@ -2282,6 +2282,15 @@ a.card {
   flex-direction: column;
 }
 
+.login-page__inner--with-back {
+  padding-top: 24px;
+}
+
+.login-page__nav {
+  align-self: flex-start;
+  margin-bottom: 24px;
+}
+
 .login-brand {
   display: flex;
   justify-content: center;

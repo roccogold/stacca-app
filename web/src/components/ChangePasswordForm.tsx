@@ -1,6 +1,7 @@
 "use client";
 
 import { FormAlert } from "@/components/FormAlert";
+import { PasswordInput } from "@/components/PasswordInput";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -42,22 +43,19 @@ export function ChangePasswordForm({ forced = false }: Props) {
     <form className="login-form" onSubmit={onSubmit}>
       {forced && (
         <p className="login-form__intro">
-          Scegli una password personale. D&apos;ora in poi entri con email + password.
+          Scegli una password personale, da ora in poi entri con email + password.
         </p>
       )}
       <div className="field">
         <label className="field-label field-label--plain" htmlFor="password">
           Nuova password
         </label>
-        <input
-          className="input input--lg"
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           placeholder="Almeno 8 caratteri"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
+          onChange={setPassword}
           minLength={8}
         />
       </div>
@@ -65,14 +63,11 @@ export function ChangePasswordForm({ forced = false }: Props) {
         <label className="field-label field-label--plain" htmlFor="confirm">
           Ripeti password
         </label>
-        <input
-          className="input input--lg"
+        <PasswordInput
           id="confirm"
-          type="password"
           autoComplete="new-password"
           value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          required
+          onChange={setConfirm}
           minLength={8}
         />
       </div>
