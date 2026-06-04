@@ -19,7 +19,7 @@ export type SheetEntryRow = {
   note: string;
   month: string;
   recordedAt: string;
-  tipo: "Voce" | "Chiusura mese";
+  tipo: "Voce" | "Chiusura";
 };
 
 function recordedAtLabel(at: Date): string {
@@ -88,7 +88,7 @@ export function buildMonthClosureSheetRow(
     note: "Mese chiuso",
     month,
     recordedAt: recordedAtLabel(submittedAt),
-    tipo: "Chiusura mese",
+    tipo: "Chiusura",
   };
 }
 
@@ -181,6 +181,7 @@ export async function appendRowsToSheet(
       insertDataOption: "INSERT_ROWS",
       requestBody: { values },
     });
+    await applyOreTotaliTabLayout();
     return { ok: true };
   } catch (err) {
     logError("google-sheets", err);
@@ -280,6 +281,7 @@ export async function upsertEntryToSheet(
         valueInputOption: "USER_ENTERED",
         requestBody: { values: [rowToValues(row)] },
       });
+      await applyOreTotaliTabLayout();
       return { ok: true };
     }
 
@@ -335,6 +337,7 @@ export async function deleteEntryFromSheet(
         ],
       },
     });
+    await applyOreTotaliTabLayout();
     return { ok: true };
   } catch (err) {
     logError("google-sheets delete-entry", err);
@@ -356,6 +359,85 @@ export async function appendMonthClosureToSheet(
   return appendRowsToSheet([
     buildMonthClosureSheetRow(user, month, totalHours, submittedAt),
   ]);
+}
+
+const SHEET_MONTH_COL = 8;
+const SHEET_TIPO_COL = 10;
+
+function rowMatchesUser(
+  row: unknown[],
+  user: Pick<User, "displayName" | "email">,
+): boolean {
+  const email = (user.email ?? "").trim().toLowerCase();
+  const name = user.displayName.trim().toLowerCase();
+  const rowEmail = String(row[2] ?? "").trim().toLowerCase();
+  const rowName = String(row[1] ?? "").trim().toLowerCase();
+  return (email && rowEmail === email) || (name && rowName === name);
+}
+
+/** Remove closure row(s) for user+month (e.g. when reopening a submitted month). */
+export async function removeMonthClosureFromSheet(
+  user: Pick<User, "displayName" | "email">,
+  month: string,
+): Promise<{ ok: true; deleted: number } | { ok: false; error: string }> {
+  const config = getServiceAccountConfig();
+  if (!config.ok) return { ok: true, deleted: 0 };
+
+  const tab = sheetTabName();
+  const sheets = getSheetsClient(config);
+
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: config.sheetId,
+      range: sheetDataRange(),
+    });
+    const rows = (res.data.values ?? []) as unknown[][];
+    const toDelete: number[] = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const tipo = String(row[SHEET_TIPO_COL] ?? "");
+      if (tipo !== "Chiusura" && tipo !== "Chiusura mese") continue;
+      if (String(row[SHEET_MONTH_COL] ?? "") !== month) continue;
+      if (!rowMatchesUser(row, user)) continue;
+      toDelete.push(i);
+    }
+
+    if (toDelete.length === 0) {
+      return { ok: true, deleted: 0 };
+    }
+
+    const sheetId = await getTabSheetId(sheets, config.sheetId, tab);
+    if (sheetId == null) {
+      return { ok: false, error: `Tab "${tab}" non trovato nel foglio.` };
+    }
+
+    const requests = [...toDelete]
+      .sort((a, b) => b - a)
+      .map((rowIndex) => ({
+        deleteDimension: {
+          range: {
+            sheetId,
+            dimension: "ROWS" as const,
+            startIndex: rowIndex,
+            endIndex: rowIndex + 1,
+          },
+        },
+      }));
+
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: config.sheetId,
+      requestBody: { requests },
+    });
+
+    return { ok: true, deleted: toDelete.length };
+  } catch (err) {
+    logError("google-sheets remove-month-closure", err);
+    return {
+      ok: false,
+      error: "Errore nella rimozione chiusura mese da Google Sheets.",
+    };
+  }
 }
 
 function getSheetsClient(config: { email: string; key: string }) {
@@ -442,11 +524,12 @@ export async function deleteUserRowsFromSheet(match: {
   }
 }
 
+const ORE_TOTALI_COL_COUNT = 12;
+
 let sheetHeaderEnsured = false;
 
-export async function ensureSheetHeader(): Promise<void> {
-  if (sheetHeaderEnsured) return;
-
+/** Riga intestazione bloccata + filtri su tutto il tab Ore Totali. */
+export async function applyOreTotaliTabLayout(): Promise<void> {
   const config = getServiceAccountConfig();
   if (!config.ok) return;
 
@@ -454,41 +537,97 @@ export async function ensureSheetHeader(): Promise<void> {
   const sheets = getSheetsClient(config);
 
   try {
-    const existing = await sheets.spreadsheets.values.get({
+    const tabSheetId = await getTabSheetId(sheets, config.sheetId, tab);
+    if (tabSheetId == null) return;
+
+    const res = await sheets.spreadsheets.values.get({
       spreadsheetId: config.sheetId,
-      range: `${tab}!A1:L1`,
+      range: sheetDataRange(),
     });
+    const rowCount = Math.max(1, (res.data.values ?? []).length);
 
-    const header = existing.data.values?.[0] ?? [];
-    if (header.length >= 12) {
-      sheetHeaderEnsured = true;
-      return;
-    }
-
-    await sheets.spreadsheets.values.update({
+    await sheets.spreadsheets.batchUpdate({
       spreadsheetId: config.sheetId,
-      range: `${tab}!A1:L1`,
-      valueInputOption: "USER_ENTERED",
       requestBody: {
-        values: [
-          [
-            "Data",
-            "Nome",
-            "Email",
-            "Ore",
-            "Ore (h)",
-            "Lavorazione",
-            "Luogo",
-            "Note",
-            "Mese",
-            "Registrato il",
-            "Tipo",
-            "ID",
-          ],
+        requests: [
+          {
+            updateSheetProperties: {
+              properties: {
+                sheetId: tabSheetId,
+                gridProperties: {
+                  frozenRowCount: 1,
+                  frozenColumnCount: 0,
+                },
+              },
+              fields:
+                "gridProperties.frozenRowCount,gridProperties.frozenColumnCount",
+            },
+          },
+          {
+            setBasicFilter: {
+              filter: {
+                range: {
+                  sheetId: tabSheetId,
+                  startRowIndex: 0,
+                  endRowIndex: rowCount,
+                  startColumnIndex: 0,
+                  endColumnIndex: ORE_TOTALI_COL_COUNT,
+                },
+              },
+            },
+          },
         ],
       },
     });
-    sheetHeaderEnsured = true;
+  } catch (err) {
+    logError("google-sheets ore-totali layout", err);
+  }
+}
+
+export async function ensureSheetHeader(): Promise<void> {
+  const config = getServiceAccountConfig();
+  if (!config.ok) return;
+
+  const tab = sheetTabName();
+  const sheets = getSheetsClient(config);
+
+  try {
+    if (!sheetHeaderEnsured) {
+      const existing = await sheets.spreadsheets.values.get({
+        spreadsheetId: config.sheetId,
+        range: `${tab}!A1:L1`,
+      });
+
+      const header = existing.data.values?.[0] ?? [];
+      if (header.length < 12) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: config.sheetId,
+          range: `${tab}!A1:L1`,
+          valueInputOption: "USER_ENTERED",
+          requestBody: {
+            values: [
+              [
+                "Data",
+                "Nome",
+                "Email",
+                "Ore",
+                "Ore (h)",
+                "Lavorazione",
+                "Luogo",
+                "Note",
+                "Mese",
+                "Registrato il",
+                "Tipo",
+                "ID",
+              ],
+            ],
+          },
+        });
+      }
+      sheetHeaderEnsured = true;
+    }
+
+    await applyOreTotaliTabLayout();
   } catch (err) {
     logError("google-sheets header", err);
   }

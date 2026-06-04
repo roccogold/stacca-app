@@ -283,7 +283,8 @@ export function formatMonthYearIt(at = new Date()): string {
 
 export function monthTitle(year: number, monthIndex0: number): string {
   const d = new Date(year, monthIndex0, 1);
-  return d.toLocaleDateString(it, { month: "long", year: "numeric" });
+  const label = d.toLocaleDateString(it, { month: "long", year: "numeric" });
+  return label.replace(/^\p{L}/u, (c) => c.toUpperCase());
 }
 
 /** First weekday index Mon=0..Sun=6 for calendar grid (Italian week starts Monday). */

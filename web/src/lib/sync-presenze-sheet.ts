@@ -86,10 +86,6 @@ async function ensurePresenzeTab(
 
 const PRESENZE_COL_WIDTHS = [96, 88, 56, 128, 148, 200, 108, 72];
 
-const CREAM_BG = { red: 0.98, green: 0.97, blue: 0.94 };
-const OLIVE_BG = { red: 0.9, green: 0.93, blue: 0.86 };
-const OLIVE_TEXT = { red: 0.28, green: 0.35, blue: 0.22 };
-
 async function applyPresenzeTabFormatting(
   sheets: ReturnType<typeof getSheetsClient>,
   spreadsheetId: string,
@@ -144,6 +140,30 @@ async function applyPresenzeTabFormatting(
     });
   }
 
+  if (values.length > 0) {
+    requests.push({
+      repeatCell: {
+        range: {
+          sheetId: tabSheetId,
+          startRowIndex: 0,
+          endRowIndex: values.length,
+          startColumnIndex: 0,
+          endColumnIndex: 8,
+        },
+        cell: {
+          userEnteredFormat: {
+            horizontalAlignment: "LEFT",
+            verticalAlignment: "MIDDLE",
+            backgroundColor: { red: 1, green: 1, blue: 1 },
+            textFormat: { foregroundColor: { red: 0, green: 0, blue: 0 } },
+          },
+        },
+        fields:
+          "userEnteredFormat(horizontalAlignment,verticalAlignment,backgroundColor,textFormat)",
+      },
+    });
+  }
+
   if (headerRowIndex >= 0) {
     requests.push({
       repeatCell: {
@@ -156,12 +176,11 @@ async function applyPresenzeTabFormatting(
         },
         cell: {
           userEnteredFormat: {
-            backgroundColor: CREAM_BG,
             textFormat: { bold: true },
-            horizontalAlignment: "CENTER",
+            horizontalAlignment: "LEFT",
           },
         },
-        fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)",
+        fields: "userEnteredFormat(textFormat,horizontalAlignment)",
       },
     });
     requests.push({
@@ -171,6 +190,19 @@ async function applyPresenzeTabFormatting(
           gridProperties: { frozenRowCount: headerRowIndex + 1 },
         },
         fields: "gridProperties.frozenRowCount",
+      },
+    });
+    requests.push({
+      setBasicFilter: {
+        filter: {
+          range: {
+            sheetId: tabSheetId,
+            startRowIndex: headerRowIndex,
+            endRowIndex: values.length,
+            startColumnIndex: 0,
+            endColumnIndex: 8,
+          },
+        },
       },
     });
   }
@@ -188,11 +220,11 @@ async function applyPresenzeTabFormatting(
         },
         cell: {
           userEnteredFormat: {
-            backgroundColor: OLIVE_BG,
-            textFormat: { bold: true, foregroundColor: OLIVE_TEXT },
+            textFormat: { bold: true },
+            horizontalAlignment: "LEFT",
           },
         },
-        fields: "userEnteredFormat(backgroundColor,textFormat)",
+        fields: "userEnteredFormat(textFormat,horizontalAlignment)",
       },
     });
   }
@@ -228,7 +260,8 @@ async function writePresenzeTab(
       await sheets.spreadsheets.values.update({
         spreadsheetId: sheetId,
         range: `${tab}!A1`,
-        valueInputOption: "USER_ENTERED",
+        // RAW: evita che Sheets interpreti "Giugno 2026" come data (→ "giugno 2026")
+        valueInputOption: "RAW",
         requestBody: { values },
       });
       await applyPresenzeTabFormatting(sheets, sheetId, tabSheetId, values);

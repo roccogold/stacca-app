@@ -91,7 +91,6 @@ export function buildPresenzeSheetValues(
     const stato = block.stato === "Chiuso" ? "Chiuso" : "Bozza";
 
     lines.push([`MESE: ${monthLabel}`, "", "", "", "", "", "", stato]);
-    lines.push([]);
 
     const entries = [...block.entries].sort(
       (a, b) =>
@@ -111,8 +110,6 @@ export function buildPresenzeSheetValues(
         stato,
       ]);
     }
-
-    lines.push([]);
   }
 
   return lines;

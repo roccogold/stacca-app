@@ -14,7 +14,9 @@
     "db:reset-password": "npx tsx prisma/reset-worker-password.ts",
     "sheets:clear-user": "npx tsx prisma/clear-google-sheets-user.ts",
     "sheets:sync-presenze": "npx tsx prisma/sync-presenze-sheets.ts",
-    "db:clear-data": "npx tsx prisma/clear-data.ts"
+    "sheets:ore-totali-layout": "npx tsx prisma/apply-ore-totali-layout.ts",
+    "db:clear-data": "npx tsx prisma/clear-data.ts",
+    "db:unlock-month": "npx tsx prisma/unlock-month.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

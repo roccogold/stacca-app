@@ -95,7 +95,7 @@ Colonne tab **Ore Totali** (log grezzo dall’app): Data, Nome, Email, Ore (test
 
 - **Ogni salvataggio** → riga `Tipo` = **Voce** (una riga per lavoro; colonna **ID** = id voce in app).
 - **Modifica / elimina** in app → aggiorna o rimuove la stessa riga su Sheet (per **ID**; righe vecchie senza ID ancora aggiornabili se data/lavorazione/luogo/ore coincidono).
-- **Invia mese** → riga `Tipo` = **Chiusura mese** su **Ore Totali** + stato **Chiuso** sul tab presenze.
+- **Invia mese** → riga `Tipo` = **Chiusura** su **Ore Totali** + stato **Chiuso** sul tab presenze.
 
 ### Tab **Presenze [Nome]** (foglio standard, un tab per dipendente)
 
