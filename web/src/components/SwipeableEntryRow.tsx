@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { EntryCardLink } from "@/components/EntryCardLink";
 
-const REVEAL_PX = 88;
-const OPEN_THRESHOLD = 44;
+const REVEAL_PX = 92;
+const OPEN_THRESHOLD = 46;
 
 type Props = {
   entryId: string;
@@ -111,8 +111,10 @@ export function SwipeableEntryRow({
     }
   }
 
+  const isOpen = offset <= -OPEN_THRESHOLD / 2;
+
   return (
-    <div className="entry-swipe">
+    <div className={`entry-swipe${isOpen ? " entry-swipe--open" : ""}`}>
       <button
         type="button"
         className="entry-swipe__delete"

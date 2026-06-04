@@ -2,10 +2,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Plus } from "lucide-react";
 import { DailyInspiration } from "@/components/DailyInspiration";
+import { MonthSubmitReminder } from "@/components/MonthSubmitReminder";
 import { SwipeableEntryRow } from "@/components/SwipeableEntryRow";
 import { StaccaLogo } from "@/components/StaccaLogo";
 import { ProfileIconLink } from "@/components/ProfileIconLink";
 import { getMonthSubmission } from "@/lib/month-lock";
+import { getMonthSubmitReminder } from "@/lib/month-reminder";
 import { requireUser } from "@/lib/auth";
 import {
   formatHoursIt,
@@ -22,7 +24,7 @@ export default async function HomePage() {
   const { y: romeY, m: romeM } = romeCalendarParts();
   const monthPrefix = `${romeY}-${String(romeM).padStart(2, "0")}`;
 
-  const [todayEntries, monthAgg, monthSubmission] = await Promise.all([
+  const [todayEntries, monthAgg, monthSubmission, monthReminder] = await Promise.all([
     prisma.timeEntry.findMany({
       where: { userId: user.id, date: today },
       orderBy: { createdAt: "asc" },
@@ -32,6 +34,7 @@ export default async function HomePage() {
       _sum: { hours: true },
     }),
     getMonthSubmission(user.id, monthPrefix),
+    getMonthSubmitReminder(user.id),
   ]);
 
   const todayTotal = todayEntries.reduce((a, e) => a + e.hours, 0);
@@ -63,6 +66,12 @@ export default async function HomePage() {
           <DailyInspiration />
         </Suspense>
       </section>
+
+      {monthReminder && (
+        <section className="block">
+          <MonthSubmitReminder reminder={monthReminder} />
+        </section>
+      )}
 
       <section className="block">
         <div className="card card--accent card--oggi card--oggi--home">
