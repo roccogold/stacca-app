@@ -115,16 +115,18 @@ export function SwipeableEntryRow({
 
   return (
     <div className={`entry-swipe${isOpen ? " entry-swipe--open" : ""}`}>
-      <button
-        type="button"
-        className="entry-swipe__delete"
-        onClick={handleDelete}
-        disabled={deleting}
-        aria-label="Elimina lavoro"
-      >
-        <Trash2 size={20} strokeWidth={2} aria-hidden />
-        <span>Elimina</span>
-      </button>
+      <div className="entry-swipe__underlay" aria-hidden>
+        <button
+          type="button"
+          className="entry-swipe__delete"
+          onClick={handleDelete}
+          disabled={deleting}
+          aria-label="Elimina lavoro"
+        >
+          <Trash2 size={22} strokeWidth={2} aria-hidden />
+          <span>Elimina</span>
+        </button>
+      </div>
       <div
         className={`entry-swipe__panel${dragging ? " entry-swipe__panel--dragging" : ""}`}
         style={{ transform: `translateX(${offset}px)` }}

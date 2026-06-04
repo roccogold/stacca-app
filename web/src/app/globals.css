@@ -2130,18 +2130,31 @@ a.card {
   opacity: 0.75;
 }
 
-/* Swipe to delete (home + mese lists) */
+/* Swipe to delete — red layer behind sliding card (rounded + shadow on panel)
+   https://stackoverflow.com/questions/71986900/custom-swipe-to-delete-for-rounded-tableviewcell-with-drop-shadow */
 .entry-swipe {
+  --entry-swipe-reveal: 88px;
   position: relative;
   border-radius: var(--r-lg);
   overflow: hidden;
-  touch-action: pan-y;
+  isolation: isolate;
+}
+
+.entry-swipe__underlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  background: var(--destructive);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .entry-swipe__delete {
-  position: absolute;
-  inset: 0 0 0 auto;
-  width: 88px;
+  width: var(--entry-swipe-reveal);
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2149,14 +2162,14 @@ a.card {
   gap: 4px;
   padding: 0 8px;
   border: none;
-  border-radius: 0;
-  background: var(--destructive);
+  background: transparent;
   color: var(--primary-fg);
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+  pointer-events: auto;
+  transition: opacity 0.15s ease;
 }
 
 .entry-swipe__delete:disabled {
@@ -2165,13 +2178,19 @@ a.card {
 }
 
 .entry-swipe__delete:active:not(:disabled) {
-  background: oklch(0.48 0.2 27);
+  opacity: 0.88;
 }
 
 .entry-swipe__panel {
   position: relative;
   z-index: 1;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
   will-change: transform;
+  touch-action: pan-x;
   transition: transform 0.28s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
@@ -2179,14 +2198,21 @@ a.card {
   transition: none;
 }
 
-.entry-swipe__panel .entry-card {
-  margin: 0;
-  border-radius: var(--r-lg);
+.entry-swipe--open .entry-swipe__panel,
+.entry-swipe__panel--dragging {
+  box-shadow: var(--shadow-lg);
 }
 
-.entry-swipe--open .entry-swipe__panel .entry-card,
-.entry-swipe__panel--dragging .entry-swipe__panel .entry-card {
-  box-shadow: var(--shadow-lg);
+.entry-swipe__panel .entry-card {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.entry-swipe__panel .entry-card:active {
+  transform: none;
 }
 
 /* Entry groups (mese) */

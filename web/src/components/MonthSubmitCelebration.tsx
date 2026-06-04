@@ -47,8 +47,7 @@ export function MonthSubmitCelebration({
           Ottimo mese!
         </h2>
         <p className="celebrate-card__body">
-          <strong>{formatHoursIt(monthTotal)}</strong> a{" "}
-          <span className="capitalize">{monthLabel}</span> inviate, grazie!
+          <strong>{formatHoursIt(monthTotal)}</strong> a {monthLabel} inviate, grazie!
         </p>
         <button
           type="button"
