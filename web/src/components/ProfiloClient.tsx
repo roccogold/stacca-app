@@ -17,17 +17,7 @@ export function ProfiloClient({ firstName }: Props) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { online, pendingCount, syncState } = useOfflineSync();
-
-  const connectionSub = !online
-    ? pendingCount > 0
-      ? `Offline · ${pendingCount} in sospeso`
-      : "Offline"
-    : syncState === "syncing"
-      ? "Invio in corso…"
-      : pendingCount > 0
-        ? `Online · ${pendingCount} da inviare`
-        : "Online · tutto aggiornato";
+  const { online } = useOfflineSync();
 
   async function sendFeedback() {
     if (!feedback.trim() || loading) return;
@@ -84,7 +74,7 @@ export function ProfiloClient({ firstName }: Props) {
             <Wifi size={20} className="account-row__icon account-row__icon--olive" aria-hidden />
             <div className="account-row__body">
               <div className="account-row__title">Connessione</div>
-              <div className="account-row__sub">{connectionSub}</div>
+              <div className="account-row__sub">{online ? "Online" : "Offline"}</div>
             </div>
             <span
               className={`sync-status__dot${online ? " sync-status__dot--online" : " sync-status__dot--offline"}`}
