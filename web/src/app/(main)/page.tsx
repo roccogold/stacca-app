@@ -38,8 +38,12 @@ export default async function HomePage() {
   const monthTotal = monthAgg._sum.hours ?? 0;
   const greeting = user.displayName.split(" ")[0] || user.displayName;
   const monthTitleCase = formatMonthYearIt().replace(/^\w/, (c) => c.toUpperCase());
-  const lavoriLabel =
-    todayEntries.length === 1 ? "1 lavoro" : `${todayEntries.length} lavori`;
+  const lavoriMeta =
+    todayEntries.length === 0
+      ? "nessun lavoro"
+      : todayEntries.length === 1
+        ? "1 lavoro"
+        : `${todayEntries.length} lavori`;
 
   return (
     <>
@@ -49,27 +53,29 @@ export default async function HomePage() {
       </header>
 
       <section className="block block--home-intro">
-        <h1 className="h1">Ciao, {greeting}</h1>
-        <p className="date-line capitalize">
-          {formatWeekdayLongFromISO(today)}
-        </p>
+        <div className="home-intro__head">
+          <h1 className="h1">Ciao {greeting}</h1>
+          <p className="date-line capitalize">
+            {formatWeekdayLongFromISO(today)}
+          </p>
+        </div>
         <Suspense fallback={null}>
           <DailyInspiration />
         </Suspense>
       </section>
 
       <section className="block">
-        <div className="card card--accent card--oggi">
+        <div className="card card--accent card--oggi card--oggi--home">
           <div className="card--oggi__label">OGGI</div>
-          {todayEntries.length === 0 ? (
-            <p className="card--oggi__empty">
-              Oggi è ancora vuoto — tocca <strong>+</strong> per inserire le ore.
-            </p>
-          ) : (
-            <div className="card--oggi__filled">
-              <span className="card--oggi__num--duration">{formatHoursIt(todayTotal)}</span>
-              <span className="badge badge--on-accent">{lavoriLabel}</span>
-            </div>
+          <div className="card--oggi__filled">
+            <span className="card--oggi__num--duration">{formatHoursIt(todayTotal)}</span>
+            <span className="badge badge--on-accent">{lavoriMeta}</span>
+          </div>
+          {!monthSubmission && (
+            <Link href="/aggiungi" prefetch className="card--oggi__cta">
+              <Plus size={18} strokeWidth={2.5} aria-hidden />
+              Aggiungi ore
+            </Link>
           )}
         </div>
       </section>
@@ -106,11 +112,6 @@ export default async function HomePage() {
         </Link>
       </section>
 
-      {!monthSubmission && (
-        <Link href="/aggiungi" prefetch className="fab" aria-label="Aggiungi ore">
-          <Plus size={32} strokeWidth={2.5} />
-        </Link>
-      )}
     </>
   );
 }

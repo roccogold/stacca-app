@@ -54,6 +54,16 @@ export function stepBreakMinutes(current: number, delta: number, max: number): n
 
 const nbsp = "\u00A0";
 
+/** Decimal hours for hero cards, e.g. "4,75" or "8". */
+export function formatHoursDecimalIt(n: number): string {
+  const rounded = Math.round(n * 100) / 100;
+  const hasFraction = Math.abs(rounded - Math.round(rounded)) > 0.001;
+  return rounded.toLocaleString(it, {
+    minimumFractionDigits: hasFraction ? 2 : 0,
+    maximumFractionDigits: 2,
+  });
+}
+
 /** e.g. "8 ore", "5 ore 3 min", "45 min" — nbsp keeps duration on one line in UI */
 export function formatHoursIt(n: number): string {
   const totalMin = Math.round(n * 60);

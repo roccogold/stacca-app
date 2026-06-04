@@ -806,29 +806,79 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
 
 .bottom-nav__item {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 12px 0;
+  padding: 8px 0 10px;
   min-height: 56px;
   color: var(--muted-foreground);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
   text-decoration: none;
   background: transparent;
   border: none;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav__tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-top: 10px;
+}
+
+.bottom-nav__indicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.bottom-nav__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+}
+
+.bottom-nav__label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.2;
 }
 
 .bottom-nav__item--active {
   color: var(--primary);
 }
 
-.bottom-nav__item:active {
-  opacity: 0.65;
+.bottom-nav__item:active .bottom-nav__icon,
+.bottom-nav__item--pop .bottom-nav__icon {
+  animation: bottom-nav-pop 0.38s cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+@keyframes bottom-nav-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav__item:active .bottom-nav__icon,
+  .bottom-nav__item--pop .bottom-nav__icon {
+    animation: none;
+  }
 }
 
 .bottom-nav__icon--pending {
@@ -1634,6 +1684,16 @@ a.card {
   padding-top: 16px;
 }
 
+.home-intro__head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-intro__head .date-line {
+  margin: 0;
+}
+
 .block--home-intro .h1 {
   margin: 0;
 }
@@ -1743,6 +1803,40 @@ a.card {
 
 .card--oggi__empty strong {
   font-weight: 700;
+}
+
+.card--oggi--home {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.card--oggi--home .card--oggi__filled {
+  margin-top: 4px;
+}
+
+.card--oggi__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 18px;
+  padding: 15px 20px;
+  background: #fff;
+  color: var(--ink);
+  border: none;
+  border-radius: var(--r-pill);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 8px oklch(0.2 0.04 30 / 0.12);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.card--oggi__cta:active {
+  transform: scale(0.98);
 }
 
 /* Month teaser (home) */
