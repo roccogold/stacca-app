@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
@@ -138,15 +138,17 @@ export async function DELETE(
     return NextResponse.json({ error: deleteAllowed.error }, { status: 403 });
   }
 
-  const sheet = await removeEntryFromGoogleSheet(userId, existing);
-  if (!sheet.ok) {
-    return NextResponse.json({ error: sheet.error }, { status: 503 });
-  }
-
   await prisma.timeEntry.delete({ where: { id } });
 
   revalidatePath("/");
   revalidatePath("/mese");
+
+  after(async () => {
+    const sheet = await removeEntryFromGoogleSheet(userId, existing);
+    if (!sheet.ok) {
+      console.error("[entries DELETE] Google Sheets:", sheet.error, { entryId: id });
+    }
+  });
 
   return NextResponse.json({ ok: true });
 }

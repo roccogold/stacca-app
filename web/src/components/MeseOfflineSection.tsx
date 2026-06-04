@@ -9,6 +9,7 @@ import {
   formatShortWeekdayFromISO,
   sharePercentages,
 } from "@/lib/format";
+import { useOptimisticHidden } from "@/lib/use-optimistic-hidden";
 
 type ServerEntry = {
   id: string;
@@ -50,7 +51,8 @@ export function MeseEntriesList({
   monthSubmitted,
   selectedDay,
 }: Props) {
-  const entries = useMergedMonthEntries(serverEntries, monthPrefix);
+  const { hide, unhide, filterVisible } = useOptimisticHidden();
+  const entries = filterVisible(useMergedMonthEntries(serverEntries, monthPrefix));
 
   const filtered = selectedDay
     ? entries.filter((e) => e.date === selectedDay)
@@ -88,6 +90,8 @@ export function MeseEntriesList({
                     serverId={e.serverId}
                     clientId={e.clientId}
                     pending={e.pending}
+                    onDeleteStart={() => hide(e.id)}
+                    onDeleteUndo={() => unhide(e.id)}
                     href={
                       monthSubmitted
                         ? undefined

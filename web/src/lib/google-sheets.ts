@@ -103,7 +103,7 @@ function parseServiceAccountJson(raw: string): {
   }
 }
 
-function loadServiceAccountCredentials():
+export function loadServiceAccountCredentials():
   | { ok: true; email: string; key: string }
   | { ok: false; error: string } {
   const jsonSetting = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();

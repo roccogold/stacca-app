@@ -221,6 +221,26 @@ export function formatWeekdayLong(d: Date): string {
   });
 }
 
+/** Weekday only, e.g. "lunedì" — for foglio presenze. */
+export function formatWeekdayNameFromISO(iso: string): string {
+  const d = isoDateAnchorUtc(iso);
+  if (!d) return "";
+  const name = d.toLocaleDateString(it, { ...romeDateFmt, weekday: "long" });
+  return name ? name.charAt(0).toUpperCase() + name.slice(1) : "";
+}
+
+/** Calendar date dd/mm/yyyy in Europe/Rome. */
+export function formatDateItFromISO(iso: string): string {
+  const d = isoDateAnchorUtc(iso);
+  if (!d) return iso;
+  return d.toLocaleDateString(it, {
+    ...romeDateFmt,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 export function formatShortWeekdayFromISO(iso: string): string {
   const d = isoDateAnchorUtc(iso);
   if (!d) return iso;

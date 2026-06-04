@@ -77,7 +77,7 @@ Free tier: 3,000 emails/month — enough for this app.
 2. **APIs & Services → Library** → abilita **Google Sheets API**
 3. **APIs & Services → Credentials → Create credentials → Service account**
 4. Crea service account → **Keys → Add key → JSON** (salva il file)
-5. Crea un **Google Sheet** con tab **Ore Totali** (log grezzo; o cambia `GOOGLE_SHEETS_TAB`)
+5. Crea un **Google Sheet** con tab **Ore Totali** (log grezzo; i tab **Presenze …** per dipendente vengono creati automaticamente all’invio mese)
 6. **Condividi** il foglio con l'email del service account (tipo `xxx@xxx.iam.gserviceaccount.com`) come **Editor**
 7. In `web/.env` (local) or Vercel env (production):
    ```
@@ -95,32 +95,48 @@ Colonne tab **Ore Totali** (log grezzo dall’app): Data, Nome, Email, Ore (test
 
 - **Ogni salvataggio** → riga `Tipo` = **Voce** (una riga per lavoro; colonna **ID** = id voce in app).
 - **Modifica / elimina** in app → aggiorna o rimuove la stessa riga su Sheet (per **ID**; righe vecchie senza ID ancora aggiornabili se data/lavorazione/luogo/ore coincidono).
-- **Invia mese** → riga `Tipo` = **Chiusura mese** (totale; escluderla dai pivot).
+- **Invia mese** → riga `Tipo` = **Chiusura mese** su **Ore Totali** + aggiornamento tab **Presenze [Nome]** (foglio standard per segretaria/consulente).
 
-### Analisi su Google Sheet (pivot, non in app)
+### Tab **Presenze [Nome]** (foglio standard, un tab per dipendente)
 
-L’app scrive solo il log su **Ore Totali**. Report e pivot li costruisci nel foglio:
+Creato/aggiornato automaticamente a ogni **Invia mese** (nome tab: `Presenze Rocco`, ecc.). Contiene **tutti i mesi già inviati** da quel lavoratore.
 
-1. **Un tab per dipendente** (es. `Ore Rocco`, `Ore Arianna`) con dati filtrati dal log:
-   ```text
-   =FILTER('Ore Totali'!A2:L; 'Ore Totali'!B2:B="Rocco"; 'Ore Totali'!K2:K="Voce")
-   ```
-   (in locale IT usa `;` al posto di `,` se serve.)
+| Colonna | Uso |
+|---------|-----|
+| Mese | `YYYY-MM` |
+| Nome, Email | Dipendente |
+| Data, Giorno, Data (IT) | Giorno lavorato |
+| Ore, **Ore (h)** | Ore del giorno (numero per copia su portale paghe) |
+| Attività, Luoghi, Note | Riepilogo giornata |
+| Inviato il | Timestamp chiusura mese |
+| **Tipo** | Vedi sotto |
 
-2. **Tab Riepilogo** (o più tab) con **Tabella pivot** sul range `Ore Totali!A:L` (o sul tab dipendente; escludi colonna ID dai pivot se non serve):
-   - Filtra **Tipo** = `Voce` (non contare le righe di chiusura mese).
-   - Valori: **SUM di Ore (h)** — non la colonna “Ore” testuale.
+**Tipo** (filtra in Sheet per la segretaria):
 
-3. **Esempi utili**
+| Tipo | Contenuto |
+|------|-----------|
+| **Intestazione** | Una riga per mese (azienda, etichetta mese) |
+| **Giorno** | **Una riga per giorno lavorato** — formato da usare per inserire ore sul portale |
+| **Riepilogo** | Totale ore e giorni del mese |
+| **Voce** | Dettaglio singoli lavori (come in app), dopo il riepilogo |
 
-   | Domanda | Righe pivot | Colonne pivot | Valori |
-   |---------|-------------|---------------|--------|
-   | Ore per lavorazione nel mese | Mese | Lavorazione | SUM Ore (h) |
-   | Ore in una vigna per mese | Mese | Luogo | SUM Ore (h) |
-   | Totale ore per dipendente | Nome | Mese | SUM Ore (h) |
-   | Dettaglio giorni | Data | Lavorazione | SUM Ore (h) |
+Esempio per estrarre solo i giorni di giugno 2026:
 
-4. Se il foglio esisteva prima della colonna **Ore (h)**, aggiorna la riga 1 su **Ore Totali** con l’intestazione completa (o lascia che la prima nuova riga dall’app la crei dopo deploy).
+```text
+=FILTER('Presenze Rocco'!A:M; 'Presenze Rocco'!A:A="2026-06"; 'Presenze Rocco'!M:M="Giorno")
+```
+
+(in locale IT usa `;` al posto di `,` se serve.)
+
+**Backfill** tab presenze per chi ha già inviato mesi in passato:
+
+```bash
+npm run sheets:sync-presenze
+```
+
+### Analisi su **Ore Totali** (pivot, opzionale)
+
+Per analisi grezze o pivot su tutti i dipendenti, usa ancora **Ore Totali** (`Tipo` = `Voce`, valori **SUM Ore (h)**).
 
 Condividi il foglio in sola lettura con chi fa contabilità; il service account resta **Editor** solo per l’app.
 
@@ -186,6 +202,7 @@ Open the Vercel URL → login → add entries → **Invia mese** → check Googl
 - `npm run db:reset-password -- <handle>` — reset one worker to demo password
 - `npm run db:clear-data` — delete all entries + month submissions + sheet data rows (keeps users)
 - `npm run sheets:clear-user -- <handle>` — remove one worker’s rows from Google Sheets
+- `npm run sheets:sync-presenze` — rebuild all **Presenze [Nome]** tabs from DB submissions
 - `npm run db:migrate` — Prisma migrate
 
 ## Security checklist (GitHub / ops)

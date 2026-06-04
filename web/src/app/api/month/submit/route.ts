@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { appendMonthClosureToSheet } from "@/lib/google-sheets";
+import { syncEmployeePresenzeTab } from "@/lib/sync-presenze-sheet";
 import { canSubmitMonthRome, isValidMonthKey, isMonthLocked } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, type SessionData } from "@/lib/session";
@@ -68,6 +69,13 @@ export async function POST(req: Request) {
 
   if (!sent.ok) {
     return NextResponse.json({ error: sent.error }, { status: 503 });
+  }
+
+  const presenze = await syncEmployeePresenzeTab(user.id, {
+    appendMonth: { month, submittedAt, entries },
+  });
+  if (!presenze.ok) {
+    return NextResponse.json({ error: presenze.error }, { status: 503 });
   }
 
   await prisma.monthSubmission.create({

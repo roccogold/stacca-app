@@ -11,6 +11,7 @@ import {
 import { OfflinePendingBanner } from "@/components/OfflinePendingBanner";
 import { SwipeableEntryRow } from "@/components/SwipeableEntryRow";
 import { formatHoursIt } from "@/lib/format";
+import { useOptimisticHidden } from "@/lib/use-optimistic-hidden";
 
 type ServerEntry = {
   id: string;
@@ -35,6 +36,7 @@ const FLASH_COPY: Record<OfflineFlash, string> = {
 
 export function HomeTodaySection({ today, serverTodayEntries, monthLocked }: Props) {
   const { mergeWithServer, consumeFlash } = useOfflineSync();
+  const { hide, unhide, filterVisible } = useOptimisticHidden();
   const [flash, setFlash] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,13 +61,13 @@ export function HomeTodaySection({ today, serverTodayEntries, monthLocked }: Pro
 
   const todayEntries = useMemo(() => {
     const merged = mergeWithServer(serverTodayEntries);
-    return merged
+    return filterVisible(merged)
       .filter((e) => e.date === today)
       .sort((a, b) => {
         if (a.pending !== b.pending) return a.pending ? 1 : -1;
         return a.mansione.localeCompare(b.mansione, "it");
       });
-  }, [mergeWithServer, serverTodayEntries, today]);
+  }, [mergeWithServer, serverTodayEntries, today, filterVisible]);
 
   const todayTotal = todayEntries.reduce((a, e) => a + e.hours, 0);
   const lavoriMeta =
@@ -116,6 +118,8 @@ export function HomeTodaySection({ today, serverTodayEntries, monthLocked }: Pro
                   serverId={e.serverId}
                   clientId={e.clientId}
                   pending={e.pending}
+                  onDeleteStart={() => hide(e.id)}
+                  onDeleteUndo={() => unhide(e.id)}
                   href={
                     monthLocked
                       ? undefined

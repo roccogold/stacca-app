@@ -2,7 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useTransition } from "react";
 import { EntryCardLink } from "@/components/EntryCardLink";
 import { useOfflineSync } from "@/components/OfflineSyncProvider";
 import { isLocalEntryId, parseLocalEntryId } from "@/lib/offline-queue";
@@ -21,6 +21,8 @@ type Props = {
   mansione: string;
   luogo: string;
   compact?: boolean;
+  onDeleteStart?: () => void;
+  onDeleteUndo?: () => void;
 };
 
 export function SwipeableEntryRow({
@@ -34,9 +36,12 @@ export function SwipeableEntryRow({
   mansione,
   luogo,
   compact,
+  onDeleteStart,
+  onDeleteUndo,
 }: Props) {
   const router = useRouter();
   const { deleteEntry } = useOfflineSync();
+  const [, startTransition] = useTransition();
   const [offset, setOffsetState] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -93,44 +98,25 @@ export function SwipeableEntryRow({
 
   async function handleDelete() {
     if (!confirm("Vuoi davvero eliminare questo lavoro?")) return;
-    setDeleting(true);
-    try {
-      const resolvedServerId =
-        serverId ?? (isLocalEntryId(entryId) ? null : entryId);
-      const resolvedClientId =
-        clientId ?? parseLocalEntryId(entryId);
 
-      const { deleteEntryOnline } = await import("@/lib/offline-queue");
-      if (resolvedClientId && !resolvedServerId) {
-        await deleteEntry({ clientId: resolvedClientId });
-        snapClosed();
+    const resolvedServerId =
+      serverId ?? (isLocalEntryId(entryId) ? null : entryId);
+    const resolvedClientId = clientId ?? parseLocalEntryId(entryId);
+
+    onDeleteStart?.();
+    snapClosed();
+    setDeleting(true);
+
+    try {
+      await deleteEntry({
+        serverId: resolvedServerId,
+        clientId: resolvedClientId,
+      });
+      startTransition(() => {
         router.refresh();
-        return;
-      }
-      if (resolvedServerId && navigator.onLine) {
-        const res = await deleteEntryOnline(resolvedServerId);
-        if (res.ok) {
-          snapClosed();
-          router.refresh();
-          return;
-        }
-        if (res.retryable) {
-          await deleteEntry({ serverId: resolvedServerId });
-          snapClosed();
-          router.refresh();
-          return;
-        }
-        alert(res.error);
-        return;
-      }
-      if (resolvedServerId) {
-        await deleteEntry({ serverId: resolvedServerId });
-        snapClosed();
-        router.refresh();
-        return;
-      }
-      alert("Errore nell'eliminazione");
+      });
     } catch (e) {
+      onDeleteUndo?.();
       alert(e instanceof Error ? e.message : "Errore nell'eliminazione");
     } finally {
       setDeleting(false);
