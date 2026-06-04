@@ -9,6 +9,7 @@ type Props = {
   luogo: string;
   compact?: boolean;
   readOnly?: boolean;
+  pending?: boolean;
 };
 
 export function EntryCardLink({
@@ -18,12 +19,14 @@ export function EntryCardLink({
   luogo,
   compact,
   readOnly,
+  pending = false,
 }: Props) {
   const content = (
     <>
       <div className="entry-card__body">
         <span className="entry-card__title">{mansione}</span>
         <span className="entry-card__meta">{luogo}</span>
+        {pending && <span className="entry-card__pending">In attesa</span>}
       </div>
       <div className="entry-card__aside">
         <span className="entry-card__hours">{formatHoursIt(hours)}</span>
@@ -37,7 +40,7 @@ export function EntryCardLink({
   if (readOnly || !href) {
     return (
       <div
-        className={`entry-card entry-card--readonly${compact ? " entry-card--compact" : ""}`}
+        className={`entry-card entry-card--readonly${pending ? " entry-card--pending" : ""}${compact ? " entry-card--compact" : ""}`}
       >
         {content}
       </div>
@@ -45,7 +48,11 @@ export function EntryCardLink({
   }
 
   return (
-    <Link href={href} prefetch className={`entry-card${compact ? " entry-card--compact" : ""}`}>
+    <Link
+      href={href}
+      prefetch
+      className={`entry-card${pending ? " entry-card--pending" : ""}${compact ? " entry-card--compact" : ""}`}
+    >
       {content}
     </Link>
   );

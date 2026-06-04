@@ -105,7 +105,7 @@ Keep **minimal** — no avatar circle, no @username, no “Operaio” label.
 - **Large touch targets** (min 44–56px).
 - **One primary action per screen.**
 - **Confirm destructive actions** (delete entry, submit month).
-- **Offline-friendly messaging** if no network: “Serve connessione per salvare” — workers log when back in coverage.
+- **Offline queue**: save works without network (“Salvato sul telefono…”), badge “In attesa”, olive banner with pending count, auto-sync on `online`. Month submit still requires connection and empty queue.
 - **No tables, no spreadsheets, no filters** — workers never see Google Sheets.
 
 ## Month lock rules (business logic for prototype)

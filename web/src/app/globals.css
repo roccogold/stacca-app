@@ -2130,6 +2130,81 @@ a.card {
   opacity: 0.75;
 }
 
+/* Offline — pending sync banner */
+.offline-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: var(--stacca-olive);
+  color: var(--stacca-sun);
+  box-shadow: var(--shadow);
+}
+
+.offline-banner--syncing {
+  background: oklch(0.55 0.06 130);
+}
+
+.offline-banner--error {
+  background: oklch(0.52 0.08 55);
+  color: var(--stacca-cream);
+}
+
+.offline-banner__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.offline-banner__title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.offline-banner__sub {
+  font-size: 13px;
+  opacity: 0.9;
+  line-height: 1.35;
+}
+
+.offline-banner__spin {
+  flex-shrink: 0;
+  animation: offline-spin 1s linear infinite;
+}
+
+@keyframes offline-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.offline-flash {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: oklch(0.94 0.03 130);
+  color: var(--stacca-ink);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.entry-card--pending {
+  border: 1.5px dashed oklch(0.72 0.04 130);
+}
+
+.entry-card__pending {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--stacca-olive);
+  letter-spacing: 0.02em;
+}
+
 /* Swipe to delete — red layer behind sliding card (rounded + shadow on panel)
    https://stackoverflow.com/questions/71986900/custom-swipe-to-delete-for-rounded-tableviewcell-with-drop-shadow */
 .entry-swipe {

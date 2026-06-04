@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus } from "lucide-react";
 import { DailyInspiration } from "@/components/DailyInspiration";
+import { HomeTodaySection } from "@/components/HomeTodaySection";
 import { MonthSubmitReminder } from "@/components/MonthSubmitReminder";
-import { SwipeableEntryRow } from "@/components/SwipeableEntryRow";
 import { StaccaLogo } from "@/components/StaccaLogo";
 import { ProfileIconLink } from "@/components/ProfileIconLink";
 import { getMonthSubmission } from "@/lib/month-lock";
@@ -37,16 +36,9 @@ export default async function HomePage() {
     getMonthSubmitReminder(user.id),
   ]);
 
-  const todayTotal = todayEntries.reduce((a, e) => a + e.hours, 0);
   const monthTotal = monthAgg._sum.hours ?? 0;
   const greeting = user.displayName.split(" ")[0] || user.displayName;
   const monthTitleCase = formatMonthYearIt().replace(/^\w/, (c) => c.toUpperCase());
-  const lavoriMeta =
-    todayEntries.length === 0
-      ? "nessun lavoro"
-      : todayEntries.length === 1
-        ? "1 lavoro"
-        : `${todayEntries.length} lavori`;
 
   return (
     <>
@@ -73,41 +65,11 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section className="block">
-        <div className="card card--accent card--oggi card--oggi--home">
-          <div className="card--oggi__label">OGGI</div>
-          <div className="card--oggi__filled">
-            <span className="card--oggi__num--duration">{formatHoursIt(todayTotal)}</span>
-            <span className="badge badge--on-accent">{lavoriMeta}</span>
-          </div>
-          {!monthSubmission && (
-            <Link href="/aggiungi" prefetch className="card--oggi__cta">
-              <Plus size={18} strokeWidth={2.5} aria-hidden />
-              Aggiungi ore
-            </Link>
-          )}
-        </div>
-      </section>
-
-      {todayEntries.length > 0 && (
-        <section className="block">
-          <h2 className="section-title section-title--inset">I lavori di oggi</h2>
-          <ul className="entry-list">
-            {todayEntries.map((e) => (
-              <li key={e.id}>
-                <SwipeableEntryRow
-                  entryId={e.id}
-                  href={monthSubmission ? undefined : `/aggiungi?edit=${e.id}`}
-                  readOnly={!!monthSubmission}
-                  hours={e.hours}
-                  mansione={e.mansione}
-                  luogo={e.luogo}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <HomeTodaySection
+        today={today}
+        serverTodayEntries={todayEntries}
+        monthLocked={!!monthSubmission}
+      />
 
       <section className="block">
         <Link href="/mese" className="month-teaser">

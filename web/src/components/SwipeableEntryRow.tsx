@@ -4,12 +4,17 @@ import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { EntryCardLink } from "@/components/EntryCardLink";
+import { useOfflineSync } from "@/components/OfflineSyncProvider";
+import { isLocalEntryId, parseLocalEntryId } from "@/lib/offline-queue";
 
 const REVEAL_PX = 88;
 const OPEN_THRESHOLD = 44;
 
 type Props = {
   entryId: string;
+  serverId?: string | null;
+  clientId?: string | null;
+  pending?: boolean;
   href?: string;
   readOnly?: boolean;
   hours: number;
@@ -20,6 +25,9 @@ type Props = {
 
 export function SwipeableEntryRow({
   entryId,
+  serverId = null,
+  clientId = null,
+  pending = false,
   href,
   readOnly = false,
   hours,
@@ -28,6 +36,7 @@ export function SwipeableEntryRow({
   compact,
 }: Props) {
   const router = useRouter();
+  const { deleteEntry } = useOfflineSync();
   const [offset, setOffsetState] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -53,6 +62,7 @@ export function SwipeableEntryRow({
         mansione={mansione}
         luogo={luogo}
         compact={compact}
+        pending={pending}
       />
     );
   }
@@ -85,16 +95,43 @@ export function SwipeableEntryRow({
     if (!confirm("Vuoi davvero eliminare questo lavoro?")) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/entries/${entryId}`, { method: "DELETE" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        alert(typeof data.error === "string" ? data.error : "Errore nell'eliminazione");
+      const resolvedServerId =
+        serverId ?? (isLocalEntryId(entryId) ? null : entryId);
+      const resolvedClientId =
+        clientId ?? parseLocalEntryId(entryId);
+
+      const { deleteEntryOnline } = await import("@/lib/offline-queue");
+      if (resolvedClientId && !resolvedServerId) {
+        await deleteEntry({ clientId: resolvedClientId });
+        snapClosed();
+        router.refresh();
         return;
       }
-      snapClosed();
-      router.refresh();
-    } catch {
+      if (resolvedServerId && navigator.onLine) {
+        const res = await deleteEntryOnline(resolvedServerId);
+        if (res.ok) {
+          snapClosed();
+          router.refresh();
+          return;
+        }
+        if (res.retryable) {
+          await deleteEntry({ serverId: resolvedServerId });
+          snapClosed();
+          router.refresh();
+          return;
+        }
+        alert(res.error);
+        return;
+      }
+      if (resolvedServerId) {
+        await deleteEntry({ serverId: resolvedServerId });
+        snapClosed();
+        router.refresh();
+        return;
+      }
       alert("Errore nell'eliminazione");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Errore nell'eliminazione");
     } finally {
       setDeleting(false);
     }
@@ -146,6 +183,7 @@ export function SwipeableEntryRow({
           mansione={mansione}
           luogo={luogo}
           compact={compact}
+          pending={pending}
         />
       </div>
     </div>

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Info } from "lucide-react";
 import { BottomSheet } from "@/components/BottomSheet";
 import { MonthSubmitCelebration } from "@/components/MonthSubmitCelebration";
+import { useOfflineSync } from "@/components/OfflineSyncProvider";
 import { formatHoursIt } from "@/lib/format";
 
 type Props = {
@@ -27,7 +28,9 @@ export function SubmitMonthPanel({
   submittedAt,
 }: Props) {
   const router = useRouter();
+  const { pendingCount, online } = useOfflineSync();
   const [open, setOpen] = useState(false);
+  const blockSubmit = pendingCount > 0 || !online;
   const [celebrate, setCelebrate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +52,14 @@ export function SubmitMonthPanel({
   }
 
   async function submitMonth() {
+    if (blockSubmit) {
+      setError(
+        pendingCount > 0
+          ? "Invia prima i lavori in sospeso dal telefono."
+          : "Serve connessione per inviare il mese.",
+      );
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -82,10 +93,17 @@ export function SubmitMonthPanel({
           Invia solo a fine mese, dopo l&apos;invio non potrai più modificare le ore.
         </span>
       </div>
+      {blockSubmit && (
+        <p className="form-hint" style={{ marginBottom: 12 }}>
+          {pendingCount > 0
+            ? "Hai lavori salvati sul telefono: attendi l'invio automatico prima di chiudere il mese."
+            : "Serve connessione per inviare il mese."}
+        </p>
+      )}
       <button
         type="button"
         className="btn btn--primary btn--block btn--sheet"
-        disabled={!canSubmit}
+        disabled={!canSubmit || blockSubmit}
         onClick={() => setOpen(true)}
       >
         Invia mese

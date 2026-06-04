@@ -31,6 +31,7 @@ Field workers should not fight a spreadsheet on a phone. Stacca is a **simple pr
 | Today view + fast entry form | Month lock after submit |
 | Calendar month + stats by task & site | Pivot-ready numeric hours column |
 | Swipe to delete, gentle reminders | Feedback email to admin |
+| Offline save — queue on phone, sync when back online | Pending banner + “In attesa” on entries |
 
 ---
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, LogOut, MessageSquare, Wifi } from "lucide-react";
 import { AppFooter } from "@/components/AppFooter";
+import { useOfflineSync } from "@/components/OfflineSyncProvider";
 import { BottomSheet } from "@/components/BottomSheet";
 import { logoutAction } from "@/app/(main)/actions";
 
@@ -16,20 +17,17 @@ export function ProfiloClient({ firstName }: Props) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [online, setOnline] = useState(
-    () => typeof navigator !== "undefined" && navigator.onLine,
-  );
+  const { online, pendingCount, syncState } = useOfflineSync();
 
-  useEffect(() => {
-    const on = () => setOnline(true);
-    const off = () => setOnline(false);
-    window.addEventListener("online", on);
-    window.addEventListener("offline", off);
-    return () => {
-      window.removeEventListener("online", on);
-      window.removeEventListener("offline", off);
-    };
-  }, []);
+  const connectionSub = !online
+    ? pendingCount > 0
+      ? `Offline · ${pendingCount} in sospeso`
+      : "Offline"
+    : syncState === "syncing"
+      ? "Invio in corso…"
+      : pendingCount > 0
+        ? `Online · ${pendingCount} da inviare`
+        : "Online · tutto aggiornato";
 
   async function sendFeedback() {
     if (!feedback.trim() || loading) return;
@@ -86,7 +84,7 @@ export function ProfiloClient({ firstName }: Props) {
             <Wifi size={20} className="account-row__icon account-row__icon--olive" aria-hidden />
             <div className="account-row__body">
               <div className="account-row__title">Connessione</div>
-              <div className="account-row__sub">{online ? "Online" : "Offline"}</div>
+              <div className="account-row__sub">{connectionSub}</div>
             </div>
             <span
               className={`sync-status__dot${online ? " sync-status__dot--online" : " sync-status__dot--offline"}`}

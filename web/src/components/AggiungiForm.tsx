@@ -6,11 +6,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useTransition, useState } from "react";
 import { HoursEntryCard } from "@/components/HoursEntryCard";
+import { useOfflineSync } from "@/components/OfflineSyncProvider";
 import { LUOGHI_ALTRO, LUOGHI_VIGNE, MANSIONI } from "@/lib/constants";
 import { clampISODate, formatDateField, todayISO } from "@/lib/format";
+import {
+  getPendingEntryByLocalId,
+  isLocalEntryId,
+  parseLocalEntryId,
+} from "@/lib/offline-queue";
 
 type Props = {
   initial: TimeEntry | null;
+  editLocalId?: string | null;
   presetDate?: string;
   locked?: boolean;
   minDate: string;
@@ -25,6 +32,7 @@ function initialHoursValue(existing: number | undefined): number {
 
 export function AggiungiForm({
   initial,
+  editLocalId = null,
   presetDate,
   locked = false,
   minDate,
@@ -32,8 +40,9 @@ export function AggiungiForm({
   monthLabel,
 }: Props) {
   const router = useRouter();
+  const { userId, saveEntry, deleteEntry } = useOfflineSync();
   const [, startTransition] = useTransition();
-  const editId = initial?.id ?? null;
+  const editId = initial?.id ?? editLocalId ?? null;
   const defaultDate = clampISODate(
     initial?.date ?? presetDate ?? todayISO(),
     minDate,
@@ -46,10 +55,33 @@ export function AggiungiForm({
   const [note, setNote] = useState(initial?.note ?? "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pendingLoaded, setPendingLoaded] = useState(!editLocalId);
 
   useEffect(() => {
     router.prefetch("/");
   }, [router]);
+
+  useEffect(() => {
+    if (!editLocalId || initial) return;
+    let cancelled = false;
+    void (async () => {
+      const row = await getPendingEntryByLocalId(userId, editLocalId);
+      if (cancelled || !row) {
+        if (!cancelled) setError("Lavoro non trovato sul telefono");
+        setPendingLoaded(true);
+        return;
+      }
+      setDate(clampISODate(row.date, minDate, maxDate));
+      setHours(row.hours);
+      setMansione(row.mansione);
+      setLuogo(row.luogo);
+      setNote(row.note ?? "");
+      setPendingLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editLocalId, initial, minDate, maxDate, userId]);
 
   function goHome() {
     document.dispatchEvent(new Event("stacca:navigate"));
@@ -70,22 +102,19 @@ export function AggiungiForm({
         luogo,
         note: note.trim() || null,
       };
-      const url = editId ? `/api/entries/${editId}` : "/api/entries";
-      const res = await fetch(url, {
-        method: editId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const localId = editId && isLocalEntryId(editId) ? editId : null;
+      const serverId =
+        initial?.id ?? (editId && !isLocalEntryId(editId) ? editId : null);
+      const clientId = localId ? parseLocalEntryId(localId) : null;
+
+      await saveEntry({
+        serverId,
+        clientId,
+        payload,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(typeof data.error === "string" ? data.error : "Errore nel salvataggio");
-        setLoading(false);
-        return;
-      }
       goHome();
-      return;
-    } catch {
-      setError("Errore nel salvataggio");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Errore nel salvataggio");
       setLoading(false);
     }
   }
@@ -94,16 +123,13 @@ export function AggiungiForm({
     if (!editId || !confirm("Vuoi davvero eliminare questo lavoro?")) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/entries/${editId}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(typeof data.error === "string" ? data.error : "Errore");
-        setLoading(false);
-        return;
-      }
+      const localId = isLocalEntryId(editId) ? editId : null;
+      const serverId = initial?.id ?? (localId ? null : editId);
+      const clientId = localId ? parseLocalEntryId(localId) : null;
+      await deleteEntry({ serverId, clientId });
       goHome();
-    } catch {
-      setError("Errore");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Errore");
       setLoading(false);
     }
   }
@@ -227,7 +253,7 @@ export function AggiungiForm({
             type="button"
             className="btn btn--primary btn--block btn--sheet"
             onClick={save}
-            disabled={loading || hours <= 0 || !mansione || !luogo}
+            disabled={loading || !pendingLoaded || hours <= 0 || !mansione || !luogo}
           >
             {loading ? "Salvataggio…" : editId ? "Aggiorna lavoro" : "Salva lavoro"}
           </button>

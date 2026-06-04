@@ -7,6 +7,7 @@ import {
 } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
 import { clampISODate, todayISO } from "@/lib/format";
+import { isLocalEntryId } from "@/lib/offline-queue";
 
 export default async function AggiungiPage({
   searchParams,
@@ -16,11 +17,13 @@ export default async function AggiungiPage({
   const user = await requireUser();
   const { edit, date } = await searchParams;
 
-  const initial = edit
-    ? await prisma.timeEntry.findFirst({
-        where: { id: edit, userId: user.id },
-      })
-    : null;
+  const editLocalId = edit && isLocalEntryId(edit) ? edit : null;
+  const initial =
+    edit && !isLocalEntryId(edit)
+      ? await prisma.timeEntry.findFirst({
+          where: { id: edit, userId: user.id },
+        })
+      : null;
 
   const presetDate =
     !edit && date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined;
@@ -34,6 +37,7 @@ export default async function AggiungiPage({
   return (
     <AggiungiForm
       initial={initial}
+      editLocalId={editLocalId}
       presetDate={targetDate}
       locked={locked}
       minDate={bounds.min}
