@@ -1,4 +1,8 @@
-# Setup
+# Stacca — developer guide
+
+Project overview, screenshots, and brand story: **[../README.md](../README.md)**.
+
+## Setup
 
 ```bash
 cd web
