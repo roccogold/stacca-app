@@ -69,14 +69,21 @@ export function MonthCalendar({
               else if (isToday) cls += " cal-cell--today";
               const href =
                 isSel ? `/mese?y=${year}&m=${month}` : `/mese?y=${year}&m=${month}&d=${key}`;
+              const ariaParts = [
+                key,
+                isToday ? "oggi" : null,
+                has ? "con ore" : "nessuna ora",
+                isSel ? "selezionato" : null,
+              ].filter(Boolean);
               return (
                 <Link
                   key={key}
                   href={href}
                   className={cls}
-                  aria-label={`${key}: ${has ? "con ore" : "nessuna ora"}`}
+                  aria-label={ariaParts.join(", ")}
                 >
-                  {day}
+                  <span className="cal-cell__num">{day}</span>
+                  {has ? <span className="cal-cell__dot" aria-hidden /> : null}
                 </Link>
               );
             })}
