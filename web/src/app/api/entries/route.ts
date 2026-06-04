@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
@@ -6,6 +6,7 @@ import { LUOGHI, MANSIONI } from "@/lib/constants";
 import { isValidWorkHours } from "@/lib/format";
 import { assertEntryDateAllowed } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
+import { refreshPresenzeTabAfterEntryChange } from "@/lib/sync-presenze-sheet";
 import { syncEntryToGoogleSheet } from "@/lib/sync-entry-sheet";
 import { sessionOptions, type SessionData } from "@/lib/session";
 
@@ -96,14 +97,16 @@ export async function POST(req: Request) {
     },
   });
 
-  const sheet = await syncEntryToGoogleSheet(userId, entry);
-  if (!sheet.ok) {
-    await prisma.timeEntry.delete({ where: { id: entry.id } });
-    return NextResponse.json({ error: sheet.error }, { status: 503 });
-  }
-
   revalidatePath("/");
   revalidatePath("/mese");
+
+  after(async () => {
+    const sheet = await syncEntryToGoogleSheet(userId, entry);
+    if (!sheet.ok) {
+      console.error("[entries POST] Google Sheets:", sheet.error, { entryId: entry.id });
+    }
+    await refreshPresenzeTabAfterEntryChange(userId);
+  });
 
   return NextResponse.json({ entry });
 }

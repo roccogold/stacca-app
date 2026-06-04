@@ -1,13 +1,15 @@
 import { google } from "googleapis";
 import { loadServiceAccountCredentials } from "@/lib/google-sheets";
 import { logError } from "@/lib/log-error";
+import { monthFromDate } from "@/lib/month-lock";
 import {
-  buildAllPresenzeRowsForUser,
+  buildPresenzeSheetValues,
   employeePresenzeTabName,
-  PRESENZE_SHEET_HEADERS,
-  presenzeRowToValues,
-  type PresenzeSheetRow,
-  type SubmittedMonthBlock,
+  isPresenzeBlankRow,
+  isPresenzeColumnHeaderRow,
+  isPresenzeMonthBandRow,
+  legacyPresenzeTabName,
+  type PresenzeMonthBlock,
 } from "@/lib/presenze-sheet";
 import { prisma } from "@/lib/prisma";
 
@@ -34,25 +36,179 @@ async function getTabSheetId(
   return sheetId == null ? null : sheetId;
 }
 
+async function renamePresenzeTabIfExists(
+  sheets: ReturnType<typeof getSheetsClient>,
+  spreadsheetId: string,
+  fromTitle: string,
+  toTitle: string,
+): Promise<void> {
+  if (fromTitle === toTitle) return;
+
+  const fromId = await getTabSheetId(sheets, spreadsheetId, fromTitle);
+  if (fromId == null) return;
+
+  const toId = await getTabSheetId(sheets, spreadsheetId, toTitle);
+  if (toId != null) return;
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          updateSheetProperties: {
+            properties: { sheetId: fromId, title: toTitle },
+            fields: "title",
+          },
+        },
+      ],
+    },
+  });
+}
+
 async function ensurePresenzeTab(
   sheets: ReturnType<typeof getSheetsClient>,
   spreadsheetId: string,
   tab: string,
-): Promise<void> {
+): Promise<number> {
   const existing = await getTabSheetId(sheets, spreadsheetId, tab);
-  if (existing != null) return;
+  if (existing != null) return existing;
 
-  await sheets.spreadsheets.batchUpdate({
+  const res = await sheets.spreadsheets.batchUpdate({
     spreadsheetId,
     requestBody: {
       requests: [{ addSheet: { properties: { title: tab } } }],
     },
   });
+  const id = res.data.replies?.[0]?.addSheet?.properties?.sheetId;
+  if (id == null) throw new Error(`Impossibile creare il tab "${tab}".`);
+  return id;
+}
+
+const PRESENZE_COL_WIDTHS = [96, 88, 56, 128, 148, 200, 108, 72];
+
+const CREAM_BG = { red: 0.98, green: 0.97, blue: 0.94 };
+const OLIVE_BG = { red: 0.9, green: 0.93, blue: 0.86 };
+const OLIVE_TEXT = { red: 0.28, green: 0.35, blue: 0.22 };
+
+async function applyPresenzeTabFormatting(
+  sheets: ReturnType<typeof getSheetsClient>,
+  spreadsheetId: string,
+  tabSheetId: number,
+  values: (string | number)[][],
+): Promise<void> {
+  const requests: object[] = [];
+
+  for (let c = 0; c < PRESENZE_COL_WIDTHS.length; c++) {
+    requests.push({
+      updateDimensionProperties: {
+        range: {
+          sheetId: tabSheetId,
+          dimension: "COLUMNS",
+          startIndex: c,
+          endIndex: c + 1,
+        },
+        properties: { pixelSize: PRESENZE_COL_WIDTHS[c] },
+        fields: "pixelSize",
+      },
+    });
+  }
+
+  let headerRowIndex = -1;
+
+  for (let r = 0; r < values.length; r++) {
+    const row = values[r] ?? [];
+    let pixelSize = 30;
+
+    if (isPresenzeBlankRow(row)) {
+      pixelSize = 14;
+    } else if (isPresenzeColumnHeaderRow(row)) {
+      headerRowIndex = r;
+      pixelSize = 38;
+    } else if (isPresenzeMonthBandRow(row)) {
+      pixelSize = 34;
+    } else if (row[0] === "Azienda" || row[0] === "Dipendente") {
+      pixelSize = 26;
+    }
+
+    requests.push({
+      updateDimensionProperties: {
+        range: {
+          sheetId: tabSheetId,
+          dimension: "ROWS",
+          startIndex: r,
+          endIndex: r + 1,
+        },
+        properties: { pixelSize },
+        fields: "pixelSize",
+      },
+    });
+  }
+
+  if (headerRowIndex >= 0) {
+    requests.push({
+      repeatCell: {
+        range: {
+          sheetId: tabSheetId,
+          startRowIndex: headerRowIndex,
+          endRowIndex: headerRowIndex + 1,
+          startColumnIndex: 0,
+          endColumnIndex: 8,
+        },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: CREAM_BG,
+            textFormat: { bold: true },
+            horizontalAlignment: "CENTER",
+          },
+        },
+        fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)",
+      },
+    });
+    requests.push({
+      updateSheetProperties: {
+        properties: {
+          sheetId: tabSheetId,
+          gridProperties: { frozenRowCount: headerRowIndex + 1 },
+        },
+        fields: "gridProperties.frozenRowCount",
+      },
+    });
+  }
+
+  for (let r = 0; r < values.length; r++) {
+    if (!isPresenzeMonthBandRow(values[r] ?? [])) continue;
+    requests.push({
+      repeatCell: {
+        range: {
+          sheetId: tabSheetId,
+          startRowIndex: r,
+          endRowIndex: r + 1,
+          startColumnIndex: 0,
+          endColumnIndex: 8,
+        },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: OLIVE_BG,
+            textFormat: { bold: true, foregroundColor: OLIVE_TEXT },
+          },
+        },
+        fields: "userEnteredFormat(backgroundColor,textFormat)",
+      },
+    });
+  }
+
+  const batchSize = 80;
+  for (let i = 0; i < requests.length; i += batchSize) {
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: { requests: requests.slice(i, i + batchSize) },
+    });
+  }
 }
 
 async function writePresenzeTab(
   tab: string,
-  presenzeRows: PresenzeSheetRow[],
+  values: (string | number)[][],
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const sheetId = process.env.GOOGLE_SHEETS_ID?.trim();
   const creds = loadServiceAccountCredentials();
@@ -61,23 +217,22 @@ async function writePresenzeTab(
   }
 
   const sheets = getSheetsClient(creds);
-  const values: (string | number)[][] = [
-    [...PRESENZE_SHEET_HEADERS],
-    ...presenzeRows.map(presenzeRowToValues),
-  ];
 
   try {
-    await ensurePresenzeTab(sheets, sheetId, tab);
+    const tabSheetId = await ensurePresenzeTab(sheets, sheetId, tab);
     await sheets.spreadsheets.values.clear({
       spreadsheetId: sheetId,
       range: `${tab}!A:Z`,
     });
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: sheetId,
-      range: `${tab}!A1`,
-      valueInputOption: "USER_ENTERED",
-      requestBody: { values },
-    });
+    if (values.length > 0) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: sheetId,
+        range: `${tab}!A1`,
+        valueInputOption: "USER_ENTERED",
+        requestBody: { values },
+      });
+      await applyPresenzeTabFormatting(sheets, sheetId, tabSheetId, values);
+    }
     return { ok: true };
   } catch (err) {
     logError("google-sheets presenze", err);
@@ -88,10 +243,52 @@ async function writePresenzeTab(
   }
 }
 
-/** Rebuild worker tab (Presenze Nome) from all submitted months. */
+async function loadPresenzeBlocks(userId: string): Promise<PresenzeMonthBlock[]> {
+  const submissions = await prisma.monthSubmission.findMany({
+    where: { userId },
+    orderBy: { month: "asc" },
+  });
+  const submittedByMonth = new Map(
+    submissions.map((s) => [s.month, s.submittedAt] as const),
+  );
+
+  const dateRows = await prisma.timeEntry.findMany({
+    where: { userId },
+    select: { date: true },
+  });
+  const months = new Set<string>(submittedByMonth.keys());
+  for (const { date } of dateRows) {
+    months.add(monthFromDate(date));
+  }
+
+  const sortedMonths = [...months].sort();
+  const blocks: PresenzeMonthBlock[] = [];
+
+  await Promise.all(
+    sortedMonths.map(async (month) => {
+      const monthEntries = await prisma.timeEntry.findMany({
+        where: { userId, date: { startsWith: month } },
+        orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+      });
+      if (monthEntries.length === 0) return;
+
+      const submittedAt = submittedByMonth.get(month) ?? null;
+      blocks.push({
+        month,
+        stato: submittedAt ? "Chiuso" : "Bozza",
+        submittedAt,
+        entries: monthEntries,
+      });
+    }),
+  );
+
+  blocks.sort((a, b) => a.month.localeCompare(b.month));
+  return blocks;
+}
+
+/** Rebuild worker tab (Presenze Nome) from DB — bozze + mesi chiusi. */
 export async function syncEmployeePresenzeTab(
   userId: string,
-  options?: { appendMonth?: SubmittedMonthBlock },
 ): Promise<{ ok: true; skipped?: boolean; tab?: string } | { ok: false; error: string }> {
   const sheetId = process.env.GOOGLE_SHEETS_ID?.trim();
   const creds = loadServiceAccountCredentials();
@@ -107,37 +304,30 @@ export async function syncEmployeePresenzeTab(
     return { ok: false, error: "Utente non trovato" };
   }
 
-  const submissions = await prisma.monthSubmission.findMany({
-    where: { userId },
-    orderBy: { month: "asc" },
-  });
-
-  const blocks: SubmittedMonthBlock[] = [];
-  for (const sub of submissions) {
-    const entries = await prisma.timeEntry.findMany({
-      where: { userId, date: { startsWith: sub.month } },
-      orderBy: [{ date: "asc" }, { createdAt: "asc" }],
-    });
-    blocks.push({
-      month: sub.month,
-      submittedAt: sub.submittedAt,
-      entries,
-    });
-  }
-
-  const pending = options?.appendMonth;
-  if (pending && !blocks.some((b) => b.month === pending.month)) {
-    blocks.push(pending);
-  }
-
+  const blocks = await loadPresenzeBlocks(userId);
   if (blocks.length === 0) {
     return { ok: true, skipped: true };
   }
 
-  const presenzeRows = buildAllPresenzeRowsForUser(user, blocks);
+  const values = buildPresenzeSheetValues(user, blocks);
   const tab = employeePresenzeTabName(user);
-  const written = await writePresenzeTab(tab, presenzeRows);
+  const sheets = getSheetsClient(creds);
+  const legacy = legacyPresenzeTabName(user);
+  if (legacy) {
+    await renamePresenzeTabIfExists(sheets, sheetId, legacy, tab);
+  }
+  const written = await writePresenzeTab(tab, values);
   if (!written.ok) return written;
 
   return { ok: true, tab };
+}
+
+/** Call after entry create/update/delete (non-blocking). */
+export async function refreshPresenzeTabAfterEntryChange(
+  userId: string,
+): Promise<void> {
+  const res = await syncEmployeePresenzeTab(userId);
+  if (!res.ok) {
+    console.error("[presenze refresh]", res.error, { userId });
+  }
 }

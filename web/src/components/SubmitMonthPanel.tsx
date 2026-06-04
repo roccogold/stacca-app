@@ -133,7 +133,7 @@ export function SubmitMonthPanel({
             disabled={loading}
             onClick={submitMonth}
           >
-            {loading ? "Invio…" : "Sì, invia"}
+            {loading ? "Chiusura mese…" : "Sì, invia"}
           </button>
           <button
             type="button"

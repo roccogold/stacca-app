@@ -87,8 +87,8 @@ export function AggiungiForm({
     document.dispatchEvent(new Event("stacca:navigate"));
     startTransition(() => {
       router.replace("/");
+      router.refresh();
     });
-    void router.refresh();
   }
 
   async function save() {
@@ -112,6 +112,7 @@ export function AggiungiForm({
         clientId,
         payload,
       });
+      setLoading(false);
       goHome();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Errore nel salvataggio");

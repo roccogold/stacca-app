@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { appendMonthClosureToSheet } from "@/lib/google-sheets";
@@ -60,24 +61,6 @@ export async function POST(req: Request) {
   const totalHours = entries.reduce((a, e) => a + e.hours, 0);
   const submittedAt = new Date();
 
-  const sent = await appendMonthClosureToSheet(
-    user,
-    month,
-    totalHours,
-    submittedAt,
-  );
-
-  if (!sent.ok) {
-    return NextResponse.json({ error: sent.error }, { status: 503 });
-  }
-
-  const presenze = await syncEmployeePresenzeTab(user.id, {
-    appendMonth: { month, submittedAt, entries },
-  });
-  if (!presenze.ok) {
-    return NextResponse.json({ error: presenze.error }, { status: 503 });
-  }
-
   await prisma.monthSubmission.create({
     data: {
       userId: user.id,
@@ -85,6 +68,22 @@ export async function POST(req: Request) {
       totalHours,
       submittedAt,
     },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/mese");
+
+  after(async () => {
+    const [sent, presenze] = await Promise.all([
+      appendMonthClosureToSheet(user, month, totalHours, submittedAt),
+      syncEmployeePresenzeTab(user.id),
+    ]);
+    if (!sent.ok) {
+      console.error("[month/submit] Ore Totali:", sent.error, { userId: user.id, month });
+    }
+    if (!presenze.ok) {
+      console.error("[month/submit] Presenze:", presenze.error, { userId: user.id, month });
+    }
   });
 
   return NextResponse.json({

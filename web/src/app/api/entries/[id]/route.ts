@@ -6,6 +6,7 @@ import { LUOGHI, MANSIONI } from "@/lib/constants";
 import { isValidWorkHours } from "@/lib/format";
 import { assertEntryDateAllowed } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
+import { refreshPresenzeTabAfterEntryChange } from "@/lib/sync-presenze-sheet";
 import {
   removeEntryFromGoogleSheet,
   syncEntryToGoogleSheet,
@@ -95,23 +96,16 @@ export async function PATCH(
     data,
   });
 
-  const sheet = await syncEntryToGoogleSheet(userId, entry, { previous: existing });
-  if (!sheet.ok) {
-    await prisma.timeEntry.update({
-      where: { id },
-      data: {
-        date: existing.date,
-        hours: existing.hours,
-        mansione: existing.mansione,
-        luogo: existing.luogo,
-        note: existing.note,
-      },
-    });
-    return NextResponse.json({ error: sheet.error }, { status: 503 });
-  }
-
   revalidatePath("/");
   revalidatePath("/mese");
+
+  after(async () => {
+    const sheet = await syncEntryToGoogleSheet(userId, entry, { previous: existing });
+    if (!sheet.ok) {
+      console.error("[entries PATCH] Google Sheets:", sheet.error, { entryId: id });
+    }
+    await refreshPresenzeTabAfterEntryChange(userId);
+  });
 
   return NextResponse.json({ entry });
 }
@@ -148,6 +142,7 @@ export async function DELETE(
     if (!sheet.ok) {
       console.error("[entries DELETE] Google Sheets:", sheet.error, { entryId: id });
     }
+    await refreshPresenzeTabAfterEntryChange(userId);
   });
 
   return NextResponse.json({ ok: true });

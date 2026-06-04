@@ -95,40 +95,20 @@ Colonne tab **Ore Totali** (log grezzo dall’app): Data, Nome, Email, Ore (test
 
 - **Ogni salvataggio** → riga `Tipo` = **Voce** (una riga per lavoro; colonna **ID** = id voce in app).
 - **Modifica / elimina** in app → aggiorna o rimuove la stessa riga su Sheet (per **ID**; righe vecchie senza ID ancora aggiornabili se data/lavorazione/luogo/ore coincidono).
-- **Invia mese** → riga `Tipo` = **Chiusura mese** su **Ore Totali** + aggiornamento tab **Presenze [Nome]** (foglio standard per segretaria/consulente).
+- **Invia mese** → riga `Tipo` = **Chiusura mese** su **Ore Totali** + stato **Chiuso** sul tab presenze.
 
 ### Tab **Presenze [Nome]** (foglio standard, un tab per dipendente)
 
-Creato/aggiornato automaticamente a ogni **Invia mese** (nome tab: `Presenze Rocco`, ecc.). Contiene **tutti i mesi già inviati** da quel lavoratore.
+Creato/aggiornato **ad ogni salvataggio ore** (nome tab: `Presenze Rocco`, ecc.). Formato semplice per segretaria / portale paghe:
 
-| Colonna | Uso |
-|---------|-----|
-| Mese | `YYYY-MM` |
-| Nome, Email | Dipendente |
-| Data, Giorno, Data (IT) | Giorno lavorato |
-| Ore, **Ore (h)** | Ore del giorno (numero per copia su portale paghe) |
-| Attività, Luoghi, Note | Riepilogo giornata |
-| Inviato il | Timestamp chiusura mese |
-| **Tipo** | Vedi sotto |
+- Prime righe: **Azienda**, **Dipendente**
+- Poi **una riga per ogni lavorazione** (come in app): Data, Giorno, Ore (h), Lavorazione, Luogo, Note, Mese, Stato (`Bozza` / `Chiuso`)
 
-**Tipo** (filtra in Sheet per la segretaria):
+Niente righe duplicate (Intestazione / Giorno / Riepilogo / Voce). Se registri 6 ore in un solo lavoro → **1 riga** su Presenze.
 
-| Tipo | Contenuto |
-|------|-----------|
-| **Intestazione** | Una riga per mese (azienda, etichetta mese) |
-| **Giorno** | **Una riga per giorno lavorato** — formato da usare per inserire ore sul portale |
-| **Riepilogo** | Totale ore e giorni del mese |
-| **Voce** | Dettaglio singoli lavori (come in app), dopo il riepilogo |
+**Ore Totali** resta il log tecnico completo (ogni voce + ID + chiusura mese). **Presenze** è il foglio “da ufficio”.
 
-Esempio per estrarre solo i giorni di giugno 2026:
-
-```text
-=FILTER('Presenze Rocco'!A:M; 'Presenze Rocco'!A:A="2026-06"; 'Presenze Rocco'!M:M="Giorno")
-```
-
-(in locale IT usa `;` al posto di `,` se serve.)
-
-**Backfill** tab presenze per chi ha già inviato mesi in passato:
+**Backfill** tab presenze (dopo deploy o dati già presenti):
 
 ```bash
 npm run sheets:sync-presenze

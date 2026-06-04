@@ -255,10 +255,14 @@ export async function upsertEntryToSheet(
   if (!config.ok) return { ok: true, skipped: true };
 
   await ensureSheetHeader();
+  const row = buildEntrySheetRow(user, entry, new Date());
+
+  if (!options?.previous) {
+    return appendRowsToSheet([row]);
+  }
 
   const tab = sheetTabName();
   const sheets = getSheetsClient(config);
-  const row = buildEntrySheetRow(user, entry, new Date());
 
   try {
     const res = await sheets.spreadsheets.values.get({
@@ -438,7 +442,11 @@ export async function deleteUserRowsFromSheet(match: {
   }
 }
 
+let sheetHeaderEnsured = false;
+
 export async function ensureSheetHeader(): Promise<void> {
+  if (sheetHeaderEnsured) return;
+
   const config = getServiceAccountConfig();
   if (!config.ok) return;
 
@@ -452,7 +460,10 @@ export async function ensureSheetHeader(): Promise<void> {
     });
 
     const header = existing.data.values?.[0] ?? [];
-    if (header.length >= 12) return;
+    if (header.length >= 12) {
+      sheetHeaderEnsured = true;
+      return;
+    }
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: config.sheetId,
@@ -477,6 +488,7 @@ export async function ensureSheetHeader(): Promise<void> {
         ],
       },
     });
+    sheetHeaderEnsured = true;
   } catch (err) {
     logError("google-sheets header", err);
   }
