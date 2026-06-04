@@ -2134,15 +2134,14 @@ a.card {
 .entry-swipe {
   position: relative;
   border-radius: var(--r-lg);
+  overflow: hidden;
   touch-action: pan-y;
 }
 
 .entry-swipe__delete {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  bottom: 5px;
-  width: 76px;
+  inset: 0 0 0 auto;
+  width: 88px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2150,19 +2149,14 @@ a.card {
   gap: 4px;
   padding: 0 8px;
   border: none;
-  border-radius: calc(var(--r-lg) - 2px);
+  border-radius: 0;
   background: var(--destructive);
   color: var(--primary-fg);
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.14),
-    0 2px 8px -2px oklch(0.35 0.12 27 / 0.35);
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease;
+  transition: background 0.15s ease;
 }
 
 .entry-swipe__delete:disabled {
@@ -2172,7 +2166,6 @@ a.card {
 
 .entry-swipe__delete:active:not(:disabled) {
   background: oklch(0.48 0.2 27);
-  transform: scale(0.97);
 }
 
 .entry-swipe__panel {

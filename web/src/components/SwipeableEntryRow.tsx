@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { EntryCardLink } from "@/components/EntryCardLink";
 
-const REVEAL_PX = 92;
-const OPEN_THRESHOLD = 46;
+const REVEAL_PX = 88;
+const OPEN_THRESHOLD = 44;
 
 type Props = {
   entryId: string;
