@@ -21,11 +21,6 @@ export function isValidWorkHours(h: number): boolean {
   return mins > 0 && mins <= 24 * 60 && Math.abs(h * 60 - mins) < 0.02;
 }
 
-/** @deprecated Use isValidWorkHours */
-export function isQuarterHour(h: number): boolean {
-  return isValidWorkHours(h);
-}
-
 /** Integer % per part, always sums to 100 (largest remainder). */
 export function sharePercentages(parts: number[], total: number): number[] {
   if (total <= 0 || parts.length === 0) return parts.map(() => 0);

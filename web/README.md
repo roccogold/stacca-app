@@ -180,7 +180,16 @@ Open the Vercel URL → login → add entries → **Invia mese** → check Googl
 - `npm run build` — production build
 - `npm run db:seed` — add/update workers from `prisma/workers.local.ts` (password unchanged for existing)
 - `npm run db:reset-password -- <handle>` — reset one worker to demo password
+- `npm run db:clear-data` — delete all entries + month submissions + sheet data rows (keeps users)
+- `npm run sheets:clear-user -- <handle>` — remove one worker’s rows from Google Sheets
 - `npm run db:migrate` — Prisma migrate
+
+## Security checklist (GitHub / ops)
+
+- Never commit `.env`, `google-service-account.json`, or `prisma/workers.local.ts` (all gitignored).
+- On GitHub: enable **Secret scanning** and **Dependabot alerts** for the repo.
+- Production **must** set a unique `SESSION_SECRET` (32+ chars) on Vercel — the app refuses the dev fallback in production.
+- Rotate Supabase DB password if credentials were shared outside the team.
 
 ## Static mockups
 

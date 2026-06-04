@@ -1,8 +1,13 @@
 import { randomInt } from "crypto";
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { hashSecret } from "@/lib/password";
+import { prisma } from "@/lib/prisma";
+import {
+  checkRateLimit,
+  rateLimitKey,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
 
 const CODE_TTL_MS = 15 * 60 * 1000;
 
@@ -19,6 +24,22 @@ export async function POST(req: Request) {
   }
 
   const email = normalizeEmail(body.email ?? "");
+
+  const limit = checkRateLimit(
+    rateLimitKey(req, `forgot:${email || "blank"}`),
+    RATE_LIMITS.forgotPassword.limit,
+    RATE_LIMITS.forgotPassword.windowMs,
+  );
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Troppi tentativi. Riprova tra qualche minuto." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSec) },
+      },
+    );
+  }
+
   if (!email || !email.includes("@")) {
     return NextResponse.json({ error: "Inserisci un'email valida" }, { status: 400 });
   }

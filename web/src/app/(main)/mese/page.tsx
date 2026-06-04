@@ -2,7 +2,7 @@ import Link from "next/link";
 import { EntryCardLink } from "@/components/EntryCardLink";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { SubmitMonthPanel } from "@/components/SubmitMonthPanel";
-import { getMonthSubmission } from "@/lib/month-lock";
+import { canSubmitMonthRome, getMonthSubmission } from "@/lib/month-lock";
 import { requireUser } from "@/lib/auth";
 import {
   formatHoursIt,
@@ -84,7 +84,7 @@ export default async function MesePage({
   const nextHref = `/mese?y=${next.y}&m=${next.m}`;
   const monthLabel = monthTitle(y, m - 1);
 
-  const canSubmit = y < rome.y || (y === rome.y && m <= rome.m);
+  const canSubmit = canSubmitMonthRome(y, m);
 
   const grouped = new Map<string, typeof entries>();
   for (const e of entries) {

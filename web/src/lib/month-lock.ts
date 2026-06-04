@@ -39,6 +39,12 @@ export function isValidMonthKey(month: string): boolean {
   return /^\d{4}-\d{2}$/.test(month);
 }
 
+/** Whether month YYYY-MM can be submitted (current or past month, Europe/Rome). */
+export function canSubmitMonthRome(year: number, month: number): boolean {
+  const rome = romeCalendarParts();
+  return year < rome.y || (year === rome.y && month <= rome.m);
+}
+
 export const getMonthSubmission = cache(async (userId: string, month: string) => {
   return prisma.monthSubmission.findUnique({
     where: { userId_month: { userId, month } },

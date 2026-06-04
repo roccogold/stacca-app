@@ -3,6 +3,7 @@ import path from "node:path";
 import { google } from "googleapis";
 import type { TimeEntry, User } from "@prisma/client";
 import { formatHoursIt } from "@/lib/format";
+import { logError } from "@/lib/log-error";
 import { monthFromDate } from "@/lib/month-lock";
 
 const ENTRY_ID_COL = 11;
@@ -89,21 +90,6 @@ export function buildMonthClosureSheetRow(
     recordedAt: recordedAtLabel(submittedAt),
     tipo: "Chiusura mese",
   };
-}
-
-/** @deprecated Bulk export; prefer appendEntryToSheet on each save. */
-export function buildSheetRows(
-  user: Pick<User, "displayName" | "email">,
-  entries: TimeEntry[],
-  month: string,
-  submittedAt: Date,
-): SheetEntryRow[] {
-  return entries.map((e) => ({
-    ...buildEntrySheetRow(user, e, submittedAt),
-    month,
-    recordedAt: recordedAtLabel(submittedAt),
-    tipo: "Voce" as const,
-  }));
 }
 
 function parseServiceAccountJson(raw: string): {
@@ -197,7 +183,7 @@ export async function appendRowsToSheet(
     });
     return { ok: true };
   } catch (err) {
-    console.error("[google-sheets]", err);
+    logError("google-sheets", err);
     return {
       ok: false,
       error: "Errore nell'invio a Google Sheets. Riprova più tardi.",
@@ -295,20 +281,12 @@ export async function upsertEntryToSheet(
 
     return appendRowsToSheet([row]);
   } catch (err) {
-    console.error("[google-sheets] upsert", err);
+    logError("google-sheets upsert", err);
     return {
       ok: false,
       error: "Errore nell'invio a Google Sheets. Riprova più tardi.",
     };
   }
-}
-
-/** @deprecated Use upsertEntryToSheet */
-export async function appendEntryToSheet(
-  user: Pick<User, "displayName" | "email">,
-  entry: TimeEntry,
-): Promise<{ ok: true; skipped?: boolean } | { ok: false; error: string }> {
-  return upsertEntryToSheet(user, entry);
 }
 
 /** Remove the sheet row for this entry. */
@@ -355,7 +333,7 @@ export async function deleteEntryFromSheet(
     });
     return { ok: true };
   } catch (err) {
-    console.error("[google-sheets] delete-entry", err);
+    logError("google-sheets delete-entry", err);
     return {
       ok: false,
       error: "Errore nella rimozione da Google Sheets.",
@@ -452,7 +430,7 @@ export async function deleteUserRowsFromSheet(match: {
 
     return { ok: true, deleted: toDelete.length };
   } catch (err) {
-    console.error("[google-sheets] delete", err);
+    logError("google-sheets delete", err);
     return {
       ok: false,
       error: "Errore nella rimozione da Google Sheets.",
@@ -500,6 +478,6 @@ export async function ensureSheetHeader(): Promise<void> {
       },
     });
   } catch (err) {
-    console.error("[google-sheets] header", err);
+    logError("google-sheets header", err);
   }
 }

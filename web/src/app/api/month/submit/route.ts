@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { appendMonthClosureToSheet } from "@/lib/google-sheets";
-import { isValidMonthKey, isMonthLocked } from "@/lib/month-lock";
+import { canSubmitMonthRome, isValidMonthKey, isMonthLocked } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
 import { sessionOptions, type SessionData } from "@/lib/session";
 
@@ -25,12 +25,7 @@ export async function POST(req: Request) {
   }
 
   const [y, m] = month.split("-").map(Number);
-  const now = new Date();
-  const canSubmit =
-    y < now.getFullYear() ||
-    (y === now.getFullYear() && m <= now.getMonth() + 1);
-
-  if (!canSubmit) {
+  if (!canSubmitMonthRome(y, m)) {
     return NextResponse.json(
       { error: "Puoi inviare solo mesi conclusi o il mese corrente." },
       { status: 400 },

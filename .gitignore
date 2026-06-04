@@ -2,3 +2,6 @@
 lovable/*
 !lovable/README.md
 !lovable/.gitkeep
+
+# Local IDE / agent config
+.claude/settings.local.json

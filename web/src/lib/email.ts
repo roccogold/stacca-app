@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { logError } from "@/lib/log-error";
 
 export function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -36,7 +37,7 @@ export async function sendEmail(opts: {
   });
 
   if (error) {
-    console.error("[email]", error);
+    logError("email", error);
     return { ok: false, error: "Errore nell'invio. Riprova più tardi." };
   }
 

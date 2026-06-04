@@ -12,7 +12,8 @@
     "db:push": "prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:reset-password": "npx tsx prisma/reset-worker-password.ts",
-    "sheets:clear-user": "npx tsx prisma/clear-google-sheets-user.ts"
+    "sheets:clear-user": "npx tsx prisma/clear-google-sheets-user.ts",
+    "db:clear-data": "npx tsx prisma/clear-data.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

@@ -1,4 +1,5 @@
 import type { SessionOptions } from "iron-session";
+import { getSessionSecret } from "@/lib/env";
 
 export type SessionData = {
   userId?: string;
@@ -13,9 +14,7 @@ export const defaultSession: SessionData = {
 };
 
 export const sessionOptions: SessionOptions = {
-  password:
-    process.env.SESSION_SECRET ??
-    "dev-only-secret-min-32-characters-long!!",
+  password: getSessionSecret(),
   cookieName: "stacca_session",
   cookieOptions: {
     httpOnly: true,

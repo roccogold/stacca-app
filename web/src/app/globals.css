@@ -216,26 +216,6 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   color: #fff;
 }
 
-.card--oggi__entries {
-  margin-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.card--oggi__entries .entry {
-  border-bottom-color: rgba(255, 255, 255, 0.12);
-}
-
-.card--oggi__entries .entry__hours-num,
-.card--oggi__entries .entry__title {
-  color: #fff;
-}
-
-.card--oggi__entries .entry__hours-unit,
-.card--oggi__entries .entry__meta,
-.card--oggi__entries .entry__action {
-  color: rgba(255, 255, 255, 0.65);
-}
-
 /* ============================================
    Hours hero (today summary)
    ============================================ */
@@ -777,78 +757,6 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
-}
-
-/* ============================================
-   Entry list rows
-   ============================================ */
-
-.entry {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-.entry:last-child { border-bottom: none; }
-
-.entry__hours {
-  width: 56px;
-  flex-shrink: 0;
-  text-align: right;
-}
-.entry__hours-num {
-  font-family: var(--font-serif);
-  font-size: 24px;
-  line-height: 1;
-}
-.entry__hours-unit {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.entry__body { flex: 1; min-width: 0; }
-.entry__title {
-  font-weight: 600;
-  font-size: 15px;
-  margin: 0 0 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.entry__meta {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.entry__action {
-  color: var(--text-soft);
-  flex-shrink: 0;
-}
-
-.entry--locked .entry__action { display: none; }
-
-/* Day group header */
-.day-group {
-  margin-bottom: 12px;
-}
-.day-group__header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 8px 4px 6px;
-  margin-top: 4px;
-}
-.day-group__date {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-}
-.day-group__total {
-  font-size: 13px;
-  color: var(--text-muted);
 }
 
 /* ============================================
@@ -1579,16 +1487,6 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
 
 a.card {
   display: block;
-}
-
-.entry__link {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex: 1;
-  min-width: 0;
-  text-decoration: none;
-  color: inherit;
 }
 
 /* ============================================
