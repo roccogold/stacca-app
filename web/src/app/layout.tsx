@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/react";
 import { Bricolage_Grotesque, Sen } from "next/font/google";
 import "./globals.css";
 
@@ -49,7 +50,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it" className={`${bricolage.variable} ${senLogo.variable}`}>
-      <body className={bricolage.className}>{children}</body>
+      <body className={bricolage.className}>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
