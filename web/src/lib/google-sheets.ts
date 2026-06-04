@@ -372,7 +372,10 @@ function rowMatchesUser(
   const name = user.displayName.trim().toLowerCase();
   const rowEmail = String(row[2] ?? "").trim().toLowerCase();
   const rowName = String(row[1] ?? "").trim().toLowerCase();
-  return (email && rowEmail === email) || (name && rowName === name);
+  return (
+    (email.length > 0 && rowEmail === email) ||
+    (name.length > 0 && rowName === name)
+  );
 }
 
 /** Remove closure row(s) for user+month (e.g. when reopening a submitted month). */
