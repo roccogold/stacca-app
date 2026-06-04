@@ -72,7 +72,7 @@ export function SubmitMonthPanel({
       <div className="callout callout--accent">
         <Info size={16} className="callout__icon" aria-hidden />
         <span>
-          Invia solo a fine mese, dopo l&apos;invio non potrai più modificare le voci.
+          Invia solo a fine mese, dopo l&apos;invio non potrai più modificare le ore.
         </span>
       </div>
       <button

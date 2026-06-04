@@ -91,7 +91,7 @@ export function minutesToTime(totalMins: number): string {
   return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
 }
 
-/** Worked minutes from start/end (end may be next day) minus break. */
+/** Worked minutes from start/end (end after start same day, or end before start = next day) minus break. */
 export function workedMinutesFromTimeRange(
   start: string,
   end: string,
@@ -101,9 +101,10 @@ export function workedMinutesFromTimeRange(
   let e = parseTimeToMinutes(end);
   if (s === null || e === null) return null;
   if (breakMinutes < 0) return null;
-  if (e <= s) e += DAY_MINUTES;
+  if (e === s) return null;
+  if (e < s) e += DAY_MINUTES;
   const workMin = e - s - breakMinutes;
-  if (workMin <= 0 || workMin > 24 * 60) return null;
+  if (workMin <= 0 || workMin >= 24 * 60) return null;
   return workMin;
 }
 

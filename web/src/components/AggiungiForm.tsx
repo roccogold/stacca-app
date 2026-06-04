@@ -125,8 +125,8 @@ export function AggiungiForm({
         )}
         {!editId && !locked && (
           <p className="form-hint">
-            Puoi inserire ore solo per <span className="capitalize">{monthLabel}</span> — più
-            lavori per lo stesso giorno se cambiano lavorazione o luogo.
+            Stai registrando <span className="capitalize">{monthLabel}</span>. Stesso giorno con
+            lavori diversi? Aggiungi un altro lavoro se cambi lavorazione o luogo.
           </p>
         )}
         <div className="field">

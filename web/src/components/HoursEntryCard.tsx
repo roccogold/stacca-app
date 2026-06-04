@@ -62,7 +62,7 @@ export function HoursEntryCard({
     if (!startTime.trim() || !endTime.trim()) return null;
     if (computedHours !== null && isValidWorkHours(computedHours)) return null;
     if (breakMinutes > 0 && computedHours === null) return "La pausa è troppo lunga";
-    return "La fine deve essere dopo l'inizio";
+    return null;
   }, [manualMode, startTime, endTime, computedHours, breakMinutes]);
 
   function syncHoursFromTimes(start: string, end: string, pause: number) {
