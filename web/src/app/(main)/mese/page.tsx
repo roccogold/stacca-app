@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { EntryCardLink } from "@/components/EntryCardLink";
+import { SwipeableEntryRow } from "@/components/SwipeableEntryRow";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { SubmitMonthPanel } from "@/components/SubmitMonthPanel";
 import { canSubmitMonthRome, getMonthSubmission } from "@/lib/month-lock";
@@ -246,7 +246,8 @@ export default async function MesePage({
                   <ul className="entry-list">
                     {list.map((e) => (
                       <li key={e.id}>
-                        <EntryCardLink
+                        <SwipeableEntryRow
+                          entryId={e.id}
                           href={monthSubmitted ? undefined : `/aggiungi?edit=${e.id}`}
                           readOnly={monthSubmitted}
                           hours={e.hours}

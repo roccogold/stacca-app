@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Info } from "lucide-react";
 import { BottomSheet } from "@/components/BottomSheet";
+import { MonthSubmitCelebration } from "@/components/MonthSubmitCelebration";
 import { formatHoursIt } from "@/lib/format";
 
 type Props = {
@@ -27,6 +28,7 @@ export function SubmitMonthPanel({
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,10 +63,15 @@ export function SubmitMonthPanel({
         return;
       }
       setOpen(false);
-      router.refresh();
+      setCelebrate(true);
     } finally {
       setLoading(false);
     }
+  }
+
+  function closeCelebration() {
+    setCelebrate(false);
+    router.refresh();
   }
 
   return (
@@ -120,6 +127,13 @@ export function SubmitMonthPanel({
           </button>
         </div>
       </BottomSheet>
+
+      <MonthSubmitCelebration
+        open={celebrate}
+        monthLabel={monthLabel}
+        monthTotal={monthTotal}
+        onClose={closeCelebration}
+      />
     </section>
   );
 }

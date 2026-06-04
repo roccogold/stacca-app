@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Plus } from "lucide-react";
 import { DailyInspiration } from "@/components/DailyInspiration";
-import { EntryCardLink } from "@/components/EntryCardLink";
+import { SwipeableEntryRow } from "@/components/SwipeableEntryRow";
 import { StaccaLogo } from "@/components/StaccaLogo";
 import { ProfileIconLink } from "@/components/ProfileIconLink";
 import { getMonthSubmission } from "@/lib/month-lock";
@@ -86,7 +86,8 @@ export default async function HomePage() {
           <ul className="entry-list">
             {todayEntries.map((e) => (
               <li key={e.id}>
-                <EntryCardLink
+                <SwipeableEntryRow
+                  entryId={e.id}
                   href={monthSubmission ? undefined : `/aggiungi?edit=${e.id}`}
                   readOnly={!!monthSubmission}
                   hours={e.hours}

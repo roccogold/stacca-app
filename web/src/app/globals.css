@@ -1341,6 +1341,65 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   gap: 10px;
 }
 
+/* Month submit celebration (Lovable-style) */
+.celebrate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: oklch(0.25 0.02 40 / 0.45);
+}
+
+.celebrate-card {
+  width: 100%;
+  max-width: 300px;
+  padding: 32px 26px 26px;
+  text-align: center;
+  background: var(--card);
+  border-radius: 28px;
+  box-shadow: var(--shadow-lg);
+}
+
+.celebrate-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: var(--secondary);
+  color: var(--primary);
+}
+
+.celebrate-card__title {
+  margin: 0 0 12px;
+  font-family: var(--font-sans);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+}
+
+.celebrate-card__body {
+  margin: 0 0 24px;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.celebrate-card__body strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.celebrate-card__btn {
+  border-radius: var(--r-pill);
+}
+
 /* ============================================
    Utility
    ============================================ */
@@ -2020,6 +2079,57 @@ a.card {
 
 .entry-card__chev {
   color: var(--text-muted);
+}
+
+/* Swipe to delete (home + mese lists) */
+.entry-swipe {
+  position: relative;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.entry-swipe__delete {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+  border: none;
+  background: #c62828;
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.entry-swipe__delete:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.entry-swipe__delete:active {
+  background: #b71c1c;
+}
+
+.entry-swipe__panel {
+  position: relative;
+  z-index: 1;
+  will-change: transform;
+  transition: transform 0.22s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.entry-swipe__panel--dragging {
+  transition: none;
+}
+
+.entry-swipe__panel .entry-card {
+  margin: 0;
 }
 
 /* Entry groups (mese) */
