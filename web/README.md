@@ -66,11 +66,13 @@ Mittente mostrato: `Stacca <SMTP_USER>`. Limite Gmail ~500 email/giorno. Se le `
 Ogni utente ha un `role` (`dipendente` di default, oppure `admin`).
 
 - **Dipendente** — vede solo Oggi, Mese, Profilo (le proprie ore).
-- **Admin** — in più vede il tab **Admin**: lista, crea, modifica (nome/cognome/email/ruolo), **disattiva/riattiva** l'accesso e rigenera la password temporanea degli account. Non vede le ore altrui.
+- **Admin** — in più vede il tab **Admin**: lista (admin in cima, poi alfabetico) con **ricerca** per nome/email; crea, modifica (nome/cognome/email/ruolo), **disattiva/riattiva**, **elimina** (solo dopo disattivazione) e rigenera la password temporanea degli account. Non vede le ore altrui.
 
 Un nuovo dipendente creato dal tab admin riceve una **password temporanea mostrata una sola volta**: consegnala alla persona, che la cambia al primo accesso (`mustChangePassword`). Stessa cosa per **Rigenera password**.
 
 **Disattiva non elimina dati**: blocca solo il login (le ore e i mesi inviati restano nel DB e su Google Sheets). Un utente disattivato non può accedere; puoi **riattivarlo** in qualsiasi momento.
+
+Un account **disattivato** può poi essere **eliminato definitivamente** (rimuove l'account + le sue ore/mesi dal DB; i dati già esportati su **Google Sheets restano**). L'eliminazione è possibile **solo dopo** la disattivazione — doppio passaggio voluto, per evitare cancellazioni accidentali.
 
 Guardrail: deve restare **almeno un amministratore attivo** (non puoi declassare/disattivare l'ultimo admin) e non puoi disattivare il tuo stesso account.
 

@@ -2726,11 +2726,44 @@ a.card {
 }
 
 .emp-card--disabled {
-  opacity: 0.6;
+  background: var(--card-soft);
+}
+
+.emp-card--disabled .emp-card__name {
+  color: var(--text-muted);
+}
+
+/* Disabled rows have 4 actions (Modifica · Password · Riattiva · Elimina) → 2×2 */
+.emp-card--disabled .emp-card__actions {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .emp-card__pending--off {
   color: var(--text-muted);
+}
+
+.emp-search {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.emp-search__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.emp-search__input {
+  padding-left: 42px;
+}
+
+.emp-empty {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 12px 4px;
 }
 
 .emp-card__head {
