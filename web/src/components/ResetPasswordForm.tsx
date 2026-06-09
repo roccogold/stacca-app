@@ -1,6 +1,7 @@
 "use client";
 
 import { FormAlert } from "@/components/FormAlert";
+import { PasswordInput } from "@/components/PasswordInput";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -129,15 +130,12 @@ export function ResetPasswordForm() {
         <label className="field-label field-label--plain" htmlFor="password">
           Nuova password
         </label>
-        <input
-          className="input input--lg"
+        <PasswordInput
           id="password"
-          type="password"
+          value={password}
+          onChange={setPassword}
           autoComplete="new-password"
           placeholder="Almeno 8 caratteri"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
           minLength={8}
         />
       </div>
@@ -145,14 +143,12 @@ export function ResetPasswordForm() {
         <label className="field-label field-label--plain" htmlFor="confirm">
           Ripeti password
         </label>
-        <input
-          className="input input--lg"
+        <PasswordInput
           id="confirm"
-          type="password"
-          autoComplete="new-password"
           value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          required
+          onChange={setConfirm}
+          autoComplete="new-password"
+          placeholder="Ripeti la password"
           minLength={8}
         />
       </div>
