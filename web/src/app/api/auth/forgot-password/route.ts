@@ -67,20 +67,26 @@ export async function POST(req: Request) {
 
   const firstName =
     user.firstName?.trim() || user.displayName.split(" ")[0] || user.displayName;
+  const safeName = firstName.replace(/[&<>]/g, (c) =>
+    c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;",
+  );
   const sent = await sendEmail({
     to: email,
     subject: "Stacca — codice per reimpostare la password",
     text: [
       `Ciao ${firstName},`,
       "",
-      "Hai chiesto di reimpostare la password di Stacca.",
-      `Il tuo codice è: ${code}`,
+      `Ecco il codice per reimpostare la tua password Stacca: ${code}`,
       "",
-      "Scrivilo nell'app per scegliere una nuova password. Scade tra 15 minuti.",
+      "Inseriscilo nell'app entro 15 minuti per scegliere una nuova password.",
       "",
-      "Se non sei stato tu, ignora questa email: la password resta invariata.",
-      "",
-      "— Stacca · Corzano e Paterno",
+      "Se non sei stato tu, ignora questa email.",
+    ].join("\n"),
+    html: [
+      `<p>Ciao ${safeName},</p>`,
+      `<p>Ecco il codice per reimpostare la tua password Stacca: <strong>${code}</strong></p>`,
+      `<p>Inseriscilo nell'app entro 15 minuti per scegliere una nuova password.</p>`,
+      `<p>Se non sei stato tu, ignora questa email.</p>`,
     ].join("\n"),
   });
 

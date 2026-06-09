@@ -30,6 +30,7 @@ export async function sendEmail(opts: {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const transport = getSmtpTransport();
   if (!transport) {
@@ -46,6 +47,7 @@ export async function sendEmail(opts: {
       to: opts.to,
       subject: opts.subject,
       text: opts.text,
+      ...(opts.html ? { html: opts.html } : {}),
     });
     return { ok: true };
   } catch (error) {
