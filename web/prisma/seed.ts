@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UserRole } from "@prisma/client";
 import { demoPasswordForHandle, hashSecret } from "../src/lib/password";
 import { WORKERS } from "./workers.local";
 
@@ -9,6 +9,9 @@ async function main() {
     const password = demoPasswordForHandle(w.handle, w.suffix);
     const passwordHash = await hashSecret(password);
     const email = w.email.toLowerCase();
+    const displayName = `${w.firstName} ${w.lastName}`.trim();
+    const role: UserRole =
+      "role" in w && w.role === "admin" ? UserRole.admin : UserRole.dipendente;
 
     const existing = await prisma.user.findUnique({ where: { handle: w.handle } });
 
@@ -16,24 +19,30 @@ async function main() {
       await prisma.user.update({
         where: { handle: w.handle },
         data: {
-          displayName: w.displayName,
+          displayName,
+          firstName: w.firstName,
+          lastName: w.lastName,
+          role,
           email,
         },
       });
-      console.log(`✓ ${w.displayName} — ${email} — aggiornato (password invariata)`);
+      console.log(`✓ ${displayName} — ${email} — ${role} — aggiornato (password invariata)`);
       continue;
     }
 
     await prisma.user.create({
       data: {
         handle: w.handle,
-        displayName: w.displayName,
+        displayName,
+        firstName: w.firstName,
+        lastName: w.lastName,
+        role,
         email,
         passwordHash,
         mustChangePassword: true,
       },
     });
-    console.log(`✓ ${w.displayName} — ${email} — nuovo — demo: ${password}`);
+    console.log(`✓ ${displayName} — ${email} — ${role} — nuovo — demo: ${password}`);
   }
 }
 

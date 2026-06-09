@@ -33,4 +33,5 @@ export function rateLimitKey(req: Request, suffix: string): string {
 export const RATE_LIMITS = {
   login: { limit: 10, windowMs: 15 * 60 * 1000 },
   forgotPassword: { limit: 5, windowMs: 15 * 60 * 1000 },
+  admin: { limit: 60, windowMs: 5 * 60 * 1000 },
 } as const;

@@ -18,8 +18,8 @@ Open [http://localhost:3000/login](http://localhost:3000/login).
 ## Demo login (seed)
 
 1. Copy `prisma/workers.example.ts` → `prisma/workers.local.ts` (gitignored)
-2. Fill in real emails and suffixes
-3. Run `npm run db:seed` — **new** workers get demo password `{handle}-{suffix}`; existing workers keep their password (only name/email updated)
+2. Fill in real `firstName`, `lastName`, `email`, `suffix` (and optional `role: "admin"`)
+3. Run `npm run db:seed` — **new** workers get demo password `{handle}-{suffix}`; existing workers keep their password (only name/email/role updated)
 
 Never commit `workers.local.ts`.
 
@@ -46,7 +46,45 @@ Prints the temporary demo password; worker must change it on next login.
 
 - Login: **email + password** (each worker has a row in `prisma/workers.local.ts`)
 - First login: forced password change
-- Forgot password: 6-digit code via email (needs `RESEND_API_KEY`)
+- Forgot password: 6-digit code via email (vedi **Invio email** sotto)
+
+### Invio email (reset password + feedback)
+
+Due modi. **Se imposti le `SMTP_*`, hanno priorità su Resend** (`src/lib/email.ts`):
+
+1. **SMTP / Gmail (consigliato per partire)** — invia a chiunque senza verificare un dominio. Su Google: Account → **Sicurezza** → attiva **Verifica in due passaggi** → **Password per le app** → genera (16 caratteri). In `web/.env`:
+   ```
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=roccogold23@gmail.com
+   SMTP_PASS=<app password 16 caratteri>   # NON la password normale di Gmail
+   ```
+   Mittente mostrato: `Stacca <SMTP_USER>`. Limite Gmail ~500 email/giorno (più che sufficiente).
+
+2. **Resend** — in test (`onboarding@resend.dev`) consegna **solo all'indirizzo dell'account Resend**; per inviare a tutti serve **verificare un dominio** (sotto-dominio `send.corzanoepaterno.it` per non toccare la posta esistente).
+
+Se non configuri né SMTP né Resend, il recupero via email non parte: usa il fallback admin (**Rigenera password** dal tab Admin).
+
+### Ruoli: dipendente / admin
+
+Ogni utente ha un `role` (`dipendente` di default, oppure `admin`).
+
+- **Dipendente** — vede solo Oggi, Mese, Profilo (le proprie ore).
+- **Admin** — in più vede il tab **Admin**: lista, crea, modifica (nome/cognome/email/ruolo), **disattiva/riattiva** l'accesso e rigenera la password temporanea degli account. Non vede le ore altrui.
+
+Un nuovo dipendente creato dal tab admin riceve una **password temporanea mostrata una sola volta**: consegnala alla persona, che la cambia al primo accesso (`mustChangePassword`). Stessa cosa per **Rigenera password**.
+
+**Disattiva non elimina dati**: blocca solo il login (le ore e i mesi inviati restano nel DB e su Google Sheets). Un utente disattivato non può accedere; puoi **riattivarlo** in qualsiasi momento.
+
+Guardrail: deve restare **almeno un amministratore attivo** (non puoi declassare/disattivare l'ultimo admin) e non puoi disattivare il tuo stesso account.
+
+**Promuovere un admin** (dev: via `workers.local.ts` `role: "admin"` + `db:seed`; produzione: dopo il deploy):
+
+```bash
+npm run db:promote-admin -- cantina@corzanoepaterno.it
+```
+
+Idempotente: imposta `role = admin` per quell'email (l'utente deve già esistere — esegui prima `db:seed`).
 
 ### Resend — test (now)
 
@@ -70,6 +108,22 @@ With `onboarding@resend.dev`, Resend only delivers to the email you used to sign
 3. Add all workers in `prisma/workers.local.ts` → `npm run db:seed`
 
 Free tier: 3,000 emails/month — enough for this app.
+
+## Convenzioni schema (Prisma / Postgres)
+
+Da rispettare quando si aggiungono modelli o campi (vedi anche l'header in [`prisma/schema.prisma`](prisma/schema.prisma)):
+
+| Elemento | Convenzione | Esempi |
+|----------|-------------|--------|
+| Tabelle (model) | **PascalCase, singolare** | `User`, `TimeEntry`, `MonthSubmission` |
+| Colonne (field) | **camelCase** | `displayName`, `totalHours`, `createdAt` |
+| Chiave primaria | `id` (cuid) | |
+| Chiave esterna | `<model>Id` | `userId` |
+| Timestamp | `createdAt` / `updatedAt`, o evento al passato | `submittedAt` |
+| Enum | tipo PascalCase, valori minuscoli | `UserRole { admin, dipendente }` |
+| Lingua | **inglese** di default | `firstName`, `passwordHash` |
+
+**Eccezioni volute (non "correggere"):** alcuni termini di dominio restano in **italiano** per combaciare con la UI e il foglio paghe — `mansione` (task), `luogo` (site) in `TimeEntry`, e il valore ruolo `dipendente`. `_prisma_migrations` è una tabella interna di Prisma e si lascia com'è.
 
 ## Google Sheets — invio mese
 
@@ -180,6 +234,7 @@ Open the Vercel URL → login → add entries → **Invia mese** → check Googl
 - `npm run build` — production build
 - `npm run db:seed` — add/update workers from `prisma/workers.local.ts` (password unchanged for existing)
 - `npm run db:reset-password -- <handle>` — reset one worker to demo password
+- `npm run db:promote-admin -- <email>` — set a user's role to `admin`
 - `npm run db:clear-data` — delete all entries + month submissions + sheet data rows (keeps users)
 - `npm run sheets:clear-user -- <handle>` — remove one worker’s rows from Google Sheets
 - `npm run sheets:sync-presenze` — rebuild all **Presenze [Nome]** tabs from DB submissions

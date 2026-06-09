@@ -1,12 +1,16 @@
 import { AppShell } from "@/components/AppShell";
-import { requireUser } from "@/lib/auth";
+import { requireUserWithRole } from "@/lib/auth";
 
 export default async function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireUser();
+  const user = await requireUserWithRole();
 
-  return <AppShell userId={user.id}>{children}</AppShell>;
+  return (
+    <AppShell userId={user.id} isAdmin={user.role === "admin"}>
+      {children}
+    </AppShell>
+  );
 }

@@ -124,6 +124,8 @@ export function OfflineSyncProvider({ userId, children }: Props) {
   }, [userId, refreshOps, router]);
 
   useEffect(() => {
+    // Loads the offline queue (IndexedDB); setState runs after await, not synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshOps();
   }, [refreshOps]);
 
@@ -142,6 +144,8 @@ export function OfflineSyncProvider({ userId, children }: Props) {
   }, [runFlush]);
 
   useEffect(() => {
+    // Flushes queued ops when connectivity returns; setState runs after await.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (online) void runFlush();
   }, [online, runFlush]);
 

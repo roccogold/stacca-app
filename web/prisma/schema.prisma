@@ -1,3 +1,15 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Naming conventions — keep consistent when adding models/fields:
+//   • Tables (models): PascalCase, singular   — User, TimeEntry, MonthSubmission
+//   • Columns (fields): camelCase             — displayName, totalHours, createdAt
+//   • Primary key: `id` (cuid). Foreign key: `<model>Id` (e.g. userId)
+//   • Timestamps: createdAt / updatedAt, or past-tense event time (submittedAt)
+//   • Enums: PascalCase type, lowercase values — UserRole { admin, dipendente }
+//   • Language: English by default. A few established Italian DOMAIN terms are
+//     kept on purpose to match the Italian UI + payroll sheet: `mansione` (task),
+//     `luogo` (site), and the role value `dipendente`. Don't "fix" these.
+// ─────────────────────────────────────────────────────────────────────────────
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,10 +20,19 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum UserRole {
+  admin
+  dipendente
+}
+
 model User {
   id                 String      @id @default(cuid())
   handle             String      @unique
   displayName        String
+  firstName          String      @default("")
+  lastName           String      @default("")
+  role               UserRole    @default(dipendente)
+  disabled           Boolean     @default(false)
   email              String?     @unique
   passwordHash       String?
   mustChangePassword Boolean     @default(false)

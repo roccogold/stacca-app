@@ -37,7 +37,8 @@ async function main() {
     },
   });
 
-  console.log(`✓ ${worker.displayName} — password resettata — demo: ${password}`);
+  const name = `${worker.firstName} ${worker.lastName}`.trim();
+  console.log(`✓ ${name} — password resettata — demo: ${password}`);
 }
 
 main()

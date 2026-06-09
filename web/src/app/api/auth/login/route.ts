@@ -82,10 +82,18 @@ export async function POST(req: Request) {
     );
   }
 
+  if (user.disabled) {
+    return NextResponse.json(
+      { error: "Accesso disabilitato. Contatta l'amministratore." },
+      { status: 403 },
+    );
+  }
+
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   session.userId = user.id;
   session.handle = user.handle;
   session.displayName = user.displayName;
+  session.role = user.role;
   session.isLoggedIn = true;
   session.mustChangePassword = user.mustChangePassword;
   await session.save();

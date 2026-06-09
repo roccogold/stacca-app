@@ -1,16 +1,37 @@
 "use client";
 
-import { Calendar, Home, User, type LucideIcon } from "lucide-react";
+import { Calendar, Home, User, UserCog, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-const tabs = [
-  { href: "/", label: "Oggi", icon: Home, match: (p: string) => p === "/" },
-  { href: "/mese", label: "Mese", icon: Calendar, match: (p: string) => p.startsWith("/mese") },
-  { href: "/profilo", label: "Profilo", icon: User, match: (p: string) => p.startsWith("/profilo") },
-] as const;
+type Tab = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  match: (p: string) => boolean;
+};
+
+const baseTabs: Tab[] = [
+  { href: "/", label: "Oggi", icon: Home, match: (p) => p === "/" },
+  { href: "/mese", label: "Mese", icon: Calendar, match: (p) => p.startsWith("/mese") },
+];
+
+const adminTab: Tab = {
+  href: "/dipendenti",
+  label: "Admin",
+  icon: UserCog,
+  match: (p) => p.startsWith("/dipendenti"),
+};
+
+// Profilo stays last in the bar; the admin tab slots in just before it.
+const profiloTab: Tab = {
+  href: "/profilo",
+  label: "Profilo",
+  icon: User,
+  match: (p) => p.startsWith("/profilo"),
+};
 
 function TabIcon({ Icon }: { Icon: LucideIcon }) {
   const { pending } = useLinkStatus();
@@ -24,13 +45,16 @@ function TabIcon({ Icon }: { Icon: LucideIcon }) {
   );
 }
 
-export function BottomNav() {
+export function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   const [popHref, setPopHref] = useState<string | null>(null);
+  const tabs = isAdmin ? [...baseTabs, adminTab, profiloTab] : [...baseTabs, profiloTab];
 
   return (
     <nav className="bottom-nav" aria-label="Navigazione principale">
-      <div className="bottom-nav__inner">
+      <div
+        className={`bottom-nav__inner${isAdmin ? " bottom-nav__inner--admin" : ""}`}
+      >
         {tabs.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;

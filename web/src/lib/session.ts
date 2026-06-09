@@ -5,6 +5,7 @@ export type SessionData = {
   userId?: string;
   handle?: string;
   displayName?: string;
+  role?: "admin" | "dipendente";
   isLoggedIn: boolean;
   mustChangePassword?: boolean;
 };

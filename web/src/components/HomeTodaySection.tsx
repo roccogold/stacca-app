@@ -42,6 +42,8 @@ export function HomeTodaySection({ today, serverTodayEntries, monthLocked }: Pro
   useEffect(() => {
     const f = consumeFlash();
     if (f) {
+      // One-shot flash read from sessionStorage on mount — intentional external-store sync.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFlash(FLASH_COPY[f]);
       const t = window.setTimeout(() => setFlash(null), 5000);
       return () => window.clearTimeout(t);

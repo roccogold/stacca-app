@@ -9,10 +9,11 @@ import { RouteProgress } from "@/components/RouteProgress";
 type AppShellProps = {
   children: React.ReactNode;
   userId: string;
+  isAdmin?: boolean;
   showNav?: boolean;
 };
 
-export function AppShell({ children, userId, showNav }: AppShellProps) {
+export function AppShell({ children, userId, isAdmin, showNav }: AppShellProps) {
   const pathname = usePathname();
   const navVisible = showNav ?? !pathname.startsWith("/aggiungi");
   const contentPad = navVisible ? 96 : 120;
@@ -28,7 +29,7 @@ export function AppShell({ children, userId, showNav }: AppShellProps) {
         >
           {children}
         </div>
-        {navVisible && <BottomNav />}
+        {navVisible && <BottomNav isAdmin={isAdmin} />}
       </div>
     </OfflineSyncProvider>
   );
