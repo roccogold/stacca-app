@@ -1,11 +1,13 @@
 import { DipendentiClient } from "@/components/DipendentiClient";
 import { requireAdmin } from "@/lib/auth";
+import { getProtectedAdminEmail } from "@/lib/admin-users";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function DipendentiPage() {
   const me = await requireAdmin();
+  const protectedEmail = getProtectedAdminEmail();
 
   const rows = await prisma.user.findMany({
     orderBy: [{ role: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
@@ -32,9 +34,17 @@ export default async function DipendentiPage() {
     disabled: u.disabled,
     mustChangePassword: u.mustChangePassword,
     createdAt: u.createdAt.toISOString(),
+    protected: (u.email ?? "").trim().toLowerCase() === protectedEmail,
   }));
 
+  const currentUserIsProtected =
+    initialUsers.find((u) => u.id === me.id)?.protected ?? false;
+
   return (
-    <DipendentiClient currentUserId={me.id} initialUsers={initialUsers} />
+    <DipendentiClient
+      currentUserId={me.id}
+      currentUserIsProtected={currentUserIsProtected}
+      initialUsers={initialUsers}
+    />
   );
 }

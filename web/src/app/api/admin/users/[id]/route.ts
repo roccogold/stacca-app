@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
-import { buildDisplayName, parseUserInput } from "@/lib/admin-users";
+import {
+  buildDisplayName,
+  isProtectedEmail,
+  parseUserInput,
+} from "@/lib/admin-users";
 
 const userSelect = {
   id: true,
@@ -43,6 +47,12 @@ export async function PATCH(
   const target = await prisma.user.findUnique({ where: { id } });
   if (!target) {
     return NextResponse.json({ error: "Utente non trovato" }, { status: 404 });
+  }
+  if (isProtectedEmail(target.email) && !isProtectedEmail(auth.user.email)) {
+    return NextResponse.json(
+      { error: "Account protetto: modificabile solo dal titolare." },
+      { status: 403 },
+    );
   }
 
   let body: unknown;
@@ -94,44 +104,5 @@ export async function PATCH(
   return NextResponse.json({ user });
 }
 
-/**
- * Permanent delete — allowed ONLY for already-disabled accounts (deliberate
- * two-step: disable first, then delete). Cascades to the user's TimeEntry /
- * MonthSubmission rows. Google Sheets rows are NOT touched.
- */
-export async function DELETE(
-  req: Request,
-  ctx: { params: Promise<{ id: string }> },
-) {
-  const auth = await requireAdminApi();
-  if (!auth.ok) return auth.response;
-
-  const limited = rateLimited(req);
-  if (limited) return limited;
-
-  const { id } = await ctx.params;
-
-  if (id === auth.user.id) {
-    return NextResponse.json(
-      { error: "Non puoi eliminare il tuo account." },
-      { status: 409 },
-    );
-  }
-
-  const target = await prisma.user.findUnique({
-    where: { id },
-    select: { id: true, disabled: true },
-  });
-  if (!target) {
-    return NextResponse.json({ error: "Utente non trovato" }, { status: 404 });
-  }
-  if (!target.disabled) {
-    return NextResponse.json(
-      { error: "Disattiva l'account prima di eliminarlo." },
-      { status: 409 },
-    );
-  }
-
-  await prisma.user.delete({ where: { id } });
-  return NextResponse.json({ ok: true });
-}
+// Nessun endpoint di eliminazione: per GDPR / conservazione, i dati restano
+// per sempre (DB + Google Sheets). L'azione più forte è "Disattiva" (blocco accesso).

@@ -2733,13 +2733,40 @@ a.card {
   color: var(--text-muted);
 }
 
-/* Disabled rows have 4 actions (Modifica · Password · Riattiva · Elimina) → 2×2 */
-.emp-card--disabled .emp-card__actions {
-  grid-template-columns: repeat(2, 1fr);
-}
-
 .emp-card__pending--off {
   color: var(--text-muted);
+}
+
+.emp-disabled-group {
+  margin-top: 16px;
+}
+
+.emp-disabled-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  padding: 6px 2px;
+}
+
+.emp-disabled-toggle__chev {
+  transition: transform 0.15s ease;
+}
+
+.emp-disabled-toggle__chev--open {
+  transform: rotate(180deg);
+}
+
+.emp-list--disabled {
+  margin-top: 10px;
 }
 
 .emp-search {

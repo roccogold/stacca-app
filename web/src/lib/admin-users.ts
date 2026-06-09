@@ -11,6 +11,21 @@ export function buildDisplayName(firstName: string, lastName: string): string {
   return `${firstName} ${lastName}`.replace(/\s+/g, " ").trim();
 }
 
+/**
+ * The protected "owner" account: can only be edited/disabled/reset by itself,
+ * never by other admins. Configurable via env, defaults to the owner email.
+ */
+export function getProtectedAdminEmail(): string {
+  return (process.env.PROTECTED_ADMIN_EMAIL || "roccogold23@gmail.com")
+    .trim()
+    .toLowerCase();
+}
+
+export function isProtectedEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return email.trim().toLowerCase() === getProtectedAdminEmail();
+}
+
 /** lowercase, accent-stripped, alphanumeric-only slug for the internal handle. */
 export function slugifyHandle(input: string): string {
   const slug = input

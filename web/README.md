@@ -66,13 +66,15 @@ Mittente mostrato: `Stacca <SMTP_USER>`. Limite Gmail ~500 email/giorno. Se le `
 Ogni utente ha un `role` (`dipendente` di default, oppure `admin`).
 
 - **Dipendente** — vede solo Oggi, Mese, Profilo (le proprie ore).
-- **Admin** — in più vede il tab **Admin**: lista (admin in cima, poi alfabetico) con **ricerca** per nome/email; crea, modifica (nome/cognome/email/ruolo), **disattiva/riattiva**, **elimina** (solo dopo disattivazione) e rigenera la password temporanea degli account. Non vede le ore altrui.
+- **Admin** — in più vede il tab **Admin**: lista (admin in cima, poi alfabetico) con **ricerca** per nome/email; crea, modifica (nome/cognome/email/ruolo), **disattiva/riattiva** e rigenera la password temporanea degli account. I disattivati sono raccolti in una sezione richiudibile. Non vede le ore altrui.
 
 Un nuovo dipendente creato dal tab admin riceve una **password temporanea mostrata una sola volta**: consegnala alla persona, che la cambia al primo accesso (`mustChangePassword`). Stessa cosa per **Rigenera password**.
 
 **Disattiva non elimina dati**: blocca solo il login (le ore e i mesi inviati restano nel DB e su Google Sheets). Un utente disattivato non può accedere; puoi **riattivarlo** in qualsiasi momento.
 
-Un account **disattivato** può poi essere **eliminato definitivamente** (rimuove l'account + le sue ore/mesi dal DB; i dati già esportati su **Google Sheets restano**). L'eliminazione è possibile **solo dopo** la disattivazione — doppio passaggio voluto, per evitare cancellazioni accidentali.
+**Nessuna eliminazione dei dati** (GDPR / conservazione): non esiste un'azione che cancella ore o mesi — i dati restano **per sempre**, sia nel DB che su Google Sheets. L'azione più forte è **Disattiva** (blocca l'accesso). I disattivati vengono nascosti nella sezione richiudibile "Disattivati" per non ingombrare la lista.
+
+**Account protetto:** l'email in `PROTECTED_ADMIN_EMAIL` (default `roccogold23@gmail.com`) è il titolare e **non può essere modificata, disattivata o resettata da altri admin** — solo dal titolare stesso. Gli altri admin vedono i pulsanti disabilitati (e le API rispondono 403).
 
 Guardrail: deve restare **almeno un amministratore attivo** (non puoi declassare/disattivare l'ultimo admin) e non puoi disattivare il tuo stesso account.
 

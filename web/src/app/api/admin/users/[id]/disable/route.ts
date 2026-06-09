@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
+import { isProtectedEmail } from "@/lib/admin-users";
 
 const userSelect = {
   id: true,
@@ -56,10 +57,16 @@ export async function POST(
 
   const target = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, role: true, disabled: true },
+    select: { id: true, role: true, disabled: true, email: true },
   });
   if (!target) {
     return NextResponse.json({ error: "Utente non trovato" }, { status: 404 });
+  }
+  if (isProtectedEmail(target.email) && !isProtectedEmail(auth.user.email)) {
+    return NextResponse.json(
+      { error: "Account protetto: gestibile solo dal titolare." },
+      { status: 403 },
+    );
   }
 
   if (disabled) {

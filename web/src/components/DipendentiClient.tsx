@@ -1,16 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Ban,
   Check,
+  ChevronDown,
   Copy,
   KeyRound,
   Pencil,
   RotateCcw,
   Search,
-  Trash2,
   UserPlus,
 } from "lucide-react";
 import { BottomSheet } from "@/components/BottomSheet";
@@ -27,10 +27,12 @@ type Employee = {
   disabled: boolean;
   mustChangePassword: boolean;
   createdAt: string;
+  protected: boolean;
 };
 
 type Props = {
   currentUserId: string;
+  currentUserIsProtected: boolean;
   initialUsers: Employee[];
 };
 
@@ -61,10 +63,15 @@ function fullName(e: Pick<Employee, "firstName" | "lastName">): string {
   return `${e.firstName} ${e.lastName}`.trim();
 }
 
-export function DipendentiClient({ currentUserId, initialUsers }: Props) {
+export function DipendentiClient({
+  currentUserId,
+  currentUserIsProtected,
+  initialUsers,
+}: Props) {
   const router = useRouter();
   const [users, setUsers] = useState<Employee[]>(sortEmployees(initialUsers));
   const [search, setSearch] = useState("");
+  const [showDisabled, setShowDisabled] = useState(false);
 
   // Create / edit form sheet
   const [formOpen, setFormOpen] = useState(false);
@@ -88,24 +95,9 @@ export function DipendentiClient({ currentUserId, initialUsers }: Props) {
   const [disableError, setDisableError] = useState<string | null>(null);
   const [disableLoading, setDisableLoading] = useState(false);
 
-  // Delete (permanent) confirmation sheet — only for already-disabled users
-  const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
   // Inline busy + error for the reactivate buttons
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [bannerError, setBannerError] = useState<string | null>(null);
-
-  const visible = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter(
-      (u) =>
-        fullName(u).toLowerCase().includes(q) ||
-        (u.email ?? "").toLowerCase().includes(q),
-    );
-  }, [users, search]);
 
   function openCreate() {
     setFormMode("create");
@@ -270,27 +262,100 @@ export function DipendentiClient({ currentUserId, initialUsers }: Props) {
     }
   }
 
-  async function confirmDelete() {
-    if (!deleteTarget || deleteLoading) return;
-    setDeleteLoading(true);
-    setDeleteError(null);
-    try {
-      const res = await fetch(`/api/admin/users/${deleteTarget.id}`, { method: "DELETE" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setDeleteError(typeof data.error === "string" ? data.error : "Errore nell'eliminazione.");
-        return;
-      }
-      const removedId = deleteTarget.id;
-      setUsers((prev) => prev.filter((u) => u.id !== removedId));
-      setDeleteTarget(null);
-      router.refresh();
-    } catch {
-      setDeleteError("Connessione assente. Riprova.");
-    } finally {
-      setDeleteLoading(false);
-    }
+  function renderCard(emp: Employee) {
+    // Protected owner account: other admins can't edit / reset / disable it.
+    const locked = emp.protected && !currentUserIsProtected;
+    const lockTitle = locked
+      ? "Account protetto: gestibile solo dal titolare"
+      : undefined;
+    return (
+      <div
+        key={emp.id}
+        className={`card emp-card${emp.disabled ? " emp-card--disabled" : ""}`}
+      >
+        <div className="emp-card__head">
+          <div>
+            <div className="emp-card__name">{fullName(emp) || emp.displayName}</div>
+            <div className="emp-card__email">{emp.email ?? "—"}</div>
+            {emp.disabled ? (
+              <div className="emp-card__pending emp-card__pending--off">
+                Accesso disattivato
+              </div>
+            ) : emp.mustChangePassword ? (
+              <div className="emp-card__pending">In attesa del primo accesso</div>
+            ) : null}
+          </div>
+          <span className={`badge ${emp.role === "admin" ? "badge--ok" : "badge--locked"}`}>
+            {emp.role === "admin" ? "Admin" : "Dipendente"}
+          </span>
+        </div>
+        <div className="emp-card__actions">
+          <button
+            type="button"
+            className="emp-action"
+            onClick={() => openEdit(emp)}
+            disabled={locked}
+            title={lockTitle}
+          >
+            <Pencil size={16} aria-hidden />
+            Modifica
+          </button>
+          <button
+            type="button"
+            className="emp-action"
+            onClick={() => askResetPassword(emp)}
+            disabled={locked}
+            title={lockTitle}
+          >
+            <KeyRound size={16} aria-hidden />
+            Password
+          </button>
+          {emp.disabled ? (
+            <button
+              type="button"
+              className="emp-action"
+              onClick={() => reactivate(emp)}
+              disabled={locked || togglingId === emp.id}
+              title={lockTitle}
+            >
+              <RotateCcw size={16} aria-hidden />
+              {togglingId === emp.id ? "…" : "Riattiva"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="emp-action emp-action--danger"
+              onClick={() => {
+                setDisableError(null);
+                setDisableTarget(emp);
+              }}
+              disabled={locked || emp.id === currentUserId}
+              title={
+                locked
+                  ? lockTitle
+                  : emp.id === currentUserId
+                    ? "Non puoi disattivare te stesso"
+                    : undefined
+              }
+            >
+              <Ban size={16} aria-hidden />
+              Disattiva
+            </button>
+          )}
+        </div>
+      </div>
+    );
   }
+
+  const q = search.trim().toLowerCase();
+  const matchesQuery = (u: Employee) =>
+    !q ||
+    fullName(u).toLowerCase().includes(q) ||
+    (u.email ?? "").toLowerCase().includes(q);
+  const activeList = users.filter((u) => !u.disabled && matchesQuery(u));
+  const disabledList = users.filter((u) => u.disabled && matchesQuery(u));
+  const nothing = activeList.length === 0 && disabledList.length === 0;
+  const disabledOpen = showDisabled || q.length > 0;
 
   return (
     <>
@@ -325,90 +390,35 @@ export function DipendentiClient({ currentUserId, initialUsers }: Props) {
         {bannerError && <p className="field-error">{bannerError}</p>}
 
         <div className="emp-list">
-          {visible.length === 0 ? (
+          {nothing ? (
             <p className="emp-empty">Nessun risultato.</p>
           ) : (
-            visible.map((emp) => (
-              <div
-                key={emp.id}
-                className={`card emp-card${emp.disabled ? " emp-card--disabled" : ""}`}
-              >
-                <div className="emp-card__head">
-                  <div>
-                    <div className="emp-card__name">{fullName(emp) || emp.displayName}</div>
-                    <div className="emp-card__email">{emp.email ?? "—"}</div>
-                    {emp.disabled ? (
-                      <div className="emp-card__pending emp-card__pending--off">
-                        Accesso disattivato
-                      </div>
-                    ) : emp.mustChangePassword ? (
-                      <div className="emp-card__pending">In attesa del primo accesso</div>
-                    ) : null}
-                  </div>
-                  <span className={`badge ${emp.role === "admin" ? "badge--ok" : "badge--locked"}`}>
-                    {emp.role === "admin" ? "Admin" : "Dipendente"}
-                  </span>
-                </div>
-                <div className="emp-card__actions">
-                  <button type="button" className="emp-action" onClick={() => openEdit(emp)}>
-                    <Pencil size={16} aria-hidden />
-                    Modifica
-                  </button>
-                  <button
-                    type="button"
-                    className="emp-action"
-                    onClick={() => askResetPassword(emp)}
-                  >
-                    <KeyRound size={16} aria-hidden />
-                    Password
-                  </button>
-                  {emp.disabled ? (
-                    <>
-                      <button
-                        type="button"
-                        className="emp-action"
-                        onClick={() => reactivate(emp)}
-                        disabled={togglingId === emp.id}
-                      >
-                        <RotateCcw size={16} aria-hidden />
-                        {togglingId === emp.id ? "…" : "Riattiva"}
-                      </button>
-                      <button
-                        type="button"
-                        className="emp-action emp-action--danger"
-                        onClick={() => {
-                          setDeleteError(null);
-                          setDeleteTarget(emp);
-                        }}
-                      >
-                        <Trash2 size={16} aria-hidden />
-                        Elimina
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      className="emp-action emp-action--danger"
-                      onClick={() => {
-                        setDisableError(null);
-                        setDisableTarget(emp);
-                      }}
-                      disabled={emp.id === currentUserId}
-                      title={
-                        emp.id === currentUserId
-                          ? "Non puoi disattivare te stesso"
-                          : undefined
-                      }
-                    >
-                      <Ban size={16} aria-hidden />
-                      Disattiva
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
+            activeList.map((e) => renderCard(e))
           )}
         </div>
+
+        {disabledList.length > 0 && (
+          <div className="emp-disabled-group">
+            <button
+              type="button"
+              className="emp-disabled-toggle"
+              onClick={() => setShowDisabled((v) => !v)}
+              aria-expanded={disabledOpen}
+            >
+              <ChevronDown
+                size={18}
+                className={`emp-disabled-toggle__chev${disabledOpen ? " emp-disabled-toggle__chev--open" : ""}`}
+                aria-hidden
+              />
+              Disattivati ({disabledList.length})
+            </button>
+            {disabledOpen && (
+              <div className="emp-list emp-list--disabled">
+                {disabledList.map((e) => renderCard(e))}
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Create / edit */}
@@ -558,7 +568,7 @@ export function DipendentiClient({ currentUserId, initialUsers }: Props) {
         )}
       </BottomSheet>
 
-      {/* Disable (deactivate) confirmation — data is kept */}
+      {/* Disable (deactivate) confirmation — data is kept forever */}
       <BottomSheet
         open={disableTarget !== null}
         onClose={() => setDisableTarget(null)}
@@ -583,37 +593,6 @@ export function DipendentiClient({ currentUserId, initialUsers }: Props) {
             type="button"
             className="btn btn--secondary btn--block btn--sheet-secondary"
             onClick={() => setDisableTarget(null)}
-          >
-            Annulla
-          </button>
-        </div>
-      </BottomSheet>
-
-      {/* Delete (permanent) confirmation — only for disabled accounts */}
-      <BottomSheet
-        open={deleteTarget !== null}
-        onClose={() => setDeleteTarget(null)}
-        title="Elimina definitivamente"
-        subtitle={
-          deleteTarget
-            ? `Rimuovi ${deleteTarget.firstName || deleteTarget.displayName} e le sue ore dal database. I dati già esportati su Google Sheets restano. Azione irreversibile.`
-            : undefined
-        }
-      >
-        {deleteError && <p className="field-error">{deleteError}</p>}
-        <div className="sheet__actions">
-          <button
-            type="button"
-            className="btn btn--logout btn--block btn--sheet"
-            onClick={confirmDelete}
-            disabled={deleteLoading}
-          >
-            {deleteLoading ? "Elimino…" : "Elimina definitivamente"}
-          </button>
-          <button
-            type="button"
-            className="btn btn--secondary btn--block btn--sheet-secondary"
-            onClick={() => setDeleteTarget(null)}
           >
             Annulla
           </button>
