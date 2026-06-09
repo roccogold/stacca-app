@@ -38,8 +38,10 @@ Prints the temporary demo password; worker must change it on next login.
 | `DATABASE_URL` | yes | Supabase **Transaction pooler** (port 6543, `?pgbouncer=true`) |
 | `DIRECT_URL` | yes | Supabase **Direct** connection (port 5432) — used for migrations |
 | `SESSION_SECRET` | yes | 32+ characters ([iron-session](https://github.com/vvo/iron-session)) |
-| `RESEND_API_KEY` | for email | [Resend](https://resend.com) API key — reset password + feedback |
-| `EMAIL_FROM` | for email | Sender address. Test: `onboarding@resend.dev`. Production: `noreply@tuodominio.it` |
+| `SMTP_HOST` | for email | SMTP server — es. `smtp.gmail.com` |
+| `SMTP_PORT` | for email | `587` (STARTTLS) o `465` (SSL) |
+| `SMTP_USER` | for email | Indirizzo casella / Gmail (è anche il mittente) |
+| `SMTP_PASS` | for email | Password casella / **App Password** Gmail |
 | `FEEDBACK_TO_EMAIL` | for feedback | Admin inbox for in-app feedback |
 
 ## Auth
@@ -50,20 +52,14 @@ Prints the temporary demo password; worker must change it on next login.
 
 ### Invio email (reset password + feedback)
 
-Due modi. **Se imposti le `SMTP_*`, hanno priorità su Resend** (`src/lib/email.ts`):
-
-1. **SMTP / Gmail (consigliato per partire)** — invia a chiunque senza verificare un dominio. Su Google: Account → **Sicurezza** → attiva **Verifica in due passaggi** → **Password per le app** → genera (16 caratteri). In `web/.env`:
-   ```
-   SMTP_HOST=smtp.gmail.com
-   SMTP_PORT=587
-   SMTP_USER=roccogold23@gmail.com
-   SMTP_PASS=<app password 16 caratteri>   # NON la password normale di Gmail
-   ```
-   Mittente mostrato: `Stacca <SMTP_USER>`. Limite Gmail ~500 email/giorno (più che sufficiente).
-
-2. **Resend** — in test (`onboarding@resend.dev`) consegna **solo all'indirizzo dell'account Resend**; per inviare a tutti serve **verificare un dominio** (sotto-dominio `send.corzanoepaterno.it` per non toccare la posta esistente).
-
-Se non configuri né SMTP né Resend, il recupero via email non parte: usa il fallback admin (**Rigenera password** dal tab Admin).
+Le email partono via **SMTP** (`src/lib/email.ts`) — nessun provider esterno. Setup con **Gmail**: Account Google → **Sicurezza** → attiva **Verifica in due passaggi** → **Password per le app** → genera (16 caratteri). In `web/.env`:
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=roccogold23@gmail.com
+SMTP_PASS=<app password 16 caratteri>   # NON la password normale di Gmail
+```
+Mittente mostrato: `Stacca <SMTP_USER>`. Limite Gmail ~500 email/giorno. Se le `SMTP_*` non sono configurate, il recupero via email non parte: usa il fallback admin (**Rigenera password** dal tab Admin). Per un mittente professionale `@corzanoepaterno.it`: verifica un (sotto)dominio sul provider SMTP e cambia solo le variabili — il codice non cambia.
 
 ### Ruoli: dipendente / admin
 
@@ -85,29 +81,6 @@ npm run db:promote-admin -- cantina@corzanoepaterno.it
 ```
 
 Idempotente: imposta `role = admin` per quell'email (l'utente deve già esistere — esegui prima `db:seed`).
-
-### Resend — test (now)
-
-1. Create a free account at [resend.com](https://resend.com) (use `roccogold23@gmail.com`)
-2. **API Keys** → Create API Key → copy `re_...`
-3. In `web/.env`:
-   ```
-   RESEND_API_KEY=re_xxxxxxxx
-   EMAIL_FROM=onboarding@resend.dev
-   FEEDBACK_TO_EMAIL=roccogold23@gmail.com
-   ```
-4. Restart `npm run dev`
-5. Test: **Password dimenticata?** → `roccogold23@gmail.com` → code arrives in Gmail
-
-With `onboarding@resend.dev`, Resend only delivers to the email you used to sign up.
-
-### Resend — production (20 workers)
-
-1. **Domains** → Add `corzanoepaterno.com` (or your domain) → add DNS records
-2. Set `EMAIL_FROM=noreply@corzanoepaterno.com`
-3. Add all workers in `prisma/workers.local.ts` → `npm run db:seed`
-
-Free tier: 3,000 emails/month — enough for this app.
 
 ## Convenzioni schema (Prisma / Postgres)
 
@@ -186,7 +159,7 @@ Condividi il foglio in sola lettura con chi fa contabilità; il service account 
 
 ### 2. Local `.env`
 
-Update `web/.env` with the two Supabase URLs + keep existing Resend/Google vars.
+Update `web/.env` with the two Supabase URLs + keep existing SMTP/Google vars.
 
 Run migrations and seed:
 
@@ -208,8 +181,10 @@ npm run dev
 | `DATABASE_URL` | Supabase transaction pooler (6543) |
 | `DIRECT_URL` | Supabase direct (5432) |
 | `SESSION_SECRET` | New random string (`openssl rand -base64 32`) |
-| `RESEND_API_KEY` | Your Resend key |
-| `EMAIL_FROM` | `onboarding@resend.dev` (or verified domain) |
+| `SMTP_HOST` | `smtp.gmail.com` |
+| `SMTP_PORT` | `587` |
+| `SMTP_USER` | Gmail address (also the sender) |
+| `SMTP_PASS` | Gmail **App Password** |
 | `FEEDBACK_TO_EMAIL` | Admin email |
 | `GOOGLE_SHEETS_ID` | Sheet ID |
 | `GOOGLE_SHEETS_TAB` | `Ore Totali` |

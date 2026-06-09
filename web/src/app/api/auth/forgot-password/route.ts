@@ -65,17 +65,22 @@ export async function POST(req: Request) {
     data: { resetCodeHash, resetCodeExpiresAt },
   });
 
+  const firstName =
+    user.firstName?.trim() || user.displayName.split(" ")[0] || user.displayName;
   const sent = await sendEmail({
     to: email,
     subject: "Stacca — codice per reimpostare la password",
     text: [
-      `Ciao ${user.displayName},`,
+      `Ciao ${firstName},`,
       "",
-      `Il tuo codice per reimpostare la password è: ${code}`,
+      "Hai chiesto di reimpostare la password di Stacca.",
+      `Il tuo codice è: ${code}`,
       "",
-      "Il codice scade tra 15 minuti.",
+      "Scrivilo nell'app per scegliere una nuova password. Scade tra 15 minuti.",
       "",
-      "Se non l'hai richiesto tu, ignora questa email.",
+      "Se non sei stato tu, ignora questa email: la password resta invariata.",
+      "",
+      "— Stacca · Corzano e Paterno",
     ].join("\n"),
   });
 
