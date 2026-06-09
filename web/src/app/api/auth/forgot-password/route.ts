@@ -76,7 +76,7 @@ export async function POST(req: Request) {
     text: [
       `Ciao ${firstName},`,
       "",
-      `Ecco il codice per reimpostare la tua password Stacca: ${code}`,
+      `Ecco il codice per reimpostare la tua password: ${code}`,
       "",
       "Inseriscilo nell'app entro 15 minuti per scegliere una nuova password.",
       "",
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
     ].join("\n"),
     html: [
       `<p>Ciao ${safeName},</p>`,
-      `<p>Ecco il codice per reimpostare la tua password Stacca: <strong>${code}</strong></p>`,
+      `<p>Ecco il codice per reimpostare la tua password: <strong>${code}</strong></p>`,
       `<p>Inseriscilo nell'app entro 15 minuti per scegliere una nuova password.</p>`,
       `<p>Se non sei stato tu, ignora questa email.</p>`,
     ].join("\n"),
