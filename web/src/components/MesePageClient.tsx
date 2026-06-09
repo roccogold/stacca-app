@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { SubmitMonthPanel } from "@/components/SubmitMonthPanel";
 import { MeseEntriesList, MeseOfflineBanner, useMergedMonthStats } from "@/components/MeseOfflineSection";
@@ -97,6 +98,15 @@ export function MesePageClient({
               )}
               {dayEntries.length === 0 && (
                 <div className="card--oggi__unit">nessun lavoro</div>
+              )}
+              {!monthSubmitted && (
+                <Link
+                  href={`/aggiungi?date=${encodeURIComponent(selectedDay)}`}
+                  className="card--oggi__cta"
+                  prefetch
+                >
+                  Aggiungi ore
+                </Link>
               )}
             </>
           ) : (

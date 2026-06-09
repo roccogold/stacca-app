@@ -1,6 +1,26 @@
 import { cache } from "react";
-import { romeCalendarParts } from "@/lib/format";
+import { romeCalendarParts, todayISO } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+
+const EDITABLE_MONTHS_LOOKBACK = 36;
+
+function shiftMonth(y: number, m: number, delta: number): { y: number; m: number } {
+  let nm = m + delta;
+  let ny = y;
+  while (nm < 1) {
+    nm += 12;
+    ny -= 1;
+  }
+  while (nm > 12) {
+    nm -= 12;
+    ny += 1;
+  }
+  return { y: ny, m: nm };
+}
+
+function monthKeyFromParts(y: number, m: number): string {
+  return `${y}-${String(m).padStart(2, "0")}`;
+}
 
 export function monthFromDate(date: string): string {
   return date.slice(0, 7);
@@ -64,15 +84,43 @@ export async function assertMonthEditable(userId: string, date: string) {
   return { locked: false as const, month };
 }
 
-/** Month not submitted and date within current calendar month (Rome). */
+/** First/last selectable day: any open (non-submitted) month in lookback, through today (Rome). */
+export async function getEditableDateBoundsRome(
+  userId: string,
+): Promise<{ min: string; max: string }> {
+  const max = todayISO();
+  const submitted = await prisma.monthSubmission.findMany({
+    where: { userId },
+    select: { month: true },
+  });
+  const submittedMonths = new Set(submitted.map((s) => s.month));
+  const { y, m } = romeCalendarParts();
+
+  let min: string | null = null;
+  for (let i = EDITABLE_MONTHS_LOOKBACK - 1; i >= 0; i--) {
+    const { y: yy, m: mm } = shiftMonth(y, m, -i);
+    const key = monthKeyFromParts(yy, mm);
+    if (submittedMonths.has(key)) continue;
+    const first = `${key}-01`;
+    if (min === null || first < min) min = first;
+  }
+
+  if (min === null) {
+    min = `${monthKeyFromParts(y, m)}-01`;
+  }
+
+  return { min, max };
+}
+
+/** Open month only; no future dates. Submitted months stay locked. */
 export async function assertEntryDateAllowed(
   userId: string,
   date: string,
 ): Promise<{ ok: true; month: string } | { ok: false; error: string }> {
-  if (!isDateInCurrentMonthRome(date)) {
+  if (date > todayISO()) {
     return {
       ok: false,
-      error: `Puoi inserire ore solo nel mese in corso (${currentMonthLabelRome()}).`,
+      error: "Non puoi registrare ore in un giorno futuro.",
     };
   }
   const lock = await assertMonthEditable(userId, date);
@@ -80,6 +128,13 @@ export async function assertEntryDateAllowed(
     return {
       ok: false,
       error: "Mese già inviato. Non puoi aggiungere o modificare lavori.",
+    };
+  }
+  const bounds = await getEditableDateBoundsRome(userId);
+  if (date < bounds.min) {
+    return {
+      ok: false,
+      error: "Questo mese è già chiuso o troppo indietro nel tempo.",
     };
   }
   return { ok: true, month: lock.month };

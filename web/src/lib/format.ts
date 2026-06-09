@@ -287,6 +287,12 @@ export function monthTitle(year: number, monthIndex0: number): string {
   return label.replace(/^\p{L}/u, (c) => c.toUpperCase());
 }
 
+export function monthLabelFromDateISO(date: string): string {
+  const [y, m] = date.split("-").map(Number);
+  if (!Number.isFinite(y) || !Number.isFinite(m)) return date;
+  return monthTitle(y, m - 1);
+}
+
 /** First weekday index Mon=0..Sun=6 for calendar grid (Italian week starts Monday). */
 export function mondayWeekdayIndex(d: Date): number {
   const js = d.getDay(); // Sun=0

@@ -8,7 +8,12 @@ import { useEffect, useTransition, useState } from "react";
 import { HoursEntryCard } from "@/components/HoursEntryCard";
 import { useOfflineSync } from "@/components/OfflineSyncProvider";
 import { LUOGHI_ALTRO, LUOGHI_VIGNE, MANSIONI } from "@/lib/constants";
-import { clampISODate, formatDateField, todayISO } from "@/lib/format";
+import {
+  clampISODate,
+  formatDateField,
+  monthLabelFromDateISO,
+  todayISO,
+} from "@/lib/format";
 import {
   getPendingEntryByLocalId,
   isLocalEntryId,
@@ -22,7 +27,6 @@ type Props = {
   locked?: boolean;
   minDate: string;
   maxDate: string;
-  monthLabel: string;
 };
 
 function initialHoursValue(existing: number | undefined): number {
@@ -37,7 +41,6 @@ export function AggiungiForm({
   locked = false,
   minDate,
   maxDate,
-  monthLabel,
 }: Props) {
   const router = useRouter();
   const { userId, saveEntry, deleteEntry } = useOfflineSync();
@@ -152,7 +155,9 @@ export function AggiungiForm({
         )}
         {!editId && !locked && (
           <p className="form-hint">
-            Stai registrando <span className="capitalize">{monthLabel}</span>. Stesso giorno con
+            Puoi scegliere qualsiasi giorno in un mese ancora{" "}
+            <strong>aperto</strong> (non inviato). Stai registrando{" "}
+            <span className="capitalize">{monthLabelFromDateISO(date)}</span>. Stesso giorno con
             lavori diversi? Aggiungi un altro lavoro se cambi lavorazione o luogo.
           </p>
         )}
