@@ -20,6 +20,8 @@ type Labels = {
   nameLabel: string;
   countOne: string;
   countMany: string;
+  /** Where the deleted item stops appearing, e.g. "nelle nuove lavorazioni". */
+  deleteScope: string;
 };
 
 type Props = {
@@ -169,20 +171,21 @@ export function OptionsManager({
     return (
       <SwipeToDelete
         key={item.id}
+        bare={false}
         onDelete={() => {
           setDeleteError(null);
           setDeleteTarget(item);
         }}
       >
-        <div className="card opt-card">
-          <span className="opt-card__name">{item.name}</span>
+        <div className="opt-row">
+          <span className="opt-row__name">{item.name}</span>
           <button
             type="button"
-            className="opt-card__edit"
+            className="opt-row__edit"
             onClick={() => openEdit(item)}
             aria-label={`Rinomina ${item.name}`}
           >
-            <Pencil size={18} aria-hidden />
+            <Pencil size={15} aria-hidden />
           </button>
         </div>
       </SwipeToDelete>
@@ -235,9 +238,9 @@ export function OptionsManager({
 
           {/* Reserved catch-all: always available, not editable or deletable. */}
           {!q && (
-            <div className="card opt-card opt-card--locked">
-              <span className="opt-card__name">{reservedLabel}</span>
-              <Lock size={16} className="opt-card__lock" aria-hidden />
+            <div className="opt-card opt-card--locked">
+              <span className="opt-row__name">{reservedLabel}</span>
+              <Lock size={15} className="opt-row__lock" aria-hidden />
             </div>
           )}
         </div>
@@ -279,7 +282,7 @@ export function OptionsManager({
         )}
         {formMode === "edit" && (
           <p className="form-hint">
-            Le voci già registrate mantengono il nome precedente; il nuovo nome
+            Le voci già registrate mantengono il nome precedente. Il nuovo nome
             vale solo per i prossimi inserimenti.
           </p>
         )}
@@ -307,10 +310,10 @@ export function OptionsManager({
       <BottomSheet
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
-        title="Elimina voce"
+        title={`Elimina ${labels.countOne}`}
         subtitle={
           deleteTarget
-            ? `"${deleteTarget.name}" non comparirà più nei nuovi inserimenti. Le voci già registrate restano invariate.`
+            ? `"${deleteTarget.name}" non comparirà più ${labels.deleteScope}. Le voci già registrate restano invariate.`
             : undefined
         }
       >

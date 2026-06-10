@@ -12,8 +12,21 @@ export type ParsedLuogoInput =
   | { name: string; category: LuogoCategory }
   | { error: string };
 
+/**
+ * Capitalize the first letter of every word, leaving the rest as typed (so
+ * acronyms like "VDM", "SG", "F9" survive). "vigna vecchia" → "Vigna Vecchia",
+ * "vigna grande nuova (tre borri)" → "Vigna Grande Nuova (Tre Borri)".
+ */
+export function toTitleCase(input: string): string {
+  return input.replace(
+    /(^|[\s('’\-/])(\p{L})/gu,
+    (_, sep: string, ch: string) => sep + ch.toUpperCase(),
+  );
+}
+
 function cleanName(raw: unknown): string {
-  return typeof raw === "string" ? raw.trim().replace(/\s+/g, " ") : "";
+  if (typeof raw !== "string") return "";
+  return toTitleCase(raw.trim().replace(/\s+/g, " "));
 }
 
 function validateName(name: string): string | null {

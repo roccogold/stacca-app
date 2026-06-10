@@ -2946,49 +2946,64 @@ a.card {
   box-shadow: var(--shadow);
 }
 
-/* Admin catalog (Lavorazioni / Luoghi) — compact rows, swipe to delete */
+/* Admin catalog (Lavorazioni / Luoghi) — compact rows, swipe to delete.
+   Swipe rows use SwipeToDelete with bare={false}, so the sliding panel
+   (.entry-swipe__panel) is itself the white card over the red underlay — same
+   homogeneous look as the entries list. .opt-row is just the transparent
+   content inside; .opt-card is the static (non-swipe) reserved "Altro" row and
+   mirrors the panel's card styling so it matches. */
 .opt-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   margin-top: 4px;
 }
 .opt-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
+.opt-row,
 .opt-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 9px 10px 9px 14px;
 }
-.opt-card__name {
-  font-size: 16px;
+.opt-card {
+  margin: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+}
+.opt-row__name {
+  font-size: 14px;
   font-weight: 600;
   color: var(--ink);
 }
-.opt-card__edit {
+.opt-row__edit {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--card);
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-muted);
+}
+.opt-row__edit:active {
+  transform: scale(0.9);
   color: var(--ink);
 }
-.opt-card__edit:active {
-  transform: scale(0.96);
-}
 .opt-card--locked {
-  opacity: 0.65;
+  opacity: 0.6;
 }
-.opt-card__lock {
+.opt-row__lock {
   color: var(--text-muted);
   flex-shrink: 0;
+  margin-right: 4px;
 }
