@@ -49,3 +49,28 @@ export async function PATCH(
   });
   return NextResponse.json({ lavorazione });
 }
+
+export async function DELETE(
+  req: Request,
+  ctx: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireAdminApi();
+  if (!auth.ok) return auth.response;
+
+  const limited = adminRateLimited(req);
+  if (limited) return limited;
+
+  const { id } = await ctx.params;
+  const target = await prisma.lavorazione.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+  if (!target) {
+    return NextResponse.json({ error: "Lavorazione non trovata" }, { status: 404 });
+  }
+
+  // Safe hard delete: TimeEntry stores the name as a string, so removing the
+  // option here never touches historical entries — it just stops being offered.
+  await prisma.lavorazione.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

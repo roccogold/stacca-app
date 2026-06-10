@@ -9,11 +9,7 @@ export default async function LavorazioniPage() {
   await requireAdmin();
 
   const rows = await prisma.lavorazione.findMany({ orderBy: { name: "asc" } });
-  const initial = rows.map((r) => ({
-    id: r.id,
-    name: r.name,
-    archived: r.archived,
-  }));
+  const initial = rows.map((r) => ({ id: r.id, name: r.name }));
 
   return (
     <OptionsManager

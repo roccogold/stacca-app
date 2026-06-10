@@ -14,7 +14,6 @@ export default async function LuoghiPage() {
   const initial = rows.map((r) => ({
     id: r.id,
     name: r.name,
-    archived: r.archived,
     category: r.category as "vigne" | "altro",
   }));
 

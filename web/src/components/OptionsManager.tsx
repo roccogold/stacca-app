@@ -2,22 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Ban,
-  ChevronDown,
-  Lock,
-  Pencil,
-  Plus,
-  RotateCcw,
-  Search,
-} from "lucide-react";
+import { Lock, Pencil, Plus, Search } from "lucide-react";
 import { BottomSheet } from "@/components/BottomSheet";
 import { SwipeToDelete } from "@/components/SwipeToDelete";
 
 export type ManagedOption = {
   id: string;
   name: string;
-  archived: boolean;
   category?: "vigne" | "altro";
 };
 
@@ -59,7 +50,6 @@ export function OptionsManager({
   const router = useRouter();
   const [items, setItems] = useState<ManagedOption[]>(sortByName(initial));
   const [search, setSearch] = useState("");
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
@@ -69,22 +59,9 @@ export function OptionsManager({
   const [formError, setFormError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  const [archiveTarget, setArchiveTarget] = useState<ManagedOption | null>(null);
-  const [archiveError, setArchiveError] = useState<string | null>(null);
-  const [archiveLoading, setArchiveLoading] = useState(false);
-
-  const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [showArchived, setShowArchived] = useState(false);
-  const [bannerError, setBannerError] = useState<string | null>(null);
-
-  function toggleExpand(id: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const [deleteTarget, setDeleteTarget] = useState<ManagedOption | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   function openCreate() {
     setFormMode("create");
@@ -148,136 +125,69 @@ export function OptionsManager({
     }
   }
 
-  async function setArchived(item: ManagedOption, archived: boolean) {
-    setTogglingId(item.id);
-    setBannerError(null);
+  async function confirmDelete() {
+    if (!deleteTarget || deleteLoading) return;
+    setDeleteLoading(true);
+    setDeleteError(null);
     try {
-      const res = await fetch(`/api/admin/${resource}/${item.id}/archive`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ archived }),
+      const res = await fetch(`/api/admin/${resource}/${deleteTarget.id}`, {
+        method: "DELETE",
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(typeof data.error === "string" ? data.error : "Errore");
-      }
-      setItems((prev) =>
-        sortByName(prev.map((it) => (it.id === item.id ? { ...it, archived } : it))),
-      );
-      router.refresh();
-    } catch (e) {
-      setBannerError(e instanceof Error ? e.message : "Errore.");
-    } finally {
-      setTogglingId(null);
-    }
-  }
-
-  async function confirmArchive() {
-    if (!archiveTarget || archiveLoading) return;
-    setArchiveLoading(true);
-    setArchiveError(null);
-    try {
-      const res = await fetch(`/api/admin/${resource}/${archiveTarget.id}/archive`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ archived: true }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setArchiveError(typeof data.error === "string" ? data.error : "Errore.");
+        setDeleteError(typeof data.error === "string" ? data.error : "Errore.");
         return;
       }
-      const removedId = archiveTarget.id;
-      setItems((prev) =>
-        sortByName(prev.map((it) => (it.id === removedId ? { ...it, archived: true } : it))),
-      );
-      setArchiveTarget(null);
+      const removedId = deleteTarget.id;
+      setItems((prev) => prev.filter((it) => it.id !== removedId));
+      setDeleteTarget(null);
       router.refresh();
     } catch {
-      setArchiveError("Connessione assente. Riprova.");
+      setDeleteError("Connessione assente. Riprova.");
     } finally {
-      setArchiveLoading(false);
+      setDeleteLoading(false);
     }
   }
 
   const q = search.trim().toLowerCase();
   const matches = (it: ManagedOption) => !q || it.name.toLowerCase().includes(q);
-  const active = items.filter((it) => !it.archived && matches(it));
-  const archived = items.filter((it) => it.archived && matches(it));
-  const archivedOpen = showArchived || q.length > 0;
+  const visible = items.filter(matches);
 
-  function renderCard(item: ManagedOption) {
-    const open = expanded.has(item.id);
-    return (
-      <div
-        key={item.id}
-        className={`card emp-card${item.archived ? " emp-card--disabled" : ""}${open ? " emp-card--open" : ""}`}
-      >
-        <button
-          type="button"
-          className="emp-card__head"
-          onClick={() => toggleExpand(item.id)}
-        >
-          <span className="emp-card__main">
-            <span className="emp-card__name">{item.name}</span>
-            {withCategory && (
-              <span className="emp-card__email">
-                {CATEGORY_LABEL[item.category ?? "altro"]}
-              </span>
-            )}
-          </span>
-          <span className="emp-card__meta">
-            <ChevronDown
-              size={20}
-              className={`emp-card__chev${open ? " emp-card__chev--open" : ""}`}
-              aria-hidden
-            />
-          </span>
-        </button>
-        {open && (
-          <div className="emp-card__actions">
-            <button type="button" className="emp-action" onClick={() => openEdit(item)}>
-              <Pencil size={16} aria-hidden /> Rinomina
-            </button>
-            {item.archived ? (
-              <button
-                type="button"
-                className="emp-action"
-                onClick={() => setArchived(item, false)}
-                disabled={togglingId === item.id}
-              >
-                <RotateCcw size={16} aria-hidden />
-                {togglingId === item.id ? "…" : "Riattiva"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="emp-action emp-action--danger"
-                onClick={() => {
-                  setArchiveError(null);
-                  setArchiveTarget(item);
-                }}
-              >
-                <Ban size={16} aria-hidden /> Archivia
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // For luoghi, group the active list by category (Vigne first, then Altro).
-  const groupedActive: Array<{ key: string; label: string; rows: ManagedOption[] }> =
+  // For luoghi, group by category (Vigne first, then Altro); otherwise one list.
+  const groups: Array<{ key: string; label: string; rows: ManagedOption[] }> =
     withCategory
       ? (["vigne", "altro"] as const)
           .map((cat) => ({
             key: cat,
             label: CATEGORY_LABEL[cat],
-            rows: active.filter((it) => (it.category ?? "altro") === cat),
+            rows: visible.filter((it) => (it.category ?? "altro") === cat),
           }))
           .filter((g) => g.rows.length > 0)
-      : [{ key: "all", label: "", rows: active }];
+      : [{ key: "all", label: "", rows: visible }];
+
+  function renderRow(item: ManagedOption) {
+    return (
+      <SwipeToDelete
+        key={item.id}
+        onDelete={() => {
+          setDeleteError(null);
+          setDeleteTarget(item);
+        }}
+      >
+        <div className="card opt-card">
+          <span className="opt-card__name">{item.name}</span>
+          <button
+            type="button"
+            className="opt-card__edit"
+            onClick={() => openEdit(item)}
+            aria-label={`Rinomina ${item.name}`}
+          >
+            <Pencil size={18} aria-hidden />
+          </button>
+        </div>
+      </SwipeToDelete>
+    );
+  }
 
   return (
     <>
@@ -294,7 +204,7 @@ export function OptionsManager({
 
       <section className="block block--spaced">
         <h2 className="section-title section-title--inset">
-          {active.length} {active.length === 1 ? labels.countOne : labels.countMany}
+          {items.length} {items.length === 1 ? labels.countOne : labels.countMany}
         </h2>
 
         <div className="emp-search">
@@ -309,70 +219,28 @@ export function OptionsManager({
           />
         </div>
 
-        {bannerError && <p className="field-error">{bannerError}</p>}
-
-        <div className="emp-list">
-          {active.length === 0 ? (
+        <div className="opt-list">
+          {visible.length === 0 ? (
             <p className="emp-empty">Nessun risultato.</p>
           ) : (
-            groupedActive.map((group) => (
-              <div key={group.key}>
+            groups.map((group) => (
+              <div key={group.key} className="opt-group">
                 {group.label && (
                   <p className="section-title section-title--inset">{group.label}</p>
                 )}
-                {group.rows.map((it) => renderCard(it))}
+                {group.rows.map((it) => renderRow(it))}
               </div>
             ))
           )}
 
-          {/* Reserved catch-all: always available, not editable. */}
+          {/* Reserved catch-all: always available, not editable or deletable. */}
           {!q && (
-            <div className="card emp-card emp-card--disabled">
-              <div className="emp-card__head" style={{ cursor: "default" }}>
-                <span className="emp-card__main">
-                  <span className="emp-card__name">{reservedLabel}</span>
-                  <span className="emp-card__email">Voce fissa · sempre disponibile</span>
-                </span>
-                <span className="emp-card__meta">
-                  <Lock size={16} aria-hidden />
-                </span>
-              </div>
+            <div className="card opt-card opt-card--locked">
+              <span className="opt-card__name">{reservedLabel}</span>
+              <Lock size={16} className="opt-card__lock" aria-hidden />
             </div>
           )}
         </div>
-
-        {archived.length > 0 && (
-          <div className="emp-disabled-group">
-            <button
-              type="button"
-              className="emp-disabled-toggle"
-              onClick={() => setShowArchived((v) => !v)}
-              aria-expanded={archivedOpen}
-            >
-              <ChevronDown
-                size={18}
-                className={`emp-disabled-toggle__chev${archivedOpen ? " emp-disabled-toggle__chev--open" : ""}`}
-                aria-hidden
-              />
-              Archiviati ({archived.length})
-            </button>
-            {archivedOpen && (
-              <div className="emp-list emp-list--disabled">
-                {archived.map((it) => (
-                  <SwipeToDelete
-                    key={it.id}
-                    onDelete={() => {
-                      setArchiveError(null);
-                      setArchiveTarget(it);
-                    }}
-                  >
-                    {renderCard(it)}
-                  </SwipeToDelete>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </section>
 
       {/* Create / edit */}
@@ -435,31 +303,31 @@ export function OptionsManager({
         </div>
       </BottomSheet>
 
-      {/* Archive confirm */}
+      {/* Delete confirm */}
       <BottomSheet
-        open={archiveTarget !== null}
-        onClose={() => setArchiveTarget(null)}
-        title="Archivia voce"
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        title="Elimina voce"
         subtitle={
-          archiveTarget
-            ? `"${archiveTarget.name}" non comparirà più nei nuovi inserimenti. Le voci già registrate restano invariate. Puoi riattivarla quando vuoi.`
+          deleteTarget
+            ? `"${deleteTarget.name}" non comparirà più nei nuovi inserimenti. Le voci già registrate restano invariate.`
             : undefined
         }
       >
-        {archiveError && <p className="field-error">{archiveError}</p>}
+        {deleteError && <p className="field-error">{deleteError}</p>}
         <div className="sheet__actions">
           <button
             type="button"
-            className="btn btn--primary btn--block btn--sheet"
-            onClick={confirmArchive}
-            disabled={archiveLoading}
+            className="btn btn--danger-outline btn--block"
+            onClick={confirmDelete}
+            disabled={deleteLoading}
           >
-            {archiveLoading ? "Archiviazione…" : "Archivia"}
+            {deleteLoading ? "Elimino…" : "Elimina"}
           </button>
           <button
             type="button"
             className="btn btn--secondary btn--block btn--sheet-secondary"
-            onClick={() => setArchiveTarget(null)}
+            onClick={() => setDeleteTarget(null)}
           >
             Annulla
           </button>
