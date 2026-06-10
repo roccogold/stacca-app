@@ -26,6 +26,14 @@ export function getFeedbackToEmail() {
   return process.env.FEEDBACK_TO_EMAIL?.trim() || "roccogold23@gmail.com";
 }
 
+/** Public app URL for links in emails. APP_URL override, else Vercel's production domain. */
+export function getAppUrl(): string {
+  const explicit = process.env.APP_URL?.trim();
+  if (explicit) return explicit.replace(/\/+$/, "");
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  return vercel ? `https://${vercel}` : "";
+}
+
 export async function sendEmail(opts: {
   to: string;
   subject: string;

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
 import { generateTemporaryPassword, hashSecret } from "@/lib/password";
-import { sendEmail } from "@/lib/email";
+import { getAppUrl, sendEmail } from "@/lib/email";
 import {
   buildDisplayName,
   generateUniqueHandle,
@@ -102,13 +102,18 @@ export async function POST(req: Request) {
 
   // Best-effort welcome email with the temp password. Never fail creation on it:
   // the admin still gets the password to share manually (WhatsApp).
+  const appUrl = getAppUrl();
+  const staccaText = appUrl ? `Stacca (${appUrl})` : "Stacca";
+  const staccaHtml = appUrl ? `<a href="${appUrl}">Stacca</a>` : "Stacca";
+  const installText =
+    'Puoi installare Stacca come app sul telefono: aprila nel browser, poi "Aggiungi a Home" (iPhone: tasto Condividi; Android: menu a tre puntini).';
   const welcome = await sendEmail({
     to: email,
     subject: "Il tuo accesso a Stacca",
     text: [
       `Ciao ${firstName},`,
       "",
-      "Ti è stato creato un account su Stacca per registrare le tue ore.",
+      `Ti è stato creato un account su ${staccaText} per registrare le tue ore.`,
       "",
       "Accedi con questi dati:",
       `Email: ${email}`,
@@ -116,13 +121,16 @@ export async function POST(req: Request) {
       "",
       "Al primo accesso ti verrà chiesto di scegliere una nuova password.",
       "",
+      installText,
+      "",
       "— Stacca · Corzano e Paterno",
     ].join("\n"),
     html: [
       `<p>Ciao ${escapeHtml(firstName)},</p>`,
-      "<p>Ti è stato creato un account su Stacca per registrare le tue ore.</p>",
+      `<p>Ti è stato creato un account su ${staccaHtml} per registrare le tue ore.</p>`,
       `<p>Accedi con questi dati:<br>Email: <strong>${escapeHtml(email)}</strong><br>Password temporanea: <strong>${temporaryPassword}</strong></p>`,
       "<p>Al primo accesso ti verrà chiesto di scegliere una nuova password.</p>",
+      `<p>Puoi installare Stacca come <strong>app sul telefono</strong>: aprila nel browser, poi <strong>"Aggiungi a Home"</strong> (iPhone: tasto Condividi; Android: menu a tre puntini).</p>`,
       "<p>— Stacca · Corzano e Paterno</p>",
     ].join("\n"),
   });
