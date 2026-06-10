@@ -5,8 +5,8 @@ const LAT = 43.4028;
 const LON = 11.186;
 const PLACE_FALLBACK = "San Casciano in Val di Pesa";
 
-/** ~3 fetch al giorno: slot da 8 ore (00–07, 08–15, 16–23 ora di Roma) */
-const WEATHER_SLOT_HOURS = 8;
+/** Aggiornamento orario: uno slot di cache per ogni ora (ora di Roma). */
+const WEATHER_SLOT_HOURS = 1;
 
 export type WeatherSnapshot = {
   tempC: number;
