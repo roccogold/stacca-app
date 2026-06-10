@@ -124,32 +124,37 @@ export async function POST(req: Request) {
   // Best-effort welcome email with the temp password. Never fail creation on it:
   // the admin still gets the password to share manually (WhatsApp).
   const appUrl = getAppUrl();
-  const staccaText = appUrl ? `Stacca (${appUrl})` : "Stacca";
-  const staccaHtml = appUrl ? `<a href="${appUrl}">Stacca</a>` : "Stacca";
-  const installText =
-    'Puoi installare Stacca come app sul telefono: aprila nel browser, poi "Aggiungi a Home" (iPhone: tasto Condividi; Android: menu a tre puntini).';
+  const appLinkHtml = appUrl ? `<a href="${appUrl}">${escapeHtml(appUrl)}</a>` : "";
   const welcome = await sendEmail({
     to: email,
-    subject: "Il tuo accesso a Stacca",
+    subject: "Benvenuto su Stacca",
     text: [
       `Ciao ${firstName},`,
       "",
-      `Ti è stato creato un account su ${staccaText} per registrare le tue ore.`,
+      "Benvenuto su Stacca! Abbiamo creato il tuo account per la registrazione delle ore di lavoro.",
       "",
-      "Accedi con questi dati:",
+      appUrl
+        ? `Per accedere vai su ${appUrl} e usa queste credenziali:`
+        : "Per accedere usa queste credenziali:",
       `Email: ${email}`,
       `Password temporanea: ${temporaryPassword}`,
       "",
-      "Al primo accesso ti verrà chiesto di scegliere una nuova password.",
+      "Al primo accesso ti verrà chiesto di impostare una nuova password personale.",
       "",
-      installText,
+      'Un consiglio: puoi installare l\'app direttamente sul telefono. Apri il sito nel browser e seleziona "Aggiungi a Home":',
+      '- iPhone: tocca il tasto Condividi, poi "Aggiungi alla schermata Home".',
+      '- Android: apri il menu a tre puntini, poi "Aggiungi a schermata Home".',
+      "",
+      "Se hai domande o problemi con l'accesso, scrivici pure.",
     ].join("\n"),
     html: [
       `<p>Ciao ${escapeHtml(firstName)},</p>`,
-      `<p>Ti è stato creato un account su ${staccaHtml} per registrare le tue ore.</p>`,
-      `<p>Accedi con questi dati:<br>Email: <strong>${escapeHtml(email)}</strong><br>Password temporanea: <strong>${temporaryPassword}</strong></p>`,
-      "<p>Al primo accesso ti verrà chiesto di scegliere una nuova password.</p>",
-      `<p>Puoi installare Stacca come <strong>app sul telefono</strong>: aprila nel browser, poi <strong>"Aggiungi a Home"</strong> (iPhone: tasto Condividi; Android: menu a tre puntini).</p>`,
+      "<p>Benvenuto su Stacca! Abbiamo creato il tuo account per la registrazione delle ore di lavoro.</p>",
+      `<p>${appUrl ? `Per accedere vai su ${appLinkHtml} e usa queste credenziali:` : "Per accedere usa queste credenziali:"}<br>Email: <strong>${escapeHtml(email)}</strong><br>Password temporanea: <strong>${temporaryPassword}</strong></p>`,
+      "<p>Al primo accesso ti verrà chiesto di impostare una nuova password personale.</p>",
+      `<p>Un consiglio: puoi installare l'app direttamente sul telefono. Apri il sito nel browser e seleziona <strong>"Aggiungi a Home"</strong>:</p>`,
+      '<ul><li><strong>iPhone</strong>: tocca il tasto Condividi, poi "Aggiungi alla schermata Home".</li><li><strong>Android</strong>: apri il menu a tre puntini, poi "Aggiungi a schermata Home".</li></ul>',
+      "<p>Se hai domande o problemi con l'accesso, scrivici pure.</p>",
     ].join("\n"),
   });
 
