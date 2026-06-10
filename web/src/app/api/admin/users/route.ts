@@ -3,11 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
 import { generateTemporaryPassword, hashSecret } from "@/lib/password";
+import { sendEmail } from "@/lib/email";
 import {
   buildDisplayName,
   generateUniqueHandle,
   parseUserInput,
 } from "@/lib/admin-users";
+
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>]/g, (c) => (c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;"));
 
 const userSelect = {
   id: true,
@@ -96,6 +100,36 @@ export async function POST(req: Request) {
     select: userSelect,
   });
 
+  // Best-effort welcome email with the temp password. Never fail creation on it:
+  // the admin still gets the password to share manually (WhatsApp).
+  const welcome = await sendEmail({
+    to: email,
+    subject: "Il tuo accesso a Stacca",
+    text: [
+      `Ciao ${firstName},`,
+      "",
+      "Ti è stato creato un account su Stacca per registrare le tue ore.",
+      "",
+      "Accedi con questi dati:",
+      `Email: ${email}`,
+      `Password temporanea: ${temporaryPassword}`,
+      "",
+      "Al primo accesso ti verrà chiesto di scegliere una nuova password.",
+      "",
+      "— Stacca · Corzano e Paterno",
+    ].join("\n"),
+    html: [
+      `<p>Ciao ${escapeHtml(firstName)},</p>`,
+      "<p>Ti è stato creato un account su Stacca per registrare le tue ore.</p>",
+      `<p>Accedi con questi dati:<br>Email: <strong>${escapeHtml(email)}</strong><br>Password temporanea: <strong>${temporaryPassword}</strong></p>`,
+      "<p>Al primo accesso ti verrà chiesto di scegliere una nuova password.</p>",
+      "<p>— Stacca · Corzano e Paterno</p>",
+    ].join("\n"),
+  });
+
   // temporaryPassword is returned once — never stored or shown again.
-  return NextResponse.json({ user, temporaryPassword }, { status: 201 });
+  return NextResponse.json(
+    { user, temporaryPassword, emailSent: welcome.ok },
+    { status: 201 },
+  );
 }

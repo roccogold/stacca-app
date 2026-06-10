@@ -16,6 +16,12 @@ import { sessionOptions, type SessionData } from "@/lib/session";
 async function getUserId(): Promise<string | null> {
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   if (!session.isLoggedIn || !session.userId) return null;
+  // Reject disabled accounts even if their session cookie is still valid.
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { disabled: true },
+  });
+  if (!user || user.disabled) return null;
   return session.userId;
 }
 

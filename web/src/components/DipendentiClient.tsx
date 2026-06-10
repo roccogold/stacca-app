@@ -89,6 +89,7 @@ export function DipendentiClient({
   const [pwError, setPwError] = useState<string | null>(null);
   const [pwLoading, setPwLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [pwEmailNote, setPwEmailNote] = useState<string | null>(null);
 
   // Disable (deactivate) confirmation sheet — never deletes data
   const [disableTarget, setDisableTarget] = useState<Employee | null>(null);
@@ -152,7 +153,10 @@ export function DipendentiClient({
       if (formMode === "create") {
         setUsers((prev) => sortEmployees([...prev, saved]));
         setFormOpen(false);
-        showPasswordResult(saved, data.temporaryPassword);
+        const note = data.emailSent
+          ? `Inviata anche via email a ${saved.email ?? "—"}`
+          : "Email non inviata — condividi la password a mano.";
+        showPasswordResult(saved, data.temporaryPassword, note);
       } else {
         setUsers((prev) => sortEmployees(prev.map((u) => (u.id === saved.id ? saved : u))));
         setFormOpen(false);
@@ -165,9 +169,14 @@ export function DipendentiClient({
     }
   }
 
-  function showPasswordResult(emp: Pick<Employee, "id" | "firstName" | "lastName">, password: string) {
+  function showPasswordResult(
+    emp: Pick<Employee, "id" | "firstName" | "lastName">,
+    password: string,
+    emailNote?: string | null,
+  ) {
     setPwUser({ id: emp.id, name: fullName(emp) });
     setPwValue(password);
+    setPwEmailNote(emailNote ?? null);
     setPwMode("result");
     setPwError(null);
     setCopied(false);
@@ -177,6 +186,7 @@ export function DipendentiClient({
   function askResetPassword(emp: Employee) {
     setPwUser({ id: emp.id, name: fullName(emp) });
     setPwValue(null);
+    setPwEmailNote(null);
     setPwMode("confirm");
     setPwError(null);
     setPwOpen(true);
@@ -517,6 +527,7 @@ export function DipendentiClient({
         {pwMode === "result" && pwValue && (
           <>
             <div className="emp-pw-box">{pwValue}</div>
+            {pwEmailNote && <p className="emp-pw-note">{pwEmailNote}</p>}
             {pwError && <p className="field-error">{pwError}</p>}
             <div className="sheet__actions">
               <button
