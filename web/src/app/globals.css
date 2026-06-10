@@ -2795,9 +2795,41 @@ a.card {
 
 .emp-card__head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.emp-card__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.emp-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.emp-card__chev {
+  color: var(--text-muted);
+  transition: transform 0.18s ease;
+}
+
+.emp-card__chev--open {
+  transform: rotate(180deg);
 }
 
 .emp-card__name {

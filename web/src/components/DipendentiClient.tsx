@@ -72,6 +72,16 @@ export function DipendentiClient({
   const [users, setUsers] = useState<Employee[]>(sortEmployees(initialUsers));
   const [search, setSearch] = useState("");
   const [showDisabled, setShowDisabled] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggleExpand(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   // Create / edit form sheet
   const [formOpen, setFormOpen] = useState(false);
@@ -278,27 +288,41 @@ export function DipendentiClient({
     const lockTitle = locked
       ? "Account protetto: gestibile solo dal titolare"
       : undefined;
+    const open = expanded.has(emp.id);
     return (
       <div
         key={emp.id}
-        className={`card emp-card${emp.disabled ? " emp-card--disabled" : ""}`}
+        className={`card emp-card${emp.disabled ? " emp-card--disabled" : ""}${open ? " emp-card--open" : ""}`}
       >
-        <div className="emp-card__head">
-          <div>
-            <div className="emp-card__name">{fullName(emp) || emp.displayName}</div>
-            <div className="emp-card__email">{emp.email ?? "—"}</div>
+        <button
+          type="button"
+          className="emp-card__head"
+          onClick={() => toggleExpand(emp.id)}
+          aria-expanded={open}
+        >
+          <span className="emp-card__main">
+            <span className="emp-card__name">{fullName(emp) || emp.displayName}</span>
+            <span className="emp-card__email">{emp.email ?? "—"}</span>
             {emp.disabled ? (
-              <div className="emp-card__pending emp-card__pending--off">
+              <span className="emp-card__pending emp-card__pending--off">
                 Accesso disattivato
-              </div>
+              </span>
             ) : emp.mustChangePassword ? (
-              <div className="emp-card__pending">In attesa del primo accesso</div>
+              <span className="emp-card__pending">In attesa del primo accesso</span>
             ) : null}
-          </div>
-          <span className={`badge ${emp.role === "admin" ? "badge--ok" : "badge--locked"}`}>
-            {emp.role === "admin" ? "Admin" : "Dipendente"}
           </span>
-        </div>
+          <span className="emp-card__meta">
+            <span className={`badge ${emp.role === "admin" ? "badge--ok" : "badge--locked"}`}>
+              {emp.role === "admin" ? "Admin" : "Dipendente"}
+            </span>
+            <ChevronDown
+              size={20}
+              className={`emp-card__chev${open ? " emp-card__chev--open" : ""}`}
+              aria-hidden
+            />
+          </span>
+        </button>
+        {open && (
         <div className="emp-card__actions">
           <button
             type="button"
@@ -353,6 +377,7 @@ export function DipendentiClient({
             </button>
           )}
         </div>
+        )}
       </div>
     );
   }
