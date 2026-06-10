@@ -37,10 +37,13 @@ export function SwipeToDelete({
   const [offset, setOffsetState] = useState(0);
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);
+  const startY = useRef(0);
   const startOffset = useRef(0);
   const didDrag = useRef(false);
-  const isDragging = useRef(false);
+  const isTracking = useRef(false);
   const captured = useRef(false);
+  // null = axis not yet decided; "x" = horizontal swipe; "y" = vertical scroll.
+  const axis = useRef<null | "x" | "y">(null);
   const offsetRef = useRef(0);
 
   const setOffset = useCallback((v: number) => {
@@ -48,39 +51,54 @@ export function SwipeToDelete({
     setOffsetState(v);
   }, []);
 
-  function onDown(clientX: number) {
+  function onDown(clientX: number, clientY: number) {
     startX.current = clientX;
+    startY.current = clientY;
     startOffset.current = offsetRef.current;
     didDrag.current = false;
     captured.current = false;
-    isDragging.current = true;
-    setDragging(true);
+    axis.current = null;
+    isTracking.current = true;
+    // Don't flag "dragging" yet — only once we know it's a horizontal swipe,
+    // so a vertical scroll never disturbs the row.
   }
   function onMove(e: ReactPointerEvent) {
-    if (!isDragging.current) return;
-    const delta = e.clientX - startX.current;
-    if (Math.abs(delta) > 6) {
+    if (!isTracking.current) return;
+    const dx = e.clientX - startX.current;
+    const dy = e.clientY - startY.current;
+
+    if (axis.current === null) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return; // not enough to decide
+      if (Math.abs(dy) >= Math.abs(dx)) {
+        // Vertical intent → let the browser scroll; stop tracking this gesture.
+        isTracking.current = false;
+        return;
+      }
+      axis.current = "x";
       didDrag.current = true;
-      // Capture only once a real drag begins. Capturing on pointerdown would
-      // make the browser dispatch the click on this wrapper instead of the
-      // tapped child (e.g. the edit button), swallowing its onClick.
-      if (!captured.current) {
-        try {
-          e.currentTarget.setPointerCapture(e.pointerId);
-          captured.current = true;
-        } catch {
-          // ignore (capture not supported / pointer already gone)
-        }
+      setDragging(true);
+      // Capture only now (a real horizontal drag). Capturing on pointerdown
+      // would make the browser dispatch the click on this wrapper instead of
+      // the tapped child (e.g. the edit button), swallowing its onClick.
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        captured.current = true;
+      } catch {
+        // ignore (capture not supported / pointer already gone)
       }
     }
-    setOffset(Math.min(0, Math.max(-REVEAL_PX, startOffset.current + delta)));
+
+    setOffset(Math.min(0, Math.max(-REVEAL_PX, startOffset.current + dx)));
   }
   function onEnd() {
-    if (!isDragging.current) return;
-    isDragging.current = false;
+    const wasSwiping = axis.current === "x";
+    isTracking.current = false;
     captured.current = false;
+    axis.current = null;
     setDragging(false);
-    setOffset(offsetRef.current <= -OPEN_THRESHOLD ? -REVEAL_PX : 0);
+    if (wasSwiping) {
+      setOffset(offsetRef.current <= -OPEN_THRESHOLD ? -REVEAL_PX : 0);
+    }
   }
 
   const isOpen = offset <= -OPEN_THRESHOLD / 2;
@@ -106,7 +124,7 @@ export function SwipeToDelete({
         style={{ transform: `translateX(${offset}px)` }}
         onPointerDown={(e) => {
           if (e.button !== 0) return;
-          onDown(e.clientX);
+          onDown(e.clientX, e.clientY);
         }}
         onPointerMove={onMove}
         onPointerUp={onEnd}

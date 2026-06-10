@@ -2291,7 +2291,9 @@ a.card {
   border-radius: var(--r-lg);
   box-shadow: var(--shadow);
   will-change: transform;
-  touch-action: pan-x;
+  /* Let the browser handle vertical scrolling; JS handles the horizontal swipe.
+     (pan-x would block page scroll when a finger starts on a row.) */
+  touch-action: pan-y;
   transition: transform 0.28s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
