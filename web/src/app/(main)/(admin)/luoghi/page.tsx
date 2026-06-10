@@ -29,7 +29,6 @@ export default async function LuoghiPage() {
         nameLabel: "Nome",
         countOne: "luogo",
         countMany: "luoghi",
-        deleteScope: "nei nuovi luoghi",
       }}
     />
   );

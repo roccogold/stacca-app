@@ -22,7 +22,6 @@ export default async function LavorazioniPage() {
         nameLabel: "Nome",
         countOne: "lavorazione",
         countMany: "lavorazioni",
-        deleteScope: "nelle nuove lavorazioni",
       }}
     />
   );

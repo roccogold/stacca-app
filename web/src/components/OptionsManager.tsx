@@ -20,8 +20,6 @@ type Labels = {
   nameLabel: string;
   countOne: string;
   countMany: string;
-  /** Where the deleted item stops appearing, e.g. "nelle nuove lavorazioni". */
-  deleteScope: string;
 };
 
 type Props = {
@@ -124,10 +122,7 @@ export function OptionsManager({
   }
 
   async function handleDelete(item: ManagedOption) {
-    const ok = confirm(
-      `Vuoi davvero eliminare "${item.name}"?\nNon comparirà più ${labels.deleteScope}; le voci già registrate restano invariate.`,
-    );
-    if (!ok) return;
+    if (!confirm(`Vuoi davvero eliminare "${item.name}"?`)) return;
     try {
       const res = await fetch(`/api/admin/${resource}/${item.id}`, {
         method: "DELETE",
