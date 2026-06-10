@@ -7,7 +7,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useTransition, useState } from "react";
 import { HoursEntryCard } from "@/components/HoursEntryCard";
 import { useOfflineSync } from "@/components/OfflineSyncProvider";
-import { LUOGHI_ALTRO, LUOGHI_VIGNE, MANSIONI } from "@/lib/constants";
+import {
+  LUOGHI_ALTRO,
+  LUOGHI_VIGNE,
+  MANSIONI,
+  RESERVED_OPTION,
+} from "@/lib/constants";
+import {
+  cacheOptions,
+  readCachedOptions,
+  type EntryOptions,
+} from "@/lib/options-cache";
 import {
   clampISODate,
   formatDateField,
@@ -27,7 +37,22 @@ type Props = {
   locked?: boolean;
   minDate: string;
   maxDate: string;
+  options?: EntryOptions;
 };
+
+const without = (list: readonly string[], name: string) =>
+  list.filter((x) => x !== name);
+
+/** Bundled lists minus the reserved catch-all — last-resort offline fallback. */
+const FALLBACK_OPTIONS: EntryOptions = {
+  mansioni: without(MANSIONI, RESERVED_OPTION),
+  luoghiVigne: without(LUOGHI_VIGNE, RESERVED_OPTION),
+  luoghiAltro: without(LUOGHI_ALTRO, RESERVED_OPTION),
+};
+
+function hasOptions(o: EntryOptions | undefined): o is EntryOptions {
+  return !!o && o.mansioni.length > 0;
+}
 
 function initialHoursValue(existing: number | undefined): number {
   if (existing != null && existing > 0) return existing;
@@ -41,6 +66,7 @@ export function AggiungiForm({
   locked = false,
   minDate,
   maxDate,
+  options,
 }: Props) {
   const router = useRouter();
   const { userId, saveEntry, deleteEntry } = useOfflineSync();
@@ -59,6 +85,27 @@ export function AggiungiForm({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pendingLoaded, setPendingLoaded] = useState(!editLocalId);
+
+  // Option lists: server props → localStorage cache → bundled fallback.
+  const [opts, setOpts] = useState<EntryOptions>(() =>
+    hasOptions(options) ? options : FALLBACK_OPTIONS,
+  );
+  const optionsKey = hasOptions(options) ? JSON.stringify(options) : "";
+  useEffect(() => {
+    if (optionsKey) {
+      // Online render: persist fresh lists for later offline use.
+      cacheOptions(JSON.parse(optionsKey) as EntryOptions);
+    } else {
+      // No server props (served from cache offline): hydrate from the last
+      // persisted lists. Reading localStorage isn't possible during SSR, so
+      // this one-time sync from an external store belongs in an effect.
+      const cached = readCachedOptions();
+      if (cached && cached.mansioni.length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- external-store hydration on mount
+        setOpts(cached);
+      }
+    }
+  }, [optionsKey]);
 
   useEffect(() => {
     router.prefetch("/");
@@ -198,9 +245,15 @@ export function AggiungiForm({
           <div className="field-control">
             <select className="select select--lg" id="lavorazione" value={mansione} onChange={(e) => setMansione(e.target.value)} required disabled={locked}>
               <option value="" disabled hidden />
-              {MANSIONI.map((m) => (
+              {opts.mansioni.map((m) => (
                 <option key={m} value={m}>{m}</option>
               ))}
+              {mansione &&
+                mansione !== RESERVED_OPTION &&
+                !opts.mansioni.includes(mansione) && (
+                  <option value={mansione}>{mansione}</option>
+                )}
+              <option value={RESERVED_OPTION}>{RESERVED_OPTION}</option>
             </select>
           </div>
         </div>
@@ -213,15 +266,22 @@ export function AggiungiForm({
             <select className="select select--lg" id="luogo" value={luogo} onChange={(e) => setLuogo(e.target.value)} required disabled={locked}>
               <option value="" disabled hidden />
               <optgroup label="Vigne">
-                {LUOGHI_VIGNE.map((l) => (
+                {opts.luoghiVigne.map((l) => (
                   <option key={`vigne-${l}`} value={l}>{l}</option>
                 ))}
               </optgroup>
               <optgroup label="Altro">
-                {LUOGHI_ALTRO.map((l) => (
+                {opts.luoghiAltro.map((l) => (
                   <option key={`altro-${l}`} value={l}>{l}</option>
                 ))}
               </optgroup>
+              {luogo &&
+                luogo !== RESERVED_OPTION &&
+                !opts.luoghiVigne.includes(luogo) &&
+                !opts.luoghiAltro.includes(luogo) && (
+                  <option value={luogo}>{luogo}</option>
+                )}
+              <option value={RESERVED_OPTION}>{RESERVED_OPTION}</option>
             </select>
           </div>
         </div>

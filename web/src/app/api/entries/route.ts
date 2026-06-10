@@ -2,7 +2,10 @@ import { after, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import { LUOGHI, MANSIONI } from "@/lib/constants";
+import {
+  getActiveLavorazioneNames,
+  getActiveLuogoNames,
+} from "@/lib/admin-options";
 import { isValidWorkHours } from "@/lib/format";
 import { assertEntryDateAllowed } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
@@ -80,10 +83,14 @@ export async function POST(req: Request) {
   if (typeof hours !== "number" || !isValidWorkHours(hours)) {
     return NextResponse.json({ error: "Ore non valide" }, { status: 400 });
   }
-  if (!mansione || !MANSIONI.includes(mansione as (typeof MANSIONI)[number])) {
+  const [activeMansioni, activeLuoghi] = await Promise.all([
+    getActiveLavorazioneNames(),
+    getActiveLuogoNames(),
+  ]);
+  if (!mansione || !activeMansioni.has(mansione)) {
     return NextResponse.json({ error: "Lavorazione non valida" }, { status: 400 });
   }
-  if (!luogo || !LUOGHI.includes(luogo as (typeof LUOGHI)[number])) {
+  if (!luogo || !activeLuoghi.has(luogo)) {
     return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });
   }
 

@@ -70,3 +70,27 @@ model TimeEntry {
 
   @@index([userId, date])
 }
+
+// Admin-managed option lists for the entry form. TimeEntry stores `mansione`
+// and `luogo` as denormalized strings (the chosen `name`), so renaming/archiving
+// here only affects the dropdown going forward — historical entries keep the
+// value they were saved with. The catch-all "Altro" is reserved in code and is
+// NOT stored as a row.
+model Lavorazione {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Luogo {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  category  String // "vigne" | "altro"
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}

@@ -2,7 +2,10 @@ import { after, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import { LUOGHI, MANSIONI } from "@/lib/constants";
+import {
+  getActiveLavorazioneNames,
+  getActiveLuogoNames,
+} from "@/lib/admin-options";
 import { isValidWorkHours } from "@/lib/format";
 import { assertEntryDateAllowed } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
@@ -73,16 +76,25 @@ export async function PATCH(
     }
     data.hours = body.hours;
   }
-  if (body.mansione !== undefined) {
-    if (!MANSIONI.includes(body.mansione as (typeof MANSIONI)[number])) {
+  // Accept a value if it's currently active, OR if it's unchanged from what the
+  // entry already stored — so editing an old entry whose option was since
+  // archived/renamed never fails just because that value is no longer offered.
+  if (body.mansione !== undefined && body.mansione !== existing.mansione) {
+    const activeMansioni = await getActiveLavorazioneNames();
+    if (!activeMansioni.has(body.mansione)) {
       return NextResponse.json({ error: "Lavorazione non valida" }, { status: 400 });
     }
     data.mansione = body.mansione;
+  } else if (body.mansione !== undefined) {
+    data.mansione = body.mansione;
   }
-  if (body.luogo !== undefined) {
-    if (!LUOGHI.includes(body.luogo as (typeof LUOGHI)[number])) {
+  if (body.luogo !== undefined && body.luogo !== existing.luogo) {
+    const activeLuoghi = await getActiveLuogoNames();
+    if (!activeLuoghi.has(body.luogo)) {
       return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });
     }
+    data.luogo = body.luogo;
+  } else if (body.luogo !== undefined) {
     data.luogo = body.luogo;
   }
   if (body.note !== undefined) {

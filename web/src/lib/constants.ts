@@ -1,3 +1,10 @@
+/**
+ * Catch-all option for Lavorazione e Luogo. Reserved in code: sempre presente
+ * in fondo ai menu, sempre valida, mai una riga DB. Single source of truth
+ * condivisa tra client (form) e server (validazione/seed).
+ */
+export const RESERVED_OPTION = "Altro";
+
 /** Lavorazioni — ordine alfabetico, Altro in fondo. */
 export const MANSIONI = [
   "Accapannatura",

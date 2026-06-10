@@ -33,6 +33,24 @@ export default async function AggiungiPage({
   const allowed = await assertEntryDateAllowed(user.id, targetDate);
   const locked = !allowed.ok;
 
+  const [mansioniRows, luoghiRows] = await Promise.all([
+    prisma.lavorazione.findMany({
+      where: { archived: false },
+      orderBy: { name: "asc" },
+      select: { name: true },
+    }),
+    prisma.luogo.findMany({
+      where: { archived: false },
+      orderBy: { name: "asc" },
+      select: { name: true, category: true },
+    }),
+  ]);
+  const options = {
+    mansioni: mansioniRows.map((r) => r.name),
+    luoghiVigne: luoghiRows.filter((r) => r.category === "vigne").map((r) => r.name),
+    luoghiAltro: luoghiRows.filter((r) => r.category === "altro").map((r) => r.name),
+  };
+
   return (
     <AggiungiForm
       initial={initial}
@@ -41,6 +59,7 @@ export default async function AggiungiPage({
       locked={locked}
       minDate={bounds.min}
       maxDate={bounds.max}
+      options={options}
     />
   );
 }
