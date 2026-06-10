@@ -10,6 +10,7 @@ export default async function DipendentiPage() {
   const protectedEmail = getProtectedAdminEmail();
 
   const rows = await prisma.user.findMany({
+    where: { archived: false },
     orderBy: [{ role: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
     select: {
       id: true,

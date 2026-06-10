@@ -74,6 +74,8 @@ Un nuovo dipendente creato dal tab admin riceve una **password temporanea mostra
 
 **Nessuna eliminazione dei dati** (GDPR / conservazione): non esiste un'azione che cancella ore o mesi — i dati restano **per sempre**, sia nel DB che su Google Sheets. L'azione più forte è **Disattiva** (blocca l'accesso). I disattivati vengono nascosti nella sezione richiudibile "Disattivati" per non ingombrare la lista.
 
+Su un disattivato puoi fare **swipe a sinistra → Elimina** per **rimuoverlo dalla lista** (flag `archived`, stessa UI delle lavorazioni): sparisce dalla vista admin ma **tutti i dati restano** (record utente, ore, mesi, Google Sheets). È archiviazione, non cancellazione — recuperabile dal DB se serve. Le card sono **comprimibili**: si toccano per aprire le azioni.
+
 **Account protetto:** l'email in `PROTECTED_ADMIN_EMAIL` (default `roccogold23@gmail.com`) è il titolare e **non può essere modificata, disattivata o resettata da altri admin** — solo dal titolare stesso. Gli altri admin vedono i pulsanti disabilitati (e le API rispondono 403).
 
 Guardrail: deve restare **almeno un amministratore attivo** (non puoi declassare/disattivare l'ultimo admin) e non puoi disattivare il tuo stesso account.

@@ -14,6 +14,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { BottomSheet } from "@/components/BottomSheet";
+import { SwipeToDelete } from "@/components/SwipeToDelete";
 
 type Role = "admin" | "dipendente";
 
@@ -105,6 +106,11 @@ export function DipendentiClient({
   const [disableTarget, setDisableTarget] = useState<Employee | null>(null);
   const [disableError, setDisableError] = useState<string | null>(null);
   const [disableLoading, setDisableLoading] = useState(false);
+
+  // Archive (hide from list) confirmation — never deletes data
+  const [archiveTarget, setArchiveTarget] = useState<Employee | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+  const [archiveLoading, setArchiveLoading] = useState(false);
 
   // Inline busy + error for the reactivate buttons
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -282,6 +288,32 @@ export function DipendentiClient({
     }
   }
 
+  async function confirmArchive() {
+    if (!archiveTarget || archiveLoading) return;
+    setArchiveLoading(true);
+    setArchiveError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${archiveTarget.id}/archive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setArchiveError(typeof data.error === "string" ? data.error : "Errore.");
+        return;
+      }
+      const removedId = archiveTarget.id;
+      setUsers((prev) => prev.filter((u) => u.id !== removedId));
+      setArchiveTarget(null);
+      router.refresh();
+    } catch {
+      setArchiveError("Connessione assente. Riprova.");
+    } finally {
+      setArchiveLoading(false);
+    }
+  }
+
   function renderCard(emp: Employee) {
     // Protected owner account: other admins can't edit / reset / disable it.
     const locked = emp.protected && !currentUserIsProtected;
@@ -449,7 +481,23 @@ export function DipendentiClient({
             </button>
             {disabledOpen && (
               <div className="emp-list emp-list--disabled">
-                {disabledList.map((e) => renderCard(e))}
+                {disabledList.map((e) => {
+                  // Protected account can't be archived by others → no swipe.
+                  const locked = e.protected && !currentUserIsProtected;
+                  return locked ? (
+                    renderCard(e)
+                  ) : (
+                    <SwipeToDelete
+                      key={e.id}
+                      onDelete={() => {
+                        setArchiveError(null);
+                        setArchiveTarget(e);
+                      }}
+                    >
+                      {renderCard(e)}
+                    </SwipeToDelete>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -629,6 +677,37 @@ export function DipendentiClient({
             type="button"
             className="btn btn--secondary btn--block btn--sheet-secondary"
             onClick={() => setDisableTarget(null)}
+          >
+            Annulla
+          </button>
+        </div>
+      </BottomSheet>
+
+      {/* Archive (remove from list) — keeps ALL data */}
+      <BottomSheet
+        open={archiveTarget !== null}
+        onClose={() => setArchiveTarget(null)}
+        title="Rimuovi dalla lista"
+        subtitle={
+          archiveTarget
+            ? `Sicuro? ${archiveTarget.firstName || archiveTarget.displayName} sparisce dalla lista. Tutti i suoi dati — ore, mesi e Google Sheets — restano salvati: è solo una pulizia di vista, non una cancellazione.`
+            : undefined
+        }
+      >
+        {archiveError && <p className="field-error">{archiveError}</p>}
+        <div className="sheet__actions">
+          <button
+            type="button"
+            className="btn btn--logout btn--block btn--sheet"
+            onClick={confirmArchive}
+            disabled={archiveLoading}
+          >
+            {archiveLoading ? "Rimuovo…" : "Rimuovi dalla lista"}
+          </button>
+          <button
+            type="button"
+            className="btn btn--secondary btn--block btn--sheet-secondary"
+            onClick={() => setArchiveTarget(null)}
           >
             Annulla
           </button>

@@ -2769,6 +2769,14 @@ a.card {
   margin-top: 10px;
 }
 
+/* Swipe-to-archive (disabled cards) reuses .entry-swipe but lets the card show through */
+.entry-swipe__panel--bare {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
 .emp-search {
   position: relative;
   margin-bottom: 12px;

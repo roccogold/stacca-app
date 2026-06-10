@@ -33,6 +33,7 @@ model User {
   lastName           String      @default("")
   role               UserRole    @default(dipendente)
   disabled           Boolean     @default(false)
+  archived           Boolean     @default(false)
   email              String?     @unique
   passwordHash       String?
   mustChangePassword Boolean     @default(false)
