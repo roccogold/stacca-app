@@ -1,16 +1,19 @@
 "use client";
 
 import type { TimeEntry } from "@prisma/client";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, Check, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useTransition, useState } from "react";
+import { useEffect, useMemo, useTransition, useState } from "react";
+import { BottomSheet } from "@/components/BottomSheet";
 import { HoursEntryCard } from "@/components/HoursEntryCard";
 import { useOfflineSync } from "@/components/OfflineSyncProvider";
 import {
   LUOGHI_ALTRO,
   LUOGHI_VIGNE,
   MANSIONI,
+  MULTI_LUOGO_MANSIONE,
+  MULTI_LUOGO_SEP,
   RESERVED_OPTION,
 } from "@/lib/constants";
 import {
@@ -185,6 +188,62 @@ export function AggiungiForm({
     }
   }
 
+  // Luogo multi-selezione: eccezione per "Trattore" (più vigne in una sessione).
+  const isMultiLuogo = mansione === MULTI_LUOGO_MANSIONE;
+  const [luogoPickerOpen, setLuogoPickerOpen] = useState(false);
+  const selectedLuoghi = useMemo(
+    () => (luogo ? luogo.split(MULTI_LUOGO_SEP).filter(Boolean) : []),
+    [luogo],
+  );
+  const luogoOrder = useMemo(
+    () => [...opts.luoghiVigne, ...opts.luoghiAltro, RESERVED_OPTION],
+    [opts],
+  );
+  // Valori selezionati non più tra le opzioni attive (es. luogo archiviato).
+  const extraLuoghi = selectedLuoghi.filter((n) => !luogoOrder.includes(n));
+
+  function onMansioneChange(value: string) {
+    setMansione(value);
+    // Uscendo dalla multi-selezione con più luoghi, il singolo non può tenerli.
+    if (value !== MULTI_LUOGO_MANSIONE && luogo.includes(MULTI_LUOGO_SEP)) {
+      setLuogo("");
+    }
+  }
+
+  function toggleLuogo(name: string) {
+    const set = new Set(selectedLuoghi);
+    if (set.has(name)) set.delete(name);
+    else set.add(name);
+    const ordered = luogoOrder.filter((n) => set.has(n));
+    const extras = [...set].filter((n) => !luogoOrder.includes(n));
+    setLuogo([...ordered, ...extras].join(MULTI_LUOGO_SEP));
+  }
+
+  const luogoSummary =
+    selectedLuoghi.length === 0
+      ? ""
+      : selectedLuoghi.length === 1
+        ? selectedLuoghi[0]
+        : `${selectedLuoghi.length} luoghi`;
+
+  const renderLuogoToggle = (name: string) => {
+    const on = selectedLuoghi.includes(name);
+    return (
+      <button
+        key={name}
+        type="button"
+        className={`luogo-opt${on ? " luogo-opt--on" : ""}`}
+        onClick={() => toggleLuogo(name)}
+        aria-pressed={on}
+      >
+        <span className="luogo-opt__name">{name}</span>
+        <span className="luogo-opt__box" aria-hidden>
+          {on ? <Check size={14} strokeWidth={3} /> : null}
+        </span>
+      </button>
+    );
+  };
+
   return (
     <>
       <header className="form-header">
@@ -243,7 +302,7 @@ export function AggiungiForm({
             Lavorazione
           </label>
           <div className="field-control">
-            <select className="select select--lg" id="lavorazione" value={mansione} onChange={(e) => setMansione(e.target.value)} required disabled={locked}>
+            <select className="select select--lg" id="lavorazione" value={mansione} onChange={(e) => onMansioneChange(e.target.value)} required disabled={locked}>
               <option value="" disabled hidden />
               {opts.mansioni.map((m) => (
                 <option key={m} value={m}>{m}</option>
@@ -263,27 +322,45 @@ export function AggiungiForm({
             Luogo
           </label>
           <div className="field-control">
-            <select className="select select--lg" id="luogo" value={luogo} onChange={(e) => setLuogo(e.target.value)} required disabled={locked}>
-              <option value="" disabled hidden />
-              <optgroup label="Vigne">
-                {opts.luoghiVigne.map((l) => (
-                  <option key={`vigne-${l}`} value={l}>{l}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Altro">
-                {opts.luoghiAltro.map((l) => (
-                  <option key={`altro-${l}`} value={l}>{l}</option>
-                ))}
-              </optgroup>
-              {luogo &&
-                luogo !== RESERVED_OPTION &&
-                !opts.luoghiVigne.includes(luogo) &&
-                !opts.luoghiAltro.includes(luogo) && (
-                  <option value={luogo}>{luogo}</option>
-                )}
-              <option value={RESERVED_OPTION}>{RESERVED_OPTION}</option>
-            </select>
+            {isMultiLuogo ? (
+              <button
+                type="button"
+                id="luogo"
+                className="select select--lg luogo-trigger"
+                onClick={() => setLuogoPickerOpen(true)}
+                disabled={locked}
+              >
+                <span className={luogoSummary ? undefined : "luogo-trigger__ph"}>
+                  {luogoSummary || "Scegli i luoghi"}
+                </span>
+                <ChevronDown size={18} aria-hidden className="luogo-trigger__chev" />
+              </button>
+            ) : (
+              <select className="select select--lg" id="luogo" value={luogo} onChange={(e) => setLuogo(e.target.value)} required disabled={locked}>
+                <option value="" disabled hidden />
+                <optgroup label="Vigne">
+                  {opts.luoghiVigne.map((l) => (
+                    <option key={`vigne-${l}`} value={l}>{l}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Altro">
+                  {opts.luoghiAltro.map((l) => (
+                    <option key={`altro-${l}`} value={l}>{l}</option>
+                  ))}
+                </optgroup>
+                {luogo &&
+                  luogo !== RESERVED_OPTION &&
+                  !opts.luoghiVigne.includes(luogo) &&
+                  !opts.luoghiAltro.includes(luogo) && (
+                    <option value={luogo}>{luogo}</option>
+                  )}
+                <option value={RESERVED_OPTION}>{RESERVED_OPTION}</option>
+              </select>
+            )}
           </div>
+          {isMultiLuogo && (
+            <p className="field-help">Trattore: puoi scegliere più vigne.</p>
+          )}
         </div>
 
         <div className="field">
@@ -326,6 +403,31 @@ export function AggiungiForm({
         </div>
       </div>
       )}
+
+      <BottomSheet
+        open={luogoPickerOpen}
+        onClose={() => setLuogoPickerOpen(false)}
+        title="Luoghi"
+        subtitle="Seleziona una o più vigne dove ha lavorato il trattore."
+      >
+        <div className="luogo-multi">
+          <p className="luogo-multi__group">Vigne</p>
+          {opts.luoghiVigne.map(renderLuogoToggle)}
+          <p className="luogo-multi__group">Altro</p>
+          {opts.luoghiAltro.map(renderLuogoToggle)}
+          {renderLuogoToggle(RESERVED_OPTION)}
+          {extraLuoghi.map(renderLuogoToggle)}
+        </div>
+        <div className="sheet__actions">
+          <button
+            type="button"
+            className="btn btn--primary btn--block btn--sheet"
+            onClick={() => setLuogoPickerOpen(false)}
+          >
+            Fatto{selectedLuoghi.length ? ` (${selectedLuoghi.length})` : ""}
+          </button>
+        </div>
+      </BottomSheet>
     </>
   );
 }

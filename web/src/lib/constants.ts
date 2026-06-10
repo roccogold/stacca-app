@@ -5,6 +5,15 @@
  */
 export const RESERVED_OPTION = "Altro";
 
+/**
+ * Eccezione: con questa lavorazione il Luogo è multi-selezione (il trattore
+ * lavora più vigne in un'unica sessione). I luoghi scelti vengono salvati come
+ * stringa unica separata da ", ". Nota: se la lavorazione viene rinominata
+ * dall'admin, aggiornare qui.
+ */
+export const MULTI_LUOGO_MANSIONE = "Trattore";
+export const MULTI_LUOGO_SEP = ", ";
+
 /** Lavorazioni — ordine alfabetico, Altro in fondo. */
 export const MANSIONI = [
   "Accapannatura",

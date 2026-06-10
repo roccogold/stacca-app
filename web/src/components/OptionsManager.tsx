@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ClipboardList, Lock, Map, Pencil, Search } from "lucide-react";
+import { ClipboardList, Map, Pencil, Search } from "lucide-react";
 import { BottomSheet } from "@/components/BottomSheet";
 import { SwipeToDelete } from "@/components/SwipeToDelete";
 
@@ -29,8 +29,6 @@ type Props = {
   initial: ManagedOption[];
   labels: Labels;
   withCategory?: boolean;
-  /** Reserved catch-all shown as a locked, non-editable entry. */
-  reservedLabel: string;
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -47,7 +45,6 @@ export function OptionsManager({
   initial,
   labels,
   withCategory = false,
-  reservedLabel,
 }: Props) {
   const router = useRouter();
   // Icon for the "new" button, per resource (can't pass a component from the
@@ -239,13 +236,6 @@ export function OptionsManager({
             ))
           )}
 
-          {/* Reserved catch-all: always available, not editable or deletable. */}
-          {!q && (
-            <div className="opt-card opt-card--locked">
-              <span className="opt-row__name">{reservedLabel}</span>
-              <Lock size={15} className="opt-row__lock" aria-hidden />
-            </div>
-          )}
         </div>
       </section>
 
@@ -297,7 +287,7 @@ export function OptionsManager({
             onClick={submitForm}
             disabled={formLoading}
           >
-            {formLoading ? "Salvataggio…" : formMode === "create" ? labels.newButton : "Salva"}
+            {formLoading ? "Salvataggio…" : formMode === "create" ? "Aggiungi" : "Salva"}
           </button>
           <button
             type="button"

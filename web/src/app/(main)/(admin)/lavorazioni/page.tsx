@@ -1,5 +1,4 @@
 import { OptionsManager } from "@/components/OptionsManager";
-import { RESERVED_OPTION } from "@/lib/admin-options";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -15,7 +14,6 @@ export default async function LavorazioniPage() {
     <OptionsManager
       resource="lavorazioni"
       initial={initial}
-      reservedLabel={RESERVED_OPTION}
       labels={{
         title: "Lavorazioni",
         newButton: "Nuova lavorazione",

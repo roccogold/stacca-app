@@ -6,6 +6,7 @@ import {
   getActiveLavorazioneNames,
   getActiveLuogoNames,
 } from "@/lib/admin-options";
+import { MULTI_LUOGO_SEP } from "@/lib/constants";
 import { isValidWorkHours } from "@/lib/format";
 import { assertEntryDateAllowed } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
@@ -90,7 +91,9 @@ export async function PATCH(
   }
   if (body.luogo !== undefined && body.luogo !== existing.luogo) {
     const activeLuoghi = await getActiveLuogoNames();
-    if (!activeLuoghi.has(body.luogo)) {
+    // Luogo può essere multiplo (es. Trattore): "A, B, C". Ogni parte valida.
+    const parts = body.luogo ? body.luogo.split(MULTI_LUOGO_SEP) : [];
+    if (parts.length === 0 || !parts.every((p) => activeLuoghi.has(p))) {
       return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });
     }
     data.luogo = body.luogo;

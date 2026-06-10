@@ -581,7 +581,7 @@ export function DipendentiClient({
             onClick={submitForm}
             disabled={formLoading}
           >
-            {formLoading ? "Salvataggio…" : formMode === "create" ? "Crea dipendente" : "Salva"}
+            {formLoading ? "Salvataggio…" : formMode === "create" ? "Aggiungi" : "Salva"}
           </button>
           <button
             type="button"

@@ -6,6 +6,7 @@ import {
   getActiveLavorazioneNames,
   getActiveLuogoNames,
 } from "@/lib/admin-options";
+import { MULTI_LUOGO_SEP } from "@/lib/constants";
 import { isValidWorkHours } from "@/lib/format";
 import { assertEntryDateAllowed } from "@/lib/month-lock";
 import { prisma } from "@/lib/prisma";
@@ -90,7 +91,9 @@ export async function POST(req: Request) {
   if (!mansione || !activeMansioni.has(mansione)) {
     return NextResponse.json({ error: "Lavorazione non valida" }, { status: 400 });
   }
-  if (!luogo || !activeLuoghi.has(luogo)) {
+  // Luogo può essere multiplo (es. Trattore): stringa "A, B, C". Ogni parte valida.
+  const luoghi = luogo ? luogo.split(MULTI_LUOGO_SEP) : [];
+  if (!luogo || luoghi.length === 0 || !luoghi.every((p) => activeLuoghi.has(p))) {
     return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });
   }
 

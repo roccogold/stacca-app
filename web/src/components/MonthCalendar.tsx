@@ -83,7 +83,6 @@ export function MonthCalendar({
                   aria-label={ariaParts.join(", ")}
                 >
                   <span className="cal-cell__num">{day}</span>
-                  {has ? <span className="cal-cell__dot" aria-hidden /> : null}
                 </Link>
               );
             })}
