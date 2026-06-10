@@ -122,8 +122,6 @@ export async function POST(req: Request) {
       "Al primo accesso ti verrà chiesto di scegliere una nuova password.",
       "",
       installText,
-      "",
-      "— Stacca · Corzano e Paterno",
     ].join("\n"),
     html: [
       `<p>Ciao ${escapeHtml(firstName)},</p>`,
@@ -131,7 +129,6 @@ export async function POST(req: Request) {
       `<p>Accedi con questi dati:<br>Email: <strong>${escapeHtml(email)}</strong><br>Password temporanea: <strong>${temporaryPassword}</strong></p>`,
       "<p>Al primo accesso ti verrà chiesto di scegliere una nuova password.</p>",
       `<p>Puoi installare Stacca come <strong>app sul telefono</strong>: aprila nel browser, poi <strong>"Aggiungi a Home"</strong> (iPhone: tasto Condividi; Android: menu a tre puntini).</p>`,
-      "<p>— Stacca · Corzano e Paterno</p>",
     ].join("\n"),
   });
 
