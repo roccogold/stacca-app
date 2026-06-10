@@ -61,10 +61,6 @@ export function OptionsManager({
   const [formError, setFormError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  const [deleteTarget, setDeleteTarget] = useState<ManagedOption | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
   function openCreate() {
     setFormMode("create");
     setEditId(null);
@@ -127,27 +123,24 @@ export function OptionsManager({
     }
   }
 
-  async function confirmDelete() {
-    if (!deleteTarget || deleteLoading) return;
-    setDeleteLoading(true);
-    setDeleteError(null);
+  async function handleDelete(item: ManagedOption) {
+    const ok = confirm(
+      `Vuoi davvero eliminare "${item.name}"?\nNon comparirà più ${labels.deleteScope}; le voci già registrate restano invariate.`,
+    );
+    if (!ok) return;
     try {
-      const res = await fetch(`/api/admin/${resource}/${deleteTarget.id}`, {
+      const res = await fetch(`/api/admin/${resource}/${item.id}`, {
         method: "DELETE",
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setDeleteError(typeof data.error === "string" ? data.error : "Errore.");
+        alert(typeof data.error === "string" ? data.error : "Errore nell'eliminazione.");
         return;
       }
-      const removedId = deleteTarget.id;
-      setItems((prev) => prev.filter((it) => it.id !== removedId));
-      setDeleteTarget(null);
+      setItems((prev) => prev.filter((it) => it.id !== item.id));
       router.refresh();
     } catch {
-      setDeleteError("Connessione assente. Riprova.");
-    } finally {
-      setDeleteLoading(false);
+      alert("Connessione assente. Riprova.");
     }
   }
 
@@ -172,10 +165,7 @@ export function OptionsManager({
       <SwipeToDelete
         key={item.id}
         bare={false}
-        onDelete={() => {
-          setDeleteError(null);
-          setDeleteTarget(item);
-        }}
+        onDelete={() => handleDelete(item)}
       >
         <div className="opt-row">
           <span className="opt-row__name">{item.name}</span>
@@ -293,37 +283,6 @@ export function OptionsManager({
             type="button"
             className="btn btn--secondary btn--block btn--sheet-secondary"
             onClick={() => setFormOpen(false)}
-          >
-            Annulla
-          </button>
-        </div>
-      </BottomSheet>
-
-      {/* Delete confirm */}
-      <BottomSheet
-        open={deleteTarget !== null}
-        onClose={() => setDeleteTarget(null)}
-        title={`Elimina ${labels.countOne}`}
-        subtitle={
-          deleteTarget
-            ? `"${deleteTarget.name}" non comparirà più ${labels.deleteScope}. Le voci già registrate restano invariate.`
-            : undefined
-        }
-      >
-        {deleteError && <p className="field-error">{deleteError}</p>}
-        <div className="sheet__actions">
-          <button
-            type="button"
-            className="btn btn--danger-outline btn--block"
-            onClick={confirmDelete}
-            disabled={deleteLoading}
-          >
-            {deleteLoading ? "Elimino…" : "Elimina"}
-          </button>
-          <button
-            type="button"
-            className="btn btn--secondary btn--block btn--sheet-secondary"
-            onClick={() => setDeleteTarget(null)}
           >
             Annulla
           </button>
