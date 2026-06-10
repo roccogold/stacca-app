@@ -21,7 +21,7 @@ export default async function LavorazioniPage() {
         newButton: "Nuova lavorazione",
         createTitle: "Nuova lavorazione",
         editTitle: "Rinomina lavorazione",
-        nameLabel: "Nome lavorazione",
+        nameLabel: "Nome",
         countOne: "lavorazione",
         countMany: "lavorazioni",
         deleteScope: "nelle nuove lavorazioni",

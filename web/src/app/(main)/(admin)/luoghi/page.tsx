@@ -28,7 +28,7 @@ export default async function LuoghiPage() {
         newButton: "Nuovo luogo",
         createTitle: "Nuovo luogo",
         editTitle: "Rinomina luogo",
-        nameLabel: "Nome luogo",
+        nameLabel: "Nome",
         countOne: "luogo",
         countMany: "luoghi",
         deleteScope: "nei nuovi luoghi",

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Pencil, Plus, Search } from "lucide-react";
+import { ClipboardList, Lock, Map, Pencil, Search } from "lucide-react";
 import { BottomSheet } from "@/components/BottomSheet";
 import { SwipeToDelete } from "@/components/SwipeToDelete";
 
@@ -50,6 +50,9 @@ export function OptionsManager({
   reservedLabel,
 }: Props) {
   const router = useRouter();
+  // Icon for the "new" button, per resource (can't pass a component from the
+  // server page to this client component).
+  const NewIcon = resource === "lavorazioni" ? ClipboardList : Map;
   const [items, setItems] = useState<ManagedOption[]>(sortByName(initial));
   const [search, setSearch] = useState("");
 
@@ -200,7 +203,7 @@ export function OptionsManager({
 
       <section className="block block--tight">
         <button type="button" className="btn btn--primary btn--block" onClick={openCreate}>
-          <Plus size={18} aria-hidden />
+          <NewIcon size={18} aria-hidden />
           {labels.newButton}
         </button>
       </section>
