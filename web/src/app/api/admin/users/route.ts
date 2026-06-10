@@ -71,34 +71,55 @@ export async function POST(req: Request) {
 
   const existing = await prisma.user.findUnique({
     where: { email },
-    select: { id: true },
+    select: { id: true, archived: true },
   });
-  if (existing) {
+  // A *visible* account with this email is a real duplicate → reject.
+  // An *archived* one is hidden from the admin list but still reserves the
+  // email (unique constraint), which otherwise dead-ends "create". So instead
+  // we reactivate it in place: same record, so its history (ore, mesi inviati)
+  // stays linked, with fresh credentials and updated name/role.
+  if (existing && !existing.archived) {
     return NextResponse.json(
       { error: "Esiste già un utente con questa email." },
       { status: 409 },
     );
   }
 
-  const handle = await generateUniqueHandle(
-    email.split("@")[0] || `${firstName}${lastName}`,
-  );
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await hashSecret(temporaryPassword);
 
-  const user = await prisma.user.create({
-    data: {
-      handle,
-      firstName,
-      lastName,
-      displayName: buildDisplayName(firstName, lastName),
-      role,
-      email,
-      passwordHash,
-      mustChangePassword: true,
-    },
-    select: userSelect,
-  });
+  const user = existing
+    ? await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          firstName,
+          lastName,
+          displayName: buildDisplayName(firstName, lastName),
+          role,
+          passwordHash,
+          mustChangePassword: true,
+          disabled: false,
+          archived: false,
+          resetCodeHash: null,
+          resetCodeExpiresAt: null,
+        },
+        select: userSelect,
+      })
+    : await prisma.user.create({
+        data: {
+          handle: await generateUniqueHandle(
+            email.split("@")[0] || `${firstName}${lastName}`,
+          ),
+          firstName,
+          lastName,
+          displayName: buildDisplayName(firstName, lastName),
+          role,
+          email,
+          passwordHash,
+          mustChangePassword: true,
+        },
+        select: userSelect,
+      });
 
   // Best-effort welcome email with the temp password. Never fail creation on it:
   // the admin still gets the password to share manually (WhatsApp).
