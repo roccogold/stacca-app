@@ -16,11 +16,10 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react"],
-    optimisticRouting: true,
-    staleTimes: {
-      dynamic: 30,
-      static: 180,
-    },
+    // NB: deliberately NOT enabling `staleTimes` / `optimisticRouting`.
+    // This app is auth-gated and role-aware; the client router cache they
+    // turn on can serve stale views right after login/logout/role changes.
+    // Freshness matters more here than shaving a few ms off navigation.
   },
 };
 
