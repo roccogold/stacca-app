@@ -31,6 +31,12 @@ export async function POST(req: Request) {
   }
 
   const to = getFeedbackToEmail();
+  if (!to) {
+    return NextResponse.json(
+      { error: "Destinatario feedback non configurato." },
+      { status: 500 },
+    );
+  }
   const sent = await sendEmail({
     to,
     subject: `[Stacca] Feedback da ${session.displayName || session.handle}`,

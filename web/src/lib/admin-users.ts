@@ -16,7 +16,8 @@ export function buildDisplayName(firstName: string, lastName: string): string {
  * never by other admins. Configurable via env, defaults to the owner email.
  */
 export function getProtectedAdminEmail(): string {
-  return (process.env.PROTECTED_ADMIN_EMAIL || "roccogold23@gmail.com")
+  // If not set explicitly, fall back to the feedback inbox (also the owner).
+  return (process.env.PROTECTED_ADMIN_EMAIL || process.env.FEEDBACK_TO_EMAIL || "")
     .trim()
     .toLowerCase();
 }

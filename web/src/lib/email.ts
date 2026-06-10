@@ -23,7 +23,7 @@ function getSmtpFrom() {
 }
 
 export function getFeedbackToEmail() {
-  return process.env.FEEDBACK_TO_EMAIL?.trim() || "roccogold23@gmail.com";
+  return process.env.FEEDBACK_TO_EMAIL?.trim() || "";
 }
 
 /** Public app URL for links in emails. APP_URL override, else Vercel's production domain. */

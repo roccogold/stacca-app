@@ -56,7 +56,7 @@ Le email partono via **SMTP** (`src/lib/email.ts`) — nessun provider esterno. 
 ```
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=roccogold23@gmail.com
+SMTP_USER=stacca.app@gmail.com
 SMTP_PASS=<app password 16 caratteri>   # NON la password normale di Gmail
 ```
 Mittente mostrato: `Stacca <SMTP_USER>`. Limite Gmail ~500 email/giorno. Se le `SMTP_*` non sono configurate, il recupero via email non parte: usa il fallback admin (**Rigenera password** dal tab Admin). Per un mittente professionale `@corzanoepaterno.it`: verifica un (sotto)dominio sul provider SMTP e cambia solo le variabili — il codice non cambia.
@@ -76,7 +76,7 @@ Un nuovo dipendente creato dal tab admin riceve una **password temporanea mostra
 
 Su un disattivato puoi fare **swipe a sinistra → Elimina** per **rimuoverlo dalla lista** (flag `archived`, stessa UI delle lavorazioni): sparisce dalla vista admin ma **tutti i dati restano** (record utente, ore, mesi, Google Sheets). È archiviazione, non cancellazione — recuperabile dal DB se serve. Le card sono **comprimibili**: si toccano per aprire le azioni.
 
-**Account protetto:** l'email in `PROTECTED_ADMIN_EMAIL` (default `roccogold23@gmail.com`) è il titolare e **non può essere modificata, disattivata o resettata da altri admin** — solo dal titolare stesso. Gli altri admin vedono i pulsanti disabilitati (e le API rispondono 403).
+**Account protetto:** l'email in `PROTECTED_ADMIN_EMAIL` (se vuoto usa `FEEDBACK_TO_EMAIL`) è il titolare e **non può essere modificata, disattivata o resettata da altri admin** — solo dal titolare stesso. Gli altri admin vedono i pulsanti disabilitati (e le API rispondono 403).
 
 Guardrail: deve restare **almeno un amministratore attivo** (non puoi declassare/disattivare l'ultimo admin) e non puoi disattivare il tuo stesso account.
 
