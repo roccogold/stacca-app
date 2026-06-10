@@ -101,6 +101,10 @@ export function DipendentiClient({
   const [pwLoading, setPwLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [pwEmailNote, setPwEmailNote] = useState<string | null>(null);
+  // True when the temp password was also emailed (create flow, best-effort).
+  // Drives which action is primary: if delivered by email, "Fatto" leads and
+  // "Copia e condividi" is the fallback; otherwise the admin must share it.
+  const [pwEmailSent, setPwEmailSent] = useState(false);
 
   // Disable (deactivate) confirmation sheet — never deletes data
   const [disableTarget, setDisableTarget] = useState<Employee | null>(null);
@@ -172,7 +176,7 @@ export function DipendentiClient({
         const note = data.emailSent
           ? `Inviata anche via email a ${saved.email ?? "—"}`
           : "Email non inviata — condividi la password a mano.";
-        showPasswordResult(saved, data.temporaryPassword, note);
+        showPasswordResult(saved, data.temporaryPassword, note, !!data.emailSent);
       } else {
         setUsers((prev) => sortEmployees(prev.map((u) => (u.id === saved.id ? saved : u))));
         setFormOpen(false);
@@ -189,10 +193,12 @@ export function DipendentiClient({
     emp: Pick<Employee, "id" | "firstName" | "lastName">,
     password: string,
     emailNote?: string | null,
+    emailSent = false,
   ) {
     setPwUser({ id: emp.id, name: fullName(emp) });
     setPwValue(password);
     setPwEmailNote(emailNote ?? null);
+    setPwEmailSent(emailSent);
     setPwMode("result");
     setPwError(null);
     setCopied(false);
@@ -225,6 +231,7 @@ export function DipendentiClient({
         prev.map((u) => (u.id === pwUser.id ? { ...u, mustChangePassword: true } : u)),
       );
       setPwValue(data.temporaryPassword);
+      setPwEmailSent(false); // reset flow never emails; admin shares manually
       setPwMode("result");
       setCopied(false);
       router.refresh();
@@ -602,30 +609,44 @@ export function DipendentiClient({
             <div className="emp-pw-box">{pwValue}</div>
             {pwEmailNote && <p className="emp-pw-note">{pwEmailNote}</p>}
             {pwError && <p className="field-error">{pwError}</p>}
-            <div className="sheet__actions">
-              <button
-                type="button"
-                className="btn btn--primary btn--block btn--sheet"
-                onClick={copyPassword}
-              >
-                {copied ? (
-                  <>
-                    <Check size={20} aria-hidden /> Copiata
-                  </>
-                ) : (
-                  <>
-                    <Copy size={20} aria-hidden /> Copia e condividi
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                className="btn btn--secondary btn--block btn--sheet-secondary"
-                onClick={() => setPwOpen(false)}
-              >
-                Fatto
-              </button>
-            </div>
+            {(() => {
+              // When the password was emailed, "Fatto" is the primary action and
+              // copying is the optional fallback; otherwise copying leads, since
+              // the admin is the only delivery channel. Emphasised button first.
+              const copyBtn = (
+                <button
+                  key="copy"
+                  type="button"
+                  className={`btn btn--block ${pwEmailSent ? "btn--secondary btn--sheet-secondary" : "btn--primary btn--sheet"}`}
+                  onClick={copyPassword}
+                >
+                  {copied ? (
+                    <>
+                      <Check size={20} aria-hidden /> Copiata
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={20} aria-hidden /> Copia e condividi
+                    </>
+                  )}
+                </button>
+              );
+              const doneBtn = (
+                <button
+                  key="done"
+                  type="button"
+                  className={`btn btn--block ${pwEmailSent ? "btn--primary btn--sheet" : "btn--secondary btn--sheet-secondary"}`}
+                  onClick={() => setPwOpen(false)}
+                >
+                  Fatto
+                </button>
+              );
+              return (
+                <div className="sheet__actions">
+                  {pwEmailSent ? [doneBtn, copyBtn] : [copyBtn, doneBtn]}
+                </div>
+              );
+            })()}
           </>
         )}
         {pwMode === "confirm" && (
