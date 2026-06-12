@@ -9,6 +9,7 @@ import {
   readAreaIds,
   setUserAreas,
 } from "@/lib/admin-users";
+import { logAudit } from "@/lib/audit";
 
 const userSelect = {
   id: true,
@@ -112,6 +113,11 @@ export async function PATCH(
   ) {
     await setUserAreas(id, readAreaIds(body));
   }
+
+  await logAudit(auth.user, "user.update", user.displayName, {
+    email: user.email,
+    role: user.role,
+  });
 
   return NextResponse.json({ user });
 }

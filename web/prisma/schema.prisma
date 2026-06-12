@@ -73,6 +73,24 @@ model TimeEntry {
   @@index([userId, date])
 }
 
+// Registro azioni admin (audit log). Si consulta direttamente su Supabase
+// (Table Editor / SQL editor) — non c'è UI nell'app. Si scrive una riga dalle
+// route admin a ogni modifica: chi (actorName denormalizzato così resta leggibile
+// anche se l'utente viene rimosso), cosa (action, es. "area.create"), su cosa
+// (target, es. il nome del settore/dipendente toccato). Le ore dei dipendenti
+// NON finiscono qui: hanno già createdAt/updatedAt e creerebbero solo rumore.
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actorName String
+  action    String
+  target    String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 // Settori aziendali (Vigna, Cantina, Caseificio, Stalla, …). Le lavorazioni e i
 // luoghi appartengono a un'area; ai dipendenti si assegnano una o più aree e nel
 // form vedono solo le opzioni delle loro aree.

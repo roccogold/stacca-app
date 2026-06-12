@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
 import { isProtectedEmail } from "@/lib/admin-users";
+import { logAudit } from "@/lib/audit";
 
 /**
  * Archive (hide from the admin list) / un-archive a user. NO data is deleted:
@@ -53,7 +54,7 @@ export async function POST(
 
   const target = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, email: true, disabled: true },
+    select: { id: true, email: true, disabled: true, displayName: true },
   });
   if (!target) {
     return NextResponse.json({ error: "Utente non trovato" }, { status: 404 });
@@ -72,5 +73,10 @@ export async function POST(
   }
 
   await prisma.user.update({ where: { id }, data: { archived } });
+  await logAudit(
+    auth.user,
+    archived ? "user.archive" : "user.unarchive",
+    target.displayName,
+  );
   return NextResponse.json({ ok: true });
 }

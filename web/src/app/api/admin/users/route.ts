@@ -11,6 +11,7 @@ import {
   readAreaIds,
   setUserAreas,
 } from "@/lib/admin-users";
+import { logAudit } from "@/lib/audit";
 
 const escapeHtml = (s: string) =>
   s.replace(/[&<>]/g, (c) => (c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;"));
@@ -125,6 +126,12 @@ export async function POST(req: Request) {
       });
 
   await setUserAreas(user.id, areaIds);
+
+  await logAudit(auth.user, "user.create", user.displayName, {
+    email: user.email,
+    role: user.role,
+    reactivated: Boolean(existing),
+  });
 
   // Best-effort welcome email with the temp password. Never fail creation on it:
   // the admin still gets the password to share manually (WhatsApp).

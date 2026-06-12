@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { adminRateLimited } from "@/lib/admin-rate-limit";
 import { parseLuogoInput } from "@/lib/admin-options";
+import { logAudit } from "@/lib/audit";
 
 export async function PATCH(
   req: Request,
@@ -59,6 +60,7 @@ export async function PATCH(
     where: { id },
     data: { name: parsed.name, areaId: parsed.areaId },
   });
+  await logAudit(auth.user, "luogo.update", luogo.name);
   return NextResponse.json({ luogo });
 }
 
@@ -83,6 +85,7 @@ export async function DELETE(
 
   // Safe hard delete: TimeEntry stores the name as a string, so removing the
   // option here never touches historical entries — it just stops being offered.
-  await prisma.luogo.delete({ where: { id } });
+  const deleted = await prisma.luogo.delete({ where: { id } });
+  await logAudit(auth.user, "luogo.delete", deleted.name);
   return NextResponse.json({ ok: true });
 }

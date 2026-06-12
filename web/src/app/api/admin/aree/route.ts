@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { adminRateLimited } from "@/lib/admin-rate-limit";
 import { parseAreaInput } from "@/lib/admin-options";
+import { logAudit } from "@/lib/audit";
 
 export async function GET() {
   const auth = await requireAdminApi();
@@ -43,5 +44,6 @@ export async function POST(req: Request) {
   }
 
   const area = await prisma.area.create({ data: { name: parsed.name } });
+  await logAudit(auth.user, "area.create", area.name);
   return NextResponse.json({ area }, { status: 201 });
 }

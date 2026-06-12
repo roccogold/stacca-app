@@ -4,6 +4,7 @@ import { requireAdminApi } from "@/lib/auth";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
 import { generateTemporaryPassword, hashSecret } from "@/lib/password";
 import { isProtectedEmail } from "@/lib/admin-users";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(
   req: Request,
@@ -27,7 +28,7 @@ export async function POST(
   const { id } = await ctx.params;
   const target = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, email: true },
+    select: { id: true, email: true, displayName: true },
   });
   if (!target) {
     return NextResponse.json({ error: "Utente non trovato" }, { status: 404 });
@@ -51,6 +52,8 @@ export async function POST(
       resetCodeExpiresAt: null,
     },
   });
+
+  await logAudit(auth.user, "user.reset-password", target.displayName);
 
   // temporaryPassword is returned once — never stored or shown again.
   return NextResponse.json({ temporaryPassword });

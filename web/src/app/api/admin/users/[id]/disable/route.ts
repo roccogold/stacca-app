@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
 import { isProtectedEmail } from "@/lib/admin-users";
+import { logAudit } from "@/lib/audit";
 
 const userSelect = {
   id: true,
@@ -95,5 +96,10 @@ export async function POST(
     data: { disabled },
     select: userSelect,
   });
+  await logAudit(
+    auth.user,
+    disabled ? "user.disable" : "user.enable",
+    user.displayName,
+  );
   return NextResponse.json({ user });
 }

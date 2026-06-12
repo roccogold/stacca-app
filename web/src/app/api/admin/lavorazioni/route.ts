@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { adminRateLimited } from "@/lib/admin-rate-limit";
 import { parseLavorazioneInput } from "@/lib/admin-options";
+import { logAudit } from "@/lib/audit";
 
 export async function GET() {
   const auth = await requireAdminApi();
@@ -55,5 +56,6 @@ export async function POST(req: Request) {
   const lavorazione = await prisma.lavorazione.create({
     data: { name: parsed.name, areaId: parsed.areaId },
   });
+  await logAudit(auth.user, "lavorazione.create", lavorazione.name);
   return NextResponse.json({ lavorazione }, { status: 201 });
 }

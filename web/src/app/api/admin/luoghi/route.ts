@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { adminRateLimited } from "@/lib/admin-rate-limit";
 import { parseLuogoInput } from "@/lib/admin-options";
+import { logAudit } from "@/lib/audit";
 
 export async function GET() {
   const auth = await requireAdminApi();
@@ -56,5 +57,6 @@ export async function POST(req: Request) {
   const luogo = await prisma.luogo.create({
     data: { name: parsed.name, areaId: parsed.areaId, category: "altro" },
   });
+  await logAudit(auth.user, "luogo.create", luogo.name);
   return NextResponse.json({ luogo }, { status: 201 });
 }

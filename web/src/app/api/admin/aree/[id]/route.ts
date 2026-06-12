@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { adminRateLimited } from "@/lib/admin-rate-limit";
 import { parseAreaInput } from "@/lib/admin-options";
+import { logAudit } from "@/lib/audit";
 
 export async function PATCH(
   req: Request,
@@ -44,6 +45,7 @@ export async function PATCH(
   }
 
   const area = await prisma.area.update({ where: { id }, data: { name: parsed.name } });
+  await logAudit(auth.user, "area.update", area.name);
   return NextResponse.json({ area });
 }
 
@@ -79,6 +81,7 @@ export async function DELETE(
     );
   }
 
-  await prisma.area.delete({ where: { id } });
+  const deleted = await prisma.area.delete({ where: { id } });
+  await logAudit(auth.user, "area.delete", deleted.name);
   return NextResponse.json({ ok: true });
 }
