@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 type Props = {
   open: boolean;
@@ -11,6 +11,17 @@ type Props = {
 };
 
 export function BottomSheet({ open, onClose, title, subtitle, children }: Props) {
+  // Lock the page behind the sheet so touch-scrolling stays inside the form
+  // instead of dragging the list underneath (iOS scroll chaining).
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (

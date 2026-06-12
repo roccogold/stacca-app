@@ -2634,9 +2634,13 @@ a.card {
   border-radius: calc(var(--radius) + 12px) calc(var(--radius) + 12px) 0 0;
   padding: 24px 24px calc(24px + var(--safe-bottom));
   box-shadow: var(--shadow-lg);
-  /* Form lunghi (es. dipendente con tanti settori): scorri dentro la finestra. */
+  /* Form lunghi (es. dipendente con tanti settori): scorri dentro la finestra.
+     dvh tiene conto della barra del browser e della tastiera su mobile;
+     overscroll-behavior evita che lo scroll trascini la lista sotto. */
   max-height: 88vh;
+  max-height: 88dvh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
