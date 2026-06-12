@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PartyPopper } from "lucide-react";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { SubmitMonthPanel } from "@/components/SubmitMonthPanel";
 import { MeseEntriesList, MeseOfflineBanner, useMergedMonthStats } from "@/components/MeseOfflineSection";
@@ -8,6 +9,7 @@ import {
   formatHoursIt,
   formatWeekdayLongFromISO,
 } from "@/lib/format";
+import { italianHolidayName } from "@/lib/holidays";
 
 type ServerEntry = {
   id: string;
@@ -83,6 +85,12 @@ export function MesePageClient({
               <div className="card--oggi__label capitalize">
                 {formatWeekdayLongFromISO(selectedDay)}
               </div>
+              {italianHolidayName(selectedDay) && (
+                <div className="card--oggi__holiday">
+                  <PartyPopper size={14} strokeWidth={2.5} aria-hidden />
+                  {italianHolidayName(selectedDay)}
+                </div>
+              )}
               <div className="card--oggi__filled">
                 <span className="card--oggi__num--duration">{formatHoursIt(dayTotal)}</span>
                 <span

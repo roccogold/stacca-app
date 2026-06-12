@@ -3078,3 +3078,44 @@ a.card {
   background: var(--primary);
   border-color: var(--primary);
 }
+
+/* Giorni festivi nazionali */
+/* Giorno festivo: l'icona sostituisce il numero (centrata nella cella) */
+.cal-cell__holiday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  color: var(--warning);
+  pointer-events: none;
+}
+.cal-cell--selected .cal-cell__holiday {
+  color: var(--warning-soft); /* visibile sullo sfondo scuro del giorno selezionato */
+}
+/* Chip festivo accanto alla data in home */
+.date-holiday {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  background: var(--warning-soft);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.date-holiday svg {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+/* Nome festivo nel dettaglio giorno (card accent scura) */
+.card--oggi__holiday {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--warning-soft);
+}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { PartyPopper } from "lucide-react";
 import { DailyInspiration } from "@/components/DailyInspiration";
 import { HomeTodaySection } from "@/components/HomeTodaySection";
 import { MonthSubmitReminder } from "@/components/MonthSubmitReminder";
@@ -15,11 +16,13 @@ import {
   romeCalendarParts,
   todayISO,
 } from "@/lib/format";
+import { italianHolidayName } from "@/lib/holidays";
 import { prisma } from "@/lib/prisma";
 
 export default async function HomePage() {
   const user = await requireUser();
   const today = todayISO();
+  const todayHoliday = italianHolidayName(today);
   const { y: romeY, m: romeM } = romeCalendarParts();
   const monthPrefix = `${romeY}-${String(romeM).padStart(2, "0")}`;
 
@@ -53,6 +56,12 @@ export default async function HomePage() {
           <p className="date-line capitalize">
             {formatWeekdayLongFromISO(today)}
           </p>
+          {todayHoliday && (
+            <p className="date-holiday">
+              <PartyPopper size={14} strokeWidth={2.5} aria-hidden />
+              {todayHoliday}
+            </p>
+          )}
         </div>
         <Suspense fallback={null}>
           <DailyInspiration />

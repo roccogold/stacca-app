@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, PartyPopper } from "lucide-react";
 import { daysInMonth, mondayWeekdayIndex, todayISO } from "@/lib/format";
+import { italianHolidaysForYear } from "@/lib/holidays";
 
 type Props = {
   year: number;
@@ -32,6 +33,7 @@ export function MonthCalendar({
   for (let d = 1; d <= dim; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
   const today = todayISO();
+  const holidays = italianHolidaysForYear(year);
 
   return (
     <>
@@ -63,8 +65,10 @@ export function MonthCalendar({
               const has = (totalsByDay[key] ?? 0) > 0;
               const isSel = selectedDay === key;
               const isToday = key === today;
+              const holiday = holidays[key];
               let cls = "cal-cell";
               if (has) cls += " cal-cell--has";
+              if (holiday) cls += " cal-cell--holiday";
               if (isSel) cls += " cal-cell--selected";
               else if (isToday) cls += " cal-cell--today";
               const href =
@@ -72,6 +76,7 @@ export function MonthCalendar({
               const ariaParts = [
                 key,
                 isToday ? "oggi" : null,
+                holiday ? `festivo: ${holiday}` : null,
                 has ? "con ore" : "nessuna ora",
                 isSel ? "selezionato" : null,
               ].filter(Boolean);
@@ -82,7 +87,13 @@ export function MonthCalendar({
                   className={cls}
                   aria-label={ariaParts.join(", ")}
                 >
-                  <span className="cal-cell__num">{day}</span>
+                  {holiday ? (
+                    <span className="cal-cell__holiday" aria-hidden>
+                      <PartyPopper size={14} strokeWidth={2.25} />
+                    </span>
+                  ) : (
+                    <span className="cal-cell__num">{day}</span>
+                  )}
                 </Link>
               );
             })}
