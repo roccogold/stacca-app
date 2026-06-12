@@ -20,6 +20,7 @@ export type SheetEntryRow = {
   month: string;
   recordedAt: string;
   tipo: "Voce" | "Chiusura";
+  area: string;
 };
 
 function recordedAtLabel(at: Date): string {
@@ -40,6 +41,9 @@ function rowToValues(r: SheetEntryRow): (string | number)[] {
     r.recordedAt,
     r.tipo,
     r.entryId ?? "",
+    // Colonna M (in coda): aggiunta dopo l'ID per non spostare gli indici
+    // esistenti (il match righe usa la colonna ID a indice fisso 11).
+    r.area,
   ];
 }
 
@@ -48,7 +52,7 @@ function sheetTabName(): string {
 }
 
 function sheetDataRange(): string {
-  return `${sheetTabName()}!A:L`;
+  return `${sheetTabName()}!A:M`;
 }
 
 export function buildEntrySheetRow(
@@ -68,6 +72,7 @@ export function buildEntrySheetRow(
     month: monthFromDate(entry.date),
     recordedAt: recordedAtLabel(recordedAt),
     tipo: "Voce",
+    area: entry.area,
   };
 }
 
@@ -89,6 +94,7 @@ export function buildMonthClosureSheetRow(
     month,
     recordedAt: recordedAtLabel(submittedAt),
     tipo: "Chiusura",
+    area: "—",
   };
 }
 
@@ -176,7 +182,7 @@ export async function appendRowsToSheet(
   try {
     await sheets.spreadsheets.values.append({
       spreadsheetId: config.sheetId,
-      range: `${sheetTabName()}!A:L`,
+      range: `${sheetTabName()}!A:M`,
       valueInputOption: "USER_ENTERED",
       insertDataOption: "INSERT_ROWS",
       requestBody: { values },
@@ -277,7 +283,7 @@ export async function upsertEntryToSheet(
       const sheetRow = idx + 1;
       await sheets.spreadsheets.values.update({
         spreadsheetId: config.sheetId,
-        range: `${tab}!A${sheetRow}:L${sheetRow}`,
+        range: `${tab}!A${sheetRow}:M${sheetRow}`,
         valueInputOption: "USER_ENTERED",
         requestBody: { values: [rowToValues(row)] },
       });
@@ -527,7 +533,7 @@ export async function deleteUserRowsFromSheet(match: {
   }
 }
 
-const ORE_TOTALI_COL_COUNT = 12;
+const ORE_TOTALI_COL_COUNT = 13;
 
 let sheetHeaderEnsured = false;
 
@@ -598,14 +604,14 @@ export async function ensureSheetHeader(): Promise<void> {
     if (!sheetHeaderEnsured) {
       const existing = await sheets.spreadsheets.values.get({
         spreadsheetId: config.sheetId,
-        range: `${tab}!A1:L1`,
+        range: `${tab}!A1:M1`,
       });
 
       const header = existing.data.values?.[0] ?? [];
-      if (header.length < 12) {
+      if (header.length < 13) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: config.sheetId,
-          range: `${tab}!A1:L1`,
+          range: `${tab}!A1:M1`,
           valueInputOption: "USER_ENTERED",
           requestBody: {
             values: [
@@ -622,6 +628,7 @@ export async function ensureSheetHeader(): Promise<void> {
                 "Registrato il",
                 "Tipo",
                 "ID",
+                "Settore",
               ],
             ],
           },

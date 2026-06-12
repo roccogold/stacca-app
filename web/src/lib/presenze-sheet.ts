@@ -71,7 +71,7 @@ export function buildPresenzeSheetValues(
     ["Dipendente", user.displayName],
     [],
     [],
-    ["Data", "Giorno", "Ore (h)", "Lavorazione", "Luogo", "Note", "Mese", "Stato"],
+    ["Data", "Giorno", "Ore (h)", "Settore", "Lavorazione", "Luogo", "Note", "Mese", "Stato"],
     [],
   ];
 
@@ -90,7 +90,7 @@ export function buildPresenzeSheetValues(
     const monthLabel = monthTitle(y, m - 1);
     const stato = block.stato === "Chiuso" ? "Chiuso" : "Bozza";
 
-    lines.push([`MESE: ${monthLabel}`, "", "", "", "", "", "", stato]);
+    lines.push([`MESE: ${monthLabel}`, "", "", "", "", "", "", "", stato]);
 
     const entries = [...block.entries].sort(
       (a, b) =>
@@ -103,6 +103,7 @@ export function buildPresenzeSheetValues(
         formatDateItFromISO(e.date),
         formatWeekdayNameFromISO(e.date),
         Math.round(e.hours * 100) / 100,
+        e.area,
         e.mansione,
         e.luogo,
         e.note ?? "",

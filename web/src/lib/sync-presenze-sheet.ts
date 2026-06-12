@@ -84,7 +84,7 @@ async function ensurePresenzeTab(
   return id;
 }
 
-const PRESENZE_COL_WIDTHS = [96, 88, 56, 128, 148, 200, 108, 72];
+const PRESENZE_COL_WIDTHS = [96, 88, 56, 110, 128, 148, 200, 108, 72];
 
 async function applyPresenzeTabFormatting(
   sheets: ReturnType<typeof getSheetsClient>,
@@ -148,7 +148,7 @@ async function applyPresenzeTabFormatting(
           startRowIndex: 0,
           endRowIndex: values.length,
           startColumnIndex: 0,
-          endColumnIndex: 8,
+          endColumnIndex: 9,
         },
         cell: {
           userEnteredFormat: {
@@ -172,7 +172,7 @@ async function applyPresenzeTabFormatting(
           startRowIndex: headerRowIndex,
           endRowIndex: headerRowIndex + 1,
           startColumnIndex: 0,
-          endColumnIndex: 8,
+          endColumnIndex: 9,
         },
         cell: {
           userEnteredFormat: {
@@ -200,7 +200,7 @@ async function applyPresenzeTabFormatting(
             startRowIndex: headerRowIndex,
             endRowIndex: values.length,
             startColumnIndex: 0,
-            endColumnIndex: 8,
+            endColumnIndex: 9,
           },
         },
       },
@@ -216,7 +216,7 @@ async function applyPresenzeTabFormatting(
           startRowIndex: r,
           endRowIndex: r + 1,
           startColumnIndex: 0,
-          endColumnIndex: 8,
+          endColumnIndex: 9,
         },
         cell: {
           userEnteredFormat: {

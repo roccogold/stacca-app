@@ -37,7 +37,7 @@ async function clearSheetDataRows(): Promise<number> {
   const tabSheetId = sheet?.properties?.sheetId;
   if (tabSheetId == null) throw new Error(`Tab not found: ${tab}`);
 
-  const range = `'${tab.replace(/'/g, "''")}'!A:L`;
+  const range = `'${tab.replace(/'/g, "''")}'!A:M`;
   const res = await sheets.spreadsheets.values.get({ spreadsheetId, range });
   const rows = res.data.values ?? [];
   const dataRows = Math.max(0, rows.length - 1);
