@@ -57,6 +57,7 @@ export default async function MesePage({
 
   return (
     <MesePageClient
+      key={prefix}
       year={y}
       month={m}
       monthPrefix={prefix}

@@ -11,6 +11,8 @@ type Props = {
   prevHref: string;
   nextHref: string;
   title: string;
+  /** Selezione client-side (istantanea). Se assente, le celle sono <Link>. */
+  onSelectDay?: (key: string | null) => void;
 };
 
 const DOW = ["L", "M", "M", "G", "V", "S", "D"] as const;
@@ -24,6 +26,7 @@ export function MonthCalendar({
   prevHref,
   nextHref,
   title,
+  onSelectDay,
 }: Props) {
   const dim = daysInMonth(year, month - 1);
   const first = new Date(year, month - 1, 1);
@@ -80,20 +83,31 @@ export function MonthCalendar({
                 has ? "con ore" : "nessuna ora",
                 isSel ? "selezionato" : null,
               ].filter(Boolean);
-              return (
+              const inner = holiday ? (
+                <span className="cal-cell__holiday" aria-hidden>
+                  <PartyPopper size={14} strokeWidth={2.25} />
+                </span>
+              ) : (
+                <span className="cal-cell__num">{day}</span>
+              );
+              return onSelectDay ? (
+                <button
+                  key={key}
+                  type="button"
+                  className={cls}
+                  aria-label={ariaParts.join(", ")}
+                  onClick={() => onSelectDay(isSel ? null : key)}
+                >
+                  {inner}
+                </button>
+              ) : (
                 <Link
                   key={key}
                   href={href}
                   className={cls}
                   aria-label={ariaParts.join(", ")}
                 >
-                  {holiday ? (
-                    <span className="cal-cell__holiday" aria-hidden>
-                      <PartyPopper size={14} strokeWidth={2.25} />
-                    </span>
-                  ) : (
-                    <span className="cal-cell__num">{day}</span>
-                  )}
+                  {inner}
                 </Link>
               );
             })}

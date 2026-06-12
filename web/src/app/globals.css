@@ -1564,13 +1564,18 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   align-items: center;
   justify-content: center;
   gap: 3px;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 500;
   color: var(--ink);
   padding: 0;
   position: relative;
   text-decoration: none;
+  cursor: pointer;
   transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.cal-cell--empty {
+  cursor: default;
 }
 
 .cal-cell__num {
@@ -2629,6 +2634,10 @@ a.card {
   border-radius: calc(var(--radius) + 12px) calc(var(--radius) + 12px) 0 0;
   padding: 24px 24px calc(24px + var(--safe-bottom));
   box-shadow: var(--shadow-lg);
+  /* Form lunghi (es. dipendente con tanti settori): scorri dentro la finestra. */
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sheet__handle {

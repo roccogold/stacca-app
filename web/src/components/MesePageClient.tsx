@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PartyPopper } from "lucide-react";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { SubmitMonthPanel } from "@/components/SubmitMonthPanel";
@@ -41,12 +43,33 @@ export function MesePageClient({
   monthLabel,
   prevHref,
   nextHref,
-  selectedDay,
+  selectedDay: selectedDayInitial,
   serverEntries,
   monthSubmitted,
   submittedAtLabel,
   canSubmit,
 }: Props) {
+  // Selezione del giorno gestita lato client: i dati del mese sono già qui,
+  // quindi cambiare giorno è istantaneo (niente round-trip al server). L'URL
+  // viene tenuto allineato così un refresh mantiene il giorno selezionato.
+  const [selectedDay, setSelectedDay] = useState<string | null>(selectedDayInitial);
+
+  // Pre-carica i mesi adiacenti e il form ore: frecce ◀▶ e "Aggiungi ore"
+  // istantanei (i dati arrivano già pronti alla navigazione).
+  const router = useRouter();
+  useEffect(() => {
+    router.prefetch(prevHref);
+    router.prefetch(nextHref);
+    router.prefetch("/aggiungi");
+  }, [router, prevHref, nextHref]);
+
+  function onSelectDay(key: string | null) {
+    setSelectedDay(key);
+    const params = new URLSearchParams({ y: String(year), m: String(month) });
+    if (key) params.set("d", key);
+    window.history.replaceState(null, "", `/mese?${params.toString()}`);
+  }
+
   const {
     totalsByDay,
     monthTotal,
@@ -71,6 +94,7 @@ export function MesePageClient({
         month={month}
         totalsByDay={totalsByDay}
         selectedDay={selectedDay}
+        onSelectDay={onSelectDay}
         prevHref={prevHref}
         nextHref={nextHref}
         title={monthLabel}
