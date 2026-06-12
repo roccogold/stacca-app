@@ -8,6 +8,8 @@ import {
   buildDisplayName,
   generateUniqueHandle,
   parseUserInput,
+  readAreaIds,
+  setUserAreas,
 } from "@/lib/admin-users";
 
 const escapeHtml = (s: string) =>
@@ -68,6 +70,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
   const { firstName, lastName, email, role } = parsed;
+  const areaIds = readAreaIds(body);
 
   const existing = await prisma.user.findUnique({
     where: { email },
@@ -120,6 +123,8 @@ export async function POST(req: Request) {
         },
         select: userSelect,
       });
+
+  await setUserAreas(user.id, areaIds);
 
   // Best-effort welcome email with the temp password. Never fail creation on it:
   // the admin still gets the password to share manually (WhatsApp).

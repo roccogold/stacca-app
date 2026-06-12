@@ -18,6 +18,8 @@ import { SwipeToDelete } from "@/components/SwipeToDelete";
 
 type Role = "admin" | "dipendente";
 
+type AreaRef = { id: string; name: string };
+
 type Employee = {
   id: string;
   firstName: string;
@@ -29,12 +31,14 @@ type Employee = {
   mustChangePassword: boolean;
   createdAt: string;
   protected: boolean;
+  areaIds: string[];
 };
 
 type Props = {
   currentUserId: string;
   currentUserIsProtected: boolean;
   initialUsers: Employee[];
+  areas: AreaRef[];
 };
 
 type FormState = {
@@ -42,6 +46,7 @@ type FormState = {
   lastName: string;
   email: string;
   role: Role;
+  areaIds: string[];
 };
 
 const EMPTY_FORM: FormState = {
@@ -49,6 +54,7 @@ const EMPTY_FORM: FormState = {
   lastName: "",
   email: "",
   role: "dipendente",
+  areaIds: [],
 };
 
 /** Admins first, then everyone alphabetically by name. */
@@ -68,9 +74,11 @@ export function DipendentiClient({
   currentUserId,
   currentUserIsProtected,
   initialUsers,
+  areas,
 }: Props) {
   const router = useRouter();
   const [users, setUsers] = useState<Employee[]>(sortEmployees(initialUsers));
+  const areaName = (id: string) => areas.find((a) => a.id === id)?.name ?? "";
   const [search, setSearch] = useState("");
   const [showDisabled, setShowDisabled] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -136,9 +144,19 @@ export function DipendentiClient({
       lastName: emp.lastName,
       email: emp.email ?? "",
       role: emp.role,
+      areaIds: emp.areaIds,
     });
     setFormError(null);
     setFormOpen(true);
+  }
+
+  function toggleFormArea(id: string) {
+    setForm((f) => ({
+      ...f,
+      areaIds: f.areaIds.includes(id)
+        ? f.areaIds.filter((a) => a !== id)
+        : [...f.areaIds, id],
+    }));
   }
 
   async function submitForm() {
@@ -155,6 +173,7 @@ export function DipendentiClient({
         lastName: form.lastName.trim(),
         email: form.email.trim(),
         role: form.role,
+        areaIds: form.areaIds,
       };
       const url =
         formMode === "create" ? "/api/admin/users" : `/api/admin/users/${editId}`;
@@ -169,7 +188,8 @@ export function DipendentiClient({
         setFormError(typeof data.error === "string" ? data.error : "Errore nel salvataggio.");
         return;
       }
-      const saved: Employee = data.user;
+      // L'API non rinvia le aree: le riprendiamo dal form per l'update ottimista.
+      const saved: Employee = { ...data.user, areaIds: form.areaIds };
       if (formMode === "create") {
         setUsers((prev) => sortEmployees([...prev, saved]));
         setFormOpen(false);
@@ -349,6 +369,11 @@ export function DipendentiClient({
             ) : emp.mustChangePassword ? (
               <span className="emp-card__pending">In attesa del primo accesso</span>
             ) : null}
+            {emp.areaIds.length > 0 && (
+              <span className="emp-card__areas">
+                {emp.areaIds.map(areaName).filter(Boolean).join(" · ")}
+              </span>
+            )}
           </span>
           <span className="emp-card__meta">
             <span className={`badge ${emp.role === "admin" ? "badge--ok" : "badge--locked"}`}>
@@ -572,6 +597,35 @@ export function DipendentiClient({
             <option value="dipendente">Dipendente</option>
             <option value="admin">Admin</option>
           </select>
+        </div>
+        <div className="field">
+          <label className="field-label">Settori</label>
+          {areas.length === 0 ? (
+            <p className="field-help">Crea prima un settore nella scheda Settori.</p>
+          ) : (
+            <div className="luogo-multi luogo-multi--inline">
+              {areas.map((a) => {
+                const on = form.areaIds.includes(a.id);
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    className={`luogo-opt${on ? " luogo-opt--on" : ""}`}
+                    onClick={() => toggleFormArea(a.id)}
+                    aria-pressed={on}
+                  >
+                    <span className="luogo-opt__name">{a.name}</span>
+                    <span className="luogo-opt__box" aria-hidden>
+                      {on ? <Check size={14} strokeWidth={3} /> : null}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <p className="field-help">
+            Il dipendente vedrà solo lavorazioni e luoghi dei settori selezionati.
+          </p>
         </div>
         {formError && <p className="field-error">{formError}</p>}
         <div className="sheet__actions">

@@ -2,10 +2,7 @@ import { after, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import {
-  getActiveLavorazioneNames,
-  getActiveLuogoNames,
-} from "@/lib/admin-options";
+import { getAreaOptionNames, getUserAreaNames } from "@/lib/admin-options";
 import { MULTI_LUOGO_SEP } from "@/lib/constants";
 import { isValidWorkHours } from "@/lib/format";
 import { assertEntryDateAllowed } from "@/lib/month-lock";
@@ -56,6 +53,7 @@ export async function PATCH(
     hours: number;
     mansione: string;
     luogo: string;
+    area: string;
     note: string | null;
   }>;
   try {
@@ -77,27 +75,44 @@ export async function PATCH(
     }
     data.hours = body.hours;
   }
-  // Accept a value if it's currently active, OR if it's unchanged from what the
-  // entry already stored — so editing an old entry whose option was since
-  // archived/renamed never fails just because that value is no longer offered.
-  if (body.mansione !== undefined && body.mansione !== existing.mansione) {
-    const activeMansioni = await getActiveLavorazioneNames();
-    if (!activeMansioni.has(body.mansione)) {
-      return NextResponse.json({ error: "Lavorazione non valida" }, { status: 400 });
+
+  // Area: se cambia, dev'essere assegnata al dipendente. mansione/luogo si
+  // validano contro l'area effettiva (nuova o esistente). Eccezione: valore
+  // invariato + area invariata → accettato (modifica di una voce con opzione
+  // nel frattempo archiviata).
+  const areaChanged = body.area !== undefined && body.area !== existing.area;
+  const nextArea = body.area ?? existing.area;
+  if (areaChanged) {
+    if (!body.area || !(await getUserAreaNames(userId)).has(body.area)) {
+      return NextResponse.json({ error: "Settore non valido" }, { status: 400 });
     }
-    data.mansione = body.mansione;
-  } else if (body.mansione !== undefined) {
+    data.area = body.area;
+  }
+  let areaOpts: Awaited<ReturnType<typeof getAreaOptionNames>> | undefined;
+  const loadAreaOpts = async () => {
+    if (areaOpts === undefined) areaOpts = await getAreaOptionNames(nextArea);
+    return areaOpts;
+  };
+
+  if (body.mansione !== undefined) {
+    const unchanged = body.mansione === existing.mansione && !areaChanged;
+    if (!unchanged) {
+      const o = await loadAreaOpts();
+      if (!o || !o.lavorazioni.has(body.mansione)) {
+        return NextResponse.json({ error: "Lavorazione non valida" }, { status: 400 });
+      }
+    }
     data.mansione = body.mansione;
   }
-  if (body.luogo !== undefined && body.luogo !== existing.luogo) {
-    const activeLuoghi = await getActiveLuogoNames();
-    // Luogo può essere multiplo (es. Trattore): "A, B, C". Ogni parte valida.
-    const parts = body.luogo ? body.luogo.split(MULTI_LUOGO_SEP) : [];
-    if (parts.length === 0 || !parts.every((p) => activeLuoghi.has(p))) {
-      return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });
+  if (body.luogo !== undefined) {
+    const unchanged = body.luogo === existing.luogo && !areaChanged;
+    if (!unchanged) {
+      const o = await loadAreaOpts();
+      const parts = body.luogo ? body.luogo.split(MULTI_LUOGO_SEP) : [];
+      if (!o || parts.length === 0 || !parts.every((p) => o.luoghi.has(p))) {
+        return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });
+      }
     }
-    data.luogo = body.luogo;
-  } else if (body.luogo !== undefined) {
     data.luogo = body.luogo;
   }
   if (body.note !== undefined) {

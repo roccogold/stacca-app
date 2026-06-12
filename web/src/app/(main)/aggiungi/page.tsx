@@ -33,22 +33,32 @@ export default async function AggiungiPage({
   const allowed = await assertEntryDateAllowed(user.id, targetDate);
   const locked = !allowed.ok;
 
-  const [mansioniRows, luoghiRows] = await Promise.all([
-    prisma.lavorazione.findMany({
-      where: { archived: false },
-      orderBy: { name: "asc" },
-      select: { name: true },
-    }),
-    prisma.luogo.findMany({
-      where: { archived: false },
-      orderBy: { name: "asc" },
-      select: { name: true, category: true },
-    }),
-  ]);
+  // Solo le aree del dipendente, ciascuna con lavorazioni e luoghi attivi.
+  const areaRows = await prisma.area.findMany({
+    where: { archived: false, users: { some: { userId: user.id } } },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      lavorazioni: {
+        where: { archived: false },
+        orderBy: { name: "asc" },
+        select: { name: true },
+      },
+      luoghi: {
+        where: { archived: false },
+        orderBy: { name: "asc" },
+        select: { name: true },
+      },
+    },
+  });
   const options = {
-    mansioni: mansioniRows.map((r) => r.name),
-    luoghiVigne: luoghiRows.filter((r) => r.category === "vigne").map((r) => r.name),
-    luoghiAltro: luoghiRows.filter((r) => r.category === "altro").map((r) => r.name),
+    areas: areaRows.map((a) => ({
+      id: a.id,
+      name: a.name,
+      lavorazioni: a.lavorazioni.map((l) => l.name),
+      luoghi: a.luoghi.map((l) => l.name),
+    })),
   };
 
   return (

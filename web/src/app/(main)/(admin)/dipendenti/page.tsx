@@ -9,21 +9,29 @@ export default async function DipendentiPage() {
   const me = await requireAdmin();
   const protectedEmail = getProtectedAdminEmail();
 
-  const rows = await prisma.user.findMany({
-    where: { archived: false },
-    orderBy: [{ role: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      displayName: true,
-      email: true,
-      role: true,
-      disabled: true,
-      mustChangePassword: true,
-      createdAt: true,
-    },
-  });
+  const [rows, areas] = await Promise.all([
+    prisma.user.findMany({
+      where: { archived: false },
+      orderBy: [{ role: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        displayName: true,
+        email: true,
+        role: true,
+        disabled: true,
+        mustChangePassword: true,
+        createdAt: true,
+        areas: { select: { areaId: true } },
+      },
+    }),
+    prisma.area.findMany({
+      where: { archived: false },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   const initialUsers = rows.map((u) => ({
     id: u.id,
@@ -36,6 +44,7 @@ export default async function DipendentiPage() {
     mustChangePassword: u.mustChangePassword,
     createdAt: u.createdAt.toISOString(),
     protected: (u.email ?? "").trim().toLowerCase() === protectedEmail,
+    areaIds: u.areas.map((a) => a.areaId),
   }));
 
   const currentUserIsProtected =
@@ -46,6 +55,7 @@ export default async function DipendentiPage() {
       currentUserId={me.id}
       currentUserIsProtected={currentUserIsProtected}
       initialUsers={initialUsers}
+      areas={areas}
     />
   );
 }

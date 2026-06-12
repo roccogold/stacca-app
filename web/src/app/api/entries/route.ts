@@ -2,10 +2,7 @@ import { after, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import {
-  getActiveLavorazioneNames,
-  getActiveLuogoNames,
-} from "@/lib/admin-options";
+import { getAreaOptionNames, getUserAreaNames } from "@/lib/admin-options";
 import { MULTI_LUOGO_SEP } from "@/lib/constants";
 import { isValidWorkHours } from "@/lib/format";
 import { assertEntryDateAllowed } from "@/lib/month-lock";
@@ -69,6 +66,7 @@ export async function POST(req: Request) {
     hours?: number;
     mansione?: string;
     luogo?: string;
+    area?: string;
     note?: string | null;
   };
   try {
@@ -77,23 +75,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "JSON non valido" }, { status: 400 });
   }
 
-  const { date, hours, mansione, luogo, note } = body;
+  const { date, hours, mansione, luogo, area, note } = body;
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return NextResponse.json({ error: "Data non valida" }, { status: 400 });
   }
   if (typeof hours !== "number" || !isValidWorkHours(hours)) {
     return NextResponse.json({ error: "Ore non valide" }, { status: 400 });
   }
-  const [activeMansioni, activeLuoghi] = await Promise.all([
-    getActiveLavorazioneNames(),
-    getActiveLuogoNames(),
-  ]);
-  if (!mansione || !activeMansioni.has(mansione)) {
+  // L'area deve essere assegnata al dipendente, e mansione/luogo devono
+  // appartenere a quell'area.
+  if (!area || !(await getUserAreaNames(userId)).has(area)) {
+    return NextResponse.json({ error: "Settore non valido" }, { status: 400 });
+  }
+  const opts = await getAreaOptionNames(area);
+  if (!opts) {
+    return NextResponse.json({ error: "Settore non valido" }, { status: 400 });
+  }
+  if (!mansione || !opts.lavorazioni.has(mansione)) {
     return NextResponse.json({ error: "Lavorazione non valida" }, { status: 400 });
   }
   // Luogo può essere multiplo (es. Trattore): stringa "A, B, C". Ogni parte valida.
   const luoghi = luogo ? luogo.split(MULTI_LUOGO_SEP) : [];
-  if (!luogo || luoghi.length === 0 || !luoghi.every((p) => activeLuoghi.has(p))) {
+  if (!luogo || luoghi.length === 0 || !luoghi.every((p) => opts.luoghi.has(p))) {
     return NextResponse.json({ error: "Luogo non valido" }, { status: 400 });
   }
 
@@ -109,6 +112,7 @@ export async function POST(req: Request) {
       hours,
       mansione,
       luogo,
+      area,
       note: note?.trim() || null,
     },
   });

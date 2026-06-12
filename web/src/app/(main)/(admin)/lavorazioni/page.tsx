@@ -7,13 +7,17 @@ export const dynamic = "force-dynamic";
 export default async function LavorazioniPage() {
   await requireAdmin();
 
-  const rows = await prisma.lavorazione.findMany({ orderBy: { name: "asc" } });
-  const initial = rows.map((r) => ({ id: r.id, name: r.name }));
+  const [rows, areas] = await Promise.all([
+    prisma.lavorazione.findMany({ orderBy: { name: "asc" } }),
+    prisma.area.findMany({ where: { archived: false }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
+  const initial = rows.map((r) => ({ id: r.id, name: r.name, areaId: r.areaId }));
 
   return (
     <OptionsManager
       resource="lavorazioni"
       initial={initial}
+      areas={areas}
       labels={{
         title: "Lavorazioni",
         newButton: "Nuova lavorazione",

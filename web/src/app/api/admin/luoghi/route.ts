@@ -9,7 +9,7 @@ export async function GET() {
   if (!auth.ok) return auth.response;
 
   const luoghi = await prisma.luogo.findMany({
-    orderBy: [{ category: "asc" }, { name: "asc" }],
+    orderBy: { name: "asc" },
   });
   return NextResponse.json({ luoghi });
 }
@@ -33,19 +33,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
+  const area = await prisma.area.findUnique({
+    where: { id: parsed.areaId },
+    select: { id: true },
+  });
+  if (!area) {
+    return NextResponse.json({ error: "Settore non valido" }, { status: 400 });
+  }
+
   const dupe = await prisma.luogo.findFirst({
-    where: { name: { equals: parsed.name, mode: "insensitive" } },
+    where: { areaId: parsed.areaId, name: { equals: parsed.name, mode: "insensitive" } },
     select: { id: true },
   });
   if (dupe) {
     return NextResponse.json(
-      { error: "Esiste già un luogo con questo nome." },
+      { error: "Esiste già un luogo con questo nome in quest'area." },
       { status: 409 },
     );
   }
 
+  // category resta valorizzato per compat schema (legacy), default "altro".
   const luogo = await prisma.luogo.create({
-    data: { name: parsed.name, category: parsed.category },
+    data: { name: parsed.name, areaId: parsed.areaId, category: "altro" },
   });
   return NextResponse.json({ luogo }, { status: 201 });
 }

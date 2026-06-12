@@ -32,20 +32,32 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
+  const area = await prisma.area.findUnique({
+    where: { id: parsed.areaId },
+    select: { id: true },
+  });
+  if (!area) {
+    return NextResponse.json({ error: "Settore non valido" }, { status: 400 });
+  }
+
   const dupe = await prisma.lavorazione.findFirst({
-    where: { name: { equals: parsed.name, mode: "insensitive" }, id: { not: id } },
+    where: {
+      areaId: parsed.areaId,
+      name: { equals: parsed.name, mode: "insensitive" },
+      id: { not: id },
+    },
     select: { id: true },
   });
   if (dupe) {
     return NextResponse.json(
-      { error: "Esiste già una lavorazione con questo nome." },
+      { error: "Esiste già una lavorazione con questo nome in quest'area." },
       { status: 409 },
     );
   }
 
   const lavorazione = await prisma.lavorazione.update({
     where: { id },
-    data: { name: parsed.name },
+    data: { name: parsed.name, areaId: parsed.areaId },
   });
   return NextResponse.json({ lavorazione });
 }

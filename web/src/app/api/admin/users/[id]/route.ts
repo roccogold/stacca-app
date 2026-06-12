@@ -6,6 +6,8 @@ import {
   buildDisplayName,
   isProtectedEmail,
   parseUserInput,
+  readAreaIds,
+  setUserAreas,
 } from "@/lib/admin-users";
 
 const userSelect = {
@@ -101,6 +103,16 @@ export async function PATCH(
     },
     select: userSelect,
   });
+
+  // Aggiorna le aree solo se il campo è presente nel body.
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    "areaIds" in (body as Record<string, unknown>)
+  ) {
+    await setUserAreas(id, readAreaIds(body));
+  }
+
   return NextResponse.json({ user });
 }
 

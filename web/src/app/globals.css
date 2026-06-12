@@ -1831,6 +1831,14 @@ a.card {
   padding: 20px;
   box-shadow: var(--shadow);
   border: none;
+  position: relative;
+}
+
+/* Stato (Aperto/Inviato) ancorato in alto a destra, sempre nello stesso punto */
+.card--oggi__filled .badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
 }
 
 .card--oggi__label {
@@ -2959,6 +2967,50 @@ a.card {
   flex-direction: column;
   gap: 6px;
 }
+/* Gruppo per area (collassabile) nel catalogo admin */
+.opt-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.opt-area__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 6px 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-soft);
+}
+.opt-area__chev {
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+.opt-area__chev--open {
+  transform: rotate(180deg);
+}
+.opt-area__count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: none;
+  background: var(--card-soft);
+  border-radius: var(--r-pill);
+  padding: 1px 9px;
+}
+.opt-area__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 6px;
+}
 .opt-row,
 .opt-card {
   display: flex;
@@ -3031,6 +3083,16 @@ a.card {
   overflow-y: auto;
   margin-top: 12px;
   -webkit-overflow-scrolling: touch;
+}
+.luogo-multi--inline {
+  max-height: none;
+  overflow: visible;
+  margin-top: 6px;
+}
+.emp-card__areas {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 .luogo-multi__group {
   font-size: 12px;

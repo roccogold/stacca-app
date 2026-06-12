@@ -41,6 +41,7 @@ model User {
   resetCodeExpiresAt DateTime?
   entries            TimeEntry[]
   monthSubmissions   MonthSubmission[]
+  areas              UserArea[]
   createdAt          DateTime    @default(now())
 }
 
@@ -64,11 +65,37 @@ model TimeEntry {
   hours     Float
   mansione  String
   luogo     String
+  area      String   @default("") // denormalized area name (like mansione/luogo)
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId, date])
+}
+
+// Settori aziendali (Vigna, Cantina, Caseificio, Stalla, …). Le lavorazioni e i
+// luoghi appartengono a un'area; ai dipendenti si assegnano una o più aree e nel
+// form vedono solo le opzioni delle loro aree.
+model Area {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  archived    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  lavorazioni Lavorazione[]
+  luoghi      Luogo[]
+  users       UserArea[]
+}
+
+// Join esplicito User ↔ Area (molti-a-molti), per controllare RLS.
+model UserArea {
+  userId String
+  areaId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  area   Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@id([userId, areaId])
+  @@index([areaId])
 }
 
 // Admin-managed option lists for the entry form. TimeEntry stores `mansione`
@@ -78,19 +105,28 @@ model TimeEntry {
 // NOT stored as a row.
 model Lavorazione {
   id        String   @id @default(cuid())
-  name      String   @unique
+  name      String
+  areaId    String?
+  area      Area?    @relation(fields: [areaId], references: [id], onDelete: Restrict)
   archived  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([areaId, name])
+  @@index([areaId])
 }
 
 model Luogo {
   id        String   @id @default(cuid())
-  name      String   @unique
-  category  String // "vigne" | "altro"
+  name      String
+  category  String // legacy "vigne"|"altro" — non più usato, sostituito da areaId
+  areaId    String?
+  area      Area?    @relation(fields: [areaId], references: [id], onDelete: Restrict)
   archived  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([areaId, name])
+  @@index([areaId])
   @@index([category])
 }

@@ -2,15 +2,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ClipboardList, Map, Pencil, Search } from "lucide-react";
+import {
+  ChevronDown,
+  ClipboardList,
+  Layers,
+  Map,
+  Pencil,
+  Search,
+} from "lucide-react";
 import { BottomSheet } from "@/components/BottomSheet";
 import { SwipeToDelete } from "@/components/SwipeToDelete";
 
 export type ManagedOption = {
   id: string;
   name: string;
-  category?: "vigne" | "altro";
+  areaId?: string | null;
 };
+
+export type AreaRef = { id: string; name: string };
 
 type Labels = {
   title: string;
@@ -22,40 +31,40 @@ type Labels = {
   countMany: string;
 };
 
+type Resource = "lavorazioni" | "luoghi" | "aree";
+
 type Props = {
-  resource: "lavorazioni" | "luoghi";
+  resource: Resource;
   initial: ManagedOption[];
   labels: Labels;
-  withCategory?: boolean;
+  /** Aree disponibili: presenti per lavorazioni/luoghi, assenti per "aree". */
+  areas?: AreaRef[];
 };
 
-const CATEGORY_LABEL: Record<string, string> = {
-  vigne: "Vigne",
-  altro: "Altro",
-};
+const RESOURCE_ICON = {
+  lavorazioni: ClipboardList,
+  luoghi: Map,
+  aree: Layers,
+} as const;
 
 function sortByName(list: ManagedOption[]): ManagedOption[] {
   return [...list].sort((a, b) => a.name.localeCompare(b.name, "it"));
 }
 
-export function OptionsManager({
-  resource,
-  initial,
-  labels,
-  withCategory = false,
-}: Props) {
+export function OptionsManager({ resource, initial, labels, areas }: Props) {
   const router = useRouter();
-  // Icon for the "new" button, per resource (can't pass a component from the
-  // server page to this client component).
-  const NewIcon = resource === "lavorazioni" ? ClipboardList : Map;
+  const NewIcon = RESOURCE_ICON[resource];
+  const grouped = !!areas; // lavorazioni/luoghi raggruppati per area
+
   const [items, setItems] = useState<ManagedOption[]>(sortByName(initial));
   const [search, setSearch] = useState("");
+  const [openAreas, setOpenAreas] = useState<Set<string>>(new Set());
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [editId, setEditId] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<"vigne" | "altro">("vigne");
+  const [areaId, setAreaId] = useState<string>(areas?.[0]?.id ?? "");
   const [formError, setFormError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
@@ -63,7 +72,7 @@ export function OptionsManager({
     setFormMode("create");
     setEditId(null);
     setName("");
-    setCategory("vigne");
+    setAreaId(areas?.[0]?.id ?? "");
     setFormError(null);
     setFormOpen(true);
   }
@@ -72,9 +81,18 @@ export function OptionsManager({
     setFormMode("edit");
     setEditId(item.id);
     setName(item.name);
-    setCategory(item.category ?? "vigne");
+    setAreaId(item.areaId ?? areas?.[0]?.id ?? "");
     setFormError(null);
     setFormOpen(true);
+  }
+
+  function toggleArea(id: string) {
+    setOpenAreas((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   async function submitForm() {
@@ -83,11 +101,15 @@ export function OptionsManager({
       setFormError("Il nome è obbligatorio.");
       return;
     }
+    if (grouped && !areaId) {
+      setFormError("Seleziona un settore.");
+      return;
+    }
     setFormLoading(true);
     setFormError(null);
     try {
-      const payload: { name: string; category?: string } = { name: name.trim() };
-      if (withCategory) payload.category = category;
+      const payload: { name: string; areaId?: string } = { name: name.trim() };
+      if (grouped) payload.areaId = areaId;
       const url =
         formMode === "create"
           ? `/api/admin/${resource}`
@@ -102,7 +124,9 @@ export function OptionsManager({
         setFormError(typeof data.error === "string" ? data.error : "Errore nel salvataggio.");
         return;
       }
-      const saved = (data.lavorazione ?? data.luogo) as ManagedOption | undefined;
+      const saved = (data.lavorazione ?? data.luogo ?? data.area) as
+        | ManagedOption
+        | undefined;
       if (!saved) {
         setFormError("Risposta non valida dal server.");
         return;
@@ -143,25 +167,9 @@ export function OptionsManager({
   const matches = (it: ManagedOption) => !q || it.name.toLowerCase().includes(q);
   const visible = items.filter(matches);
 
-  // For luoghi, group by category (Vigne first, then Altro); otherwise one list.
-  const groups: Array<{ key: string; label: string; rows: ManagedOption[] }> =
-    withCategory
-      ? (["vigne", "altro"] as const)
-          .map((cat) => ({
-            key: cat,
-            label: CATEGORY_LABEL[cat],
-            rows: visible.filter((it) => (it.category ?? "altro") === cat),
-          }))
-          .filter((g) => g.rows.length > 0)
-      : [{ key: "all", label: "", rows: visible }];
-
   function renderRow(item: ManagedOption) {
     return (
-      <SwipeToDelete
-        key={item.id}
-        bare={false}
-        onDelete={() => handleDelete(item)}
-      >
+      <SwipeToDelete key={item.id} bare={false} onDelete={() => handleDelete(item)}>
         <div className="opt-row">
           <span className="opt-row__name">{item.name}</span>
           <button
@@ -207,21 +215,38 @@ export function OptionsManager({
           />
         </div>
 
-        <div className="opt-list">
-          {visible.length === 0 ? (
-            <p className="emp-empty">Nessun risultato.</p>
-          ) : (
-            groups.map((group) => (
-              <div key={group.key} className="opt-group">
-                {group.label && (
-                  <p className="section-title section-title--inset">{group.label}</p>
-                )}
-                {group.rows.map((it) => renderRow(it))}
-              </div>
-            ))
-          )}
-
-        </div>
+        {visible.length === 0 ? (
+          <p className="emp-empty">Nessun risultato.</p>
+        ) : grouped ? (
+          <div className="opt-list">
+            {areas!.map((area) => {
+              const rows = visible.filter((it) => it.areaId === area.id);
+              if (rows.length === 0) return null;
+              const open = openAreas.has(area.id) || q.length > 0;
+              return (
+                <div key={area.id} className="opt-area">
+                  <button
+                    type="button"
+                    className="opt-area__head"
+                    onClick={() => toggleArea(area.id)}
+                    aria-expanded={open}
+                  >
+                    <ChevronDown
+                      size={18}
+                      className={`opt-area__chev${open ? " opt-area__chev--open" : ""}`}
+                      aria-hidden
+                    />
+                    {area.name}
+                    <span className="opt-area__count">{rows.length}</span>
+                  </button>
+                  {open && <div className="opt-area__rows">{rows.map(renderRow)}</div>}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="opt-list">{visible.map(renderRow)}</div>
+        )}
       </section>
 
       {/* Create / edit */}
@@ -230,6 +255,25 @@ export function OptionsManager({
         onClose={() => setFormOpen(false)}
         title={formMode === "create" ? labels.createTitle : labels.editTitle}
       >
+        {grouped && (
+          <div className="field">
+            <label className="field-label" htmlFor="opt-area">
+              Settore
+            </label>
+            <select
+              id="opt-area"
+              className="select"
+              value={areaId}
+              onChange={(e) => setAreaId(e.target.value)}
+            >
+              {areas!.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="field">
           <label className="field-label" htmlFor="opt-name">
             {labels.nameLabel}
@@ -242,22 +286,6 @@ export function OptionsManager({
             autoComplete="off"
           />
         </div>
-        {withCategory && (
-          <div className="field">
-            <label className="field-label" htmlFor="opt-category">
-              Categoria
-            </label>
-            <select
-              id="opt-category"
-              className="select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value as "vigne" | "altro")}
-            >
-              <option value="vigne">Vigne</option>
-              <option value="altro">Altro</option>
-            </select>
-          </div>
-        )}
         {formMode === "edit" && (
           <p className="form-hint">
             Le voci già registrate mantengono il nome precedente. Il nuovo nome

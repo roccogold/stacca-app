@@ -11,6 +11,35 @@ export function buildDisplayName(firstName: string, lastName: string): string {
   return `${firstName} ${lastName}`.replace(/\s+/g, " ").trim();
 }
 
+/** Extract a list of area ids from a request body (admin user create/update). */
+export function readAreaIds(body: unknown): string[] {
+  if (typeof body !== "object" || body === null) return [];
+  const v = (body as Record<string, unknown>).areaIds;
+  if (!Array.isArray(v)) return [];
+  return v.filter((x): x is string => typeof x === "string");
+}
+
+/** Replace the user's assigned areas with the given ids (existing areas only). */
+export async function setUserAreas(userId: string, areaIds: string[]): Promise<void> {
+  const valid = areaIds.length
+    ? await prisma.area.findMany({
+        where: { id: { in: areaIds } },
+        select: { id: true },
+      })
+    : [];
+  await prisma.$transaction([
+    prisma.userArea.deleteMany({ where: { userId } }),
+    ...(valid.length
+      ? [
+          prisma.userArea.createMany({
+            data: valid.map((a) => ({ userId, areaId: a.id })),
+            skipDuplicates: true,
+          }),
+        ]
+      : []),
+  ]);
+}
+
 /**
  * The protected "owner" account: can only be edited/disabled/reset by itself,
  * never by other admins. Configurable via env, defaults to the owner email.

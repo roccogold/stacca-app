@@ -26,6 +26,7 @@ const adminTab: Tab = {
   // single bottom tab highlighted on all of them.
   match: (p) =>
     p.startsWith("/dipendenti") ||
+    p.startsWith("/aree") ||
     p.startsWith("/lavorazioni") ||
     p.startsWith("/luoghi"),
 };

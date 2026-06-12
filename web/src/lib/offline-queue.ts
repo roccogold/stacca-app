@@ -7,6 +7,7 @@ export type EntryPayload = {
   hours: number;
   mansione: string;
   luogo: string;
+  area: string;
   note: string | null;
 };
 
@@ -46,6 +47,7 @@ export type MergedEntry = {
   hours: number;
   mansione: string;
   luogo: string;
+  area: string;
   note: string | null;
 };
 
@@ -306,6 +308,7 @@ export function mergeEntriesWithQueue(
     hours: number;
     mansione: string;
     luogo: string;
+    area?: string;
     note: string | null;
   }>,
   ops: QueueOperation[],
@@ -321,6 +324,7 @@ export function mergeEntriesWithQueue(
       hours: e.hours,
       mansione: e.mansione,
       luogo: e.luogo,
+      area: e.area ?? "",
       note: e.note,
     });
   }
