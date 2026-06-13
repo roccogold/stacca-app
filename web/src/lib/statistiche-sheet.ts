@@ -266,6 +266,57 @@ function pieChart(opts: {
   };
 }
 
+function stackedColumnChart(opts: {
+  title: string;
+  dataSheetId: number;
+  domainCol: number;
+  seriesCols: number[];
+  endRow: number;
+  anchor: { sheetId: number; row: number; col: number };
+  width?: number;
+}) {
+  return {
+    addChart: {
+      chart: {
+        border: NO_BORDER,
+        spec: {
+          title: opts.title,
+          titleTextFormat: { bold: true, fontSize: 12, foregroundColor: INK },
+          backgroundColor: WHITE,
+          basicChart: {
+            chartType: "COLUMN",
+            stackedType: "STACKED",
+            legendPosition: "RIGHT_LEGEND",
+            headerCount: 1,
+            axis: [
+              { position: "BOTTOM_AXIS" },
+              { position: "LEFT_AXIS", title: "Ore" },
+            ],
+            domains: [
+              { domain: source(opts.dataSheetId, opts.domainCol, opts.endRow) },
+            ],
+            series: opts.seriesCols.map((c) => ({
+              series: source(opts.dataSheetId, c, opts.endRow),
+              targetAxis: "LEFT_AXIS",
+            })),
+          },
+        },
+        position: {
+          overlayPosition: {
+            anchorCell: {
+              sheetId: opts.anchor.sheetId,
+              rowIndex: opts.anchor.row,
+              columnIndex: opts.anchor.col,
+            },
+            widthPixels: opts.width ?? 980,
+            heightPixels: 320,
+          },
+        },
+      },
+    },
+  };
+}
+
 export async function applyStatisticheTab(): Promise<
   { ok: true; skipped?: boolean } | { ok: false; error: string }
 > {
@@ -295,7 +346,23 @@ export async function applyStatisticheTab(): Promise<
     await deleteChartsOnSheet(sheets, spreadsheetId, statsId);
     await sheets.spreadsheets.values.batchClear({
       spreadsheetId,
-      requestBody: { ranges: [`${STATS_TAB}!A1:Z200`, `${DATA_TAB}!A1:Z200`] },
+      requestBody: { ranges: [`${STATS_TAB}!A1:Z200`, `${DATA_TAB}!A1:AZ200`] },
+    });
+
+    // Il tab dati di default ha 26 colonne (A–Z): il pivot stagionalità usa
+    // AA…AI. Allarga a 42 colonne (idempotente: cresce o resta).
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        requests: [
+          {
+            updateSheetProperties: {
+              properties: { sheetId: dataId, gridProperties: { columnCount: 42 } },
+              fields: "gridProperties.columnCount",
+            },
+          },
+        ],
+      },
     });
 
     // Celle filtro sul tab visibile.
@@ -313,6 +380,14 @@ export async function applyStatisticheTab(): Promise<
       `&IF(${MNUM}>0${S}" and month(A) = "&(${MNUM}-1)${S}"")` +
       `&IF(${EMP}="${ALL}"${S}""${S}" and B = '"&${EMP}&"'")`;
 
+    // Stagionalità: solo Anno + Dipendente (mostra sempre tutti i mesi).
+    const whereYE =
+      `"where K='Voce' and year(A) = "&${YEAR}` +
+      `&IF(${EMP}="${ALL}"${S}""${S}" and B = '"&${EMP}&"'")`;
+    // Pivot mese (colonna I = 1° del mese) × settore (M). Spilla in AA:
+    // col0 = mese, poi una colonna per settore (intestazione = nome settore).
+    const stagionalitaPivot = `=IFERROR(QUERY(${M}!$A$2:$M${S} "select I, sum(E) "&${whereYE}&" group by I pivot M order by I"${S}0)${S}"")`;
+
     // NB: headers=0 (ultimo arg QUERY) è essenziale: con una sola riga dati
     // l'auto-detect la scambierebbe per intestazione → "Nessun dato".
     const groupQuery = (col: string, label: string) =>
@@ -321,6 +396,10 @@ export async function applyStatisticheTab(): Promise<
     const lavorazioneQuery = groupQuery("F", "Lavorazione");
     const settoreQuery = groupQuery("M", "Settore");
     const luogoQuery = groupQuery("G", "Luogo");
+
+    // Tabella riepilogo: ore totali, n° interventi (count), ore medie (avg).
+    const summaryQuery = (col: string, label: string) =>
+      `=IFERROR(QUERY(${M}!$A$2:$M${S} "select ${col}, sum(E), count(E), avg(E) "&${whereClause}&" group by ${col} order by sum(E) desc label ${col} '${label}', sum(E) 'Ore totali', count(E) 'Interventi', avg(E) 'Ore medie'"${S}0)${S}"Nessun dato")`;
 
     // Tab nascosto: formule che alimentano i grafici.
     //  A:B lavorazione · D:E settore · G:H luogo · J:K mesi · M anni · N dipendenti
@@ -401,6 +480,8 @@ export async function applyStatisticheTab(): Promise<
             range: `${DATA_TAB}!T2`,
             values: [[`=IF(${STATS_TAB}!$B$4="${ALL}"${S}"<>"${S}${STATS_TAB}!$B$4)`]],
           },
+          // Stagionalità: pivot mese × settore (colonne AA…).
+          { range: `${DATA_TAB}!AA1`, values: [[stagionalitaPivot]] },
         ],
       },
     });
@@ -445,6 +526,32 @@ export async function applyStatisticheTab(): Promise<
               [
                 `=IFERROR(COUNTUNIQUE(FILTER(${M}!B2:B${S}(${M}!K2:K="Voce")${S}(YEAR(${M}!A2:A)=${YEAR})${S}((${MNUM}=0)+(MONTH(${M}!A2:A)=${MNUM})>0)${S}((${EMP}="${ALL}")+(${M}!B2:B=${EMP})>0)))${S}0)`,
               ],
+            ],
+          },
+          // Tabelle riepilogo (riga 61 titoli, 62 intestazioni QUERY).
+          // Lavorazione A62:D + % in E · Luogo H62:K + % in L.
+          { range: `${STATS_TAB}!A61`, values: [["Riepilogo per lavorazione"]] },
+          {
+            range: `${STATS_TAB}!A62`,
+            values: [[summaryQuery("F", "Lavorazione")]],
+          },
+          { range: `${STATS_TAB}!E62`, values: [["%"]] },
+          {
+            range: `${STATS_TAB}!E63`,
+            values: [
+              [`=ARRAYFORMULA(IF(LEN($B$63:$B)${S}$B$63:$B/SUM($B$63:$B)${S}""))`],
+            ],
+          },
+          { range: `${STATS_TAB}!H61`, values: [["Riepilogo per luogo"]] },
+          {
+            range: `${STATS_TAB}!H62`,
+            values: [[summaryQuery("G", "Luogo")]],
+          },
+          { range: `${STATS_TAB}!L62`, values: [["%"]] },
+          {
+            range: `${STATS_TAB}!L63`,
+            values: [
+              [`=ARRAYFORMULA(IF(LEN($I$63:$I)${S}$I$63:$I/SUM($I$63:$I)${S}""))`],
             ],
           },
         ],
@@ -567,6 +674,53 @@ export async function applyStatisticheTab(): Promise<
               fields: "userEnteredFormat.textFormat",
             },
           },
+          // Titoli sezioni riepilogo (riga 61) in terra.
+          {
+            repeatCell: {
+              range: { sheetId: statsId, startRowIndex: 60, endRowIndex: 61, startColumnIndex: 0, endColumnIndex: 12 },
+              cell: { userEnteredFormat: { textFormat: { bold: true, fontSize: 12, foregroundColor: TERRA } } },
+              fields: "userEnteredFormat.textFormat",
+            },
+          },
+          // Intestazioni tabelle riepilogo (riga 62) in grassetto.
+          {
+            repeatCell: {
+              range: { sheetId: statsId, startRowIndex: 61, endRowIndex: 62, startColumnIndex: 0, endColumnIndex: 12 },
+              cell: { userEnteredFormat: { textFormat: { bold: true } } },
+              fields: "userEnteredFormat.textFormat",
+            },
+          },
+          // Ore a 2 decimali, Interventi interi (B/D e I/K = ore, C/J = conteggi).
+          ...[
+            { c: 1, p: "0.00" }, // B Ore totali (lavorazione)
+            { c: 2, p: "0" }, //    C Interventi
+            { c: 3, p: "0.00" }, // D Ore medie
+            { c: 8, p: "0.00" }, // I Ore totali (luogo)
+            { c: 9, p: "0" }, //    J Interventi
+            { c: 10, p: "0.00" }, // K Ore medie
+          ].map(({ c, p }) => ({
+            repeatCell: {
+              range: { sheetId: statsId, startRowIndex: 62, endRowIndex: 200, startColumnIndex: c, endColumnIndex: c + 1 },
+              cell: { userEnteredFormat: { numberFormat: { type: "NUMBER", pattern: p } } },
+              fields: "userEnteredFormat.numberFormat",
+            },
+          })),
+          // Colonne % in formato percentuale.
+          ...[4, 11].map((c) => ({
+            repeatCell: {
+              range: { sheetId: statsId, startRowIndex: 62, endRowIndex: 200, startColumnIndex: c, endColumnIndex: c + 1 },
+              cell: { userEnteredFormat: { numberFormat: { type: "PERCENT", pattern: "0%" } } },
+              fields: "userEnteredFormat.numberFormat",
+            },
+          })),
+          // Mese (colonna AA del tab dati) come "mmm" per l'asse stagionalità.
+          {
+            repeatCell: {
+              range: { sheetId: dataId, startRowIndex: 0, endRowIndex: 50, startColumnIndex: 26, endColumnIndex: 27 },
+              cell: { userEnteredFormat: { numberFormat: { type: "DATE", pattern: "mmm" } } },
+              fields: "userEnteredFormat.numberFormat",
+            },
+          },
           // Menu a tendina: Anno (B2), Mese (B3), Dipendente (B4).
           ...[
             { row: 1, src: `=${q(DATA_TAB)}!$M$2:$M$50` },
@@ -648,6 +802,15 @@ export async function applyStatisticheTab(): Promise<
             endRow: 13,
             color: OLIVE,
             anchor: { sheetId: statsId, row: 26, col: 7 },
+          }),
+          stackedColumnChart({
+            title: "Stagionalità (mese × settore)",
+            dataSheetId: dataId,
+            domainCol: 26, // AA
+            seriesCols: [27, 28, 29, 30, 31, 32, 33, 34], // AB…AI (max 8 settori)
+            endRow: 50,
+            anchor: { sheetId: statsId, row: 43, col: 0 },
+            width: 980,
           }),
         ],
       },

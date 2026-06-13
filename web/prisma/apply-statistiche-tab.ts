@@ -15,7 +15,9 @@ async function main() {
     console.log("• Saltato: Google Sheets non configurato (GOOGLE_SHEETS_ID / credenziali).");
     return;
   }
-  console.log('✓ Tab "Statistiche" pronto — selettore Anno + 4 grafici.');
+  console.log(
+    '✓ Tab "Statistiche" pronto — filtri Anno/Mese/Dipendente, 5 grafici e tabelle riepilogo.',
+  );
 }
 
 main().catch((e) => {
