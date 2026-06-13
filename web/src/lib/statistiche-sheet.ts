@@ -539,7 +539,7 @@ export async function applyStatisticheTab(): Promise<
           },
           // Tabelle riepilogo (riga 61 titoli, 62 intestazioni QUERY).
           // Lavorazione A62:D + % in E · Luogo H62:K + % in L.
-          { range: `${STATS_TAB}!A61`, values: [["Riepilogo per lavorazione"]] },
+          { range: `${STATS_TAB}!A61`, values: [["Riepilogo x Lavorazione"]] },
           {
             range: `${STATS_TAB}!A62`,
             values: [[summaryQuery("F", "Lavorazione")]],
@@ -551,7 +551,7 @@ export async function applyStatisticheTab(): Promise<
               [`=ARRAYFORMULA(IF(LEN($B$63:$B)${S}$B$63:$B/SUM($B$63:$B)${S}""))`],
             ],
           },
-          { range: `${STATS_TAB}!H61`, values: [["Riepilogo per luogo"]] },
+          { range: `${STATS_TAB}!H61`, values: [["Riepilogo x Luogo"]] },
           {
             range: `${STATS_TAB}!H62`,
             values: [[summaryQuery("G", "Luogo")]],
