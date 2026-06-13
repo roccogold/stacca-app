@@ -22,6 +22,10 @@ const OLIVE = { red: 61 / 255, green: 74 / 255, blue: 53 / 255 }; // #3d4a35
 const TERRA = { red: 99 / 255, green: 46 / 255, blue: 36 / 255 }; // #632e24
 const CREAM = { red: 251 / 255, green: 247 / 255, blue: 240 / 255 }; // #fbf7f0
 const INK = { red: 42 / 255, green: 37 / 255, blue: 32 / 255 }; // #2a2520
+const WHITE = { red: 1, green: 1, blue: 1 };
+
+// Bordo bianco = grafico senza cornice visibile sul foglio.
+const NO_BORDER = { colorStyle: { rgbColor: WHITE } };
 
 const MONTHS_IT = [
   "Gen",
@@ -142,6 +146,7 @@ function barChart(opts: {
   return {
     addChart: {
       chart: {
+        border: NO_BORDER,
         spec: {
           title: opts.title,
           titleTextFormat: { bold: true, fontSize: 12, foregroundColor: INK },
@@ -217,6 +222,7 @@ function pieChart(opts: {
   return {
     addChart: {
       chart: {
+        border: NO_BORDER,
         spec: {
           title: opts.title,
           titleTextFormat: { bold: true, fontSize: 12, foregroundColor: INK },
@@ -329,7 +335,6 @@ export async function applyStatisticheTab(): Promise<
       requestBody: {
         valueInputOption: "USER_ENTERED",
         data: [
-          { range: `${STATS_TAB}!A1`, values: [["Statistiche Stacca"]] },
           { range: `${STATS_TAB}!A3`, values: [["Anno"]] },
           { range: `${STATS_TAB}!B3`, values: [[yearNow]] },
           {
@@ -367,9 +372,10 @@ export async function applyStatisticheTab(): Promise<
       spreadsheetId,
       requestBody: {
         requests: [
-          // Titolo: banda olive, testo crema.
+          // Cleanup banda titolo dei run precedenti: annulla il merge e
+          // ripristina lo sfondo bianco sulla riga 1.
           {
-            mergeCells: {
+            unmergeCells: {
               range: {
                 sheetId: statsId,
                 startRowIndex: 0,
@@ -377,7 +383,6 @@ export async function applyStatisticheTab(): Promise<
                 startColumnIndex: 0,
                 endColumnIndex: 11,
               },
-              mergeType: "MERGE_ALL",
             },
           },
           {
@@ -385,31 +390,26 @@ export async function applyStatisticheTab(): Promise<
               range: {
                 sheetId: statsId,
                 startRowIndex: 0,
-                endRowIndex: 1,
+                endRowIndex: 2,
                 startColumnIndex: 0,
                 endColumnIndex: 11,
               },
               cell: {
                 userEnteredFormat: {
-                  backgroundColor: OLIVE,
-                  horizontalAlignment: "LEFT",
-                  verticalAlignment: "MIDDLE",
-                  textFormat: {
-                    bold: true,
-                    fontSize: 16,
-                    foregroundColor: CREAM,
-                  },
+                  backgroundColor: WHITE,
+                  textFormat: { bold: false, foregroundColor: INK },
                 },
               },
-              fields:
-                "userEnteredFormat(backgroundColor,horizontalAlignment,verticalAlignment,textFormat)",
+              fields: "userEnteredFormat(backgroundColor,textFormat)",
             },
           },
-          { updateDimensionProperties: {
+          {
+            updateDimensionProperties: {
               range: { sheetId: statsId, dimension: "ROWS", startIndex: 0, endIndex: 1 },
-              properties: { pixelSize: 44 },
+              properties: { pixelSize: 21 },
               fields: "pixelSize",
-            } },
+            },
+          },
           // "Anno" label + KPI label in grassetto.
           {
             repeatCell: {
