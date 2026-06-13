@@ -589,11 +589,12 @@ export async function applyStatisticheTab(): Promise<
               },
             },
           })),
-          // Tab color olive + nascondi tab dati.
+          // Tab color olive + posiziona "Statistiche" come 2° foglio
+          // (subito dopo "Ore Totali", indice 0).
           {
             updateSheetProperties: {
-              properties: { sheetId: statsId, tabColor: OLIVE },
-              fields: "tabColor",
+              properties: { sheetId: statsId, tabColor: OLIVE, index: 1 },
+              fields: "tabColor,index",
             },
           },
           {
