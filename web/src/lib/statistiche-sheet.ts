@@ -306,8 +306,23 @@ export async function applyStatisticheTab(): Promise<
         valueInputOption: "USER_ENTERED",
         data: [
           { range: `${DATA_TAB}!A1`, values: [[lavorazioneQuery]] },
-          { range: `${DATA_TAB}!D1`, values: [[settoreQuery]] },
           { range: `${DATA_TAB}!G1`, values: [[luogoQuery]] },
+          // Settore: QUERY grezza in P:Q, poi D:E rietichetta il vuoto in
+          // "Senza settore" così la legenda della torta mostra un testo.
+          { range: `${DATA_TAB}!P1`, values: [[settoreQuery]] },
+          { range: `${DATA_TAB}!D1:E1`, values: [["Settore", "Ore"]] },
+          {
+            range: `${DATA_TAB}!D2`,
+            values: [
+              [
+                `=ARRAYFORMULA(IF(LEN(Q2:Q)${S}IF(P2:P=""${S}"Senza settore"${S}P2:P)${S}""))`,
+              ],
+            ],
+          },
+          {
+            range: `${DATA_TAB}!E2`,
+            values: [[`=ARRAYFORMULA(IF(LEN(Q2:Q)${S}Q2:Q${S}""))`]],
+          },
           {
             range: `${DATA_TAB}!J1:K13`,
             values: [
