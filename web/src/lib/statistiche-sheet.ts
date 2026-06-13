@@ -482,6 +482,15 @@ export async function applyStatisticheTab(): Promise<
           },
           // Stagionalità: pivot mese × settore (colonne AA…).
           { range: `${DATA_TAB}!AA1`, values: [[stagionalitaPivot]] },
+          // Etichette mese capitalizzate per l'asse ("Giu" invece di "giu",
+          // che TEXT/"mmm" produrrebbe in locale italiano).
+          { range: `${DATA_TAB}!AK1`, values: [["Mese"]] },
+          {
+            range: `${DATA_TAB}!AK2`,
+            values: [
+              [`=ARRAYFORMULA(IF(LEN(AA2:AA)${S}PROPER(TEXT(AA2:AA${S}"mmm"))${S}""))`],
+            ],
+          },
         ],
       },
     });
@@ -813,7 +822,7 @@ export async function applyStatisticheTab(): Promise<
           stackedColumnChart({
             title: "Stagionalità (mese × settore)",
             dataSheetId: dataId,
-            domainCol: 26, // AA
+            domainCol: 36, // AK = mese capitalizzato ("Giu")
             seriesCols: [27, 28, 29, 30, 31, 32, 33, 34], // AB…AI (max 8 settori)
             endRow: 50,
             anchor: { sheetId: statsId, row: 43, col: 0 },
