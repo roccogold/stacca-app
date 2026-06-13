@@ -20,7 +20,6 @@ const DATA_TAB = "Dati Statistiche";
 // Colori brand Stacca (vedi globals.css → --stacca-olive / --stacca-terra).
 const OLIVE = { red: 61 / 255, green: 74 / 255, blue: 53 / 255 }; // #3d4a35
 const TERRA = { red: 99 / 255, green: 46 / 255, blue: 36 / 255 }; // #632e24
-const CREAM = { red: 251 / 255, green: 247 / 255, blue: 240 / 255 }; // #fbf7f0
 const INK = { red: 42 / 255, green: 37 / 255, blue: 32 / 255 }; // #2a2520
 const WHITE = { red: 1, green: 1, blue: 1 };
 
@@ -150,7 +149,7 @@ function barChart(opts: {
         spec: {
           title: opts.title,
           titleTextFormat: { bold: true, fontSize: 12, foregroundColor: INK },
-          backgroundColor: CREAM,
+          backgroundColor: WHITE,
           basicChart: {
             chartType: "BAR",
             legendPosition: "NO_LEGEND",
@@ -226,7 +225,7 @@ function pieChart(opts: {
         spec: {
           title: opts.title,
           titleTextFormat: { bold: true, fontSize: 12, foregroundColor: INK },
-          backgroundColor: CREAM,
+          backgroundColor: WHITE,
           pieChart: {
             legendPosition: "RIGHT_LEGEND",
             domain: source(opts.dataSheetId, opts.labelCol, opts.endRow),
@@ -372,6 +371,29 @@ export async function applyStatisticheTab(): Promise<
       spreadsheetId,
       requestBody: {
         requests: [
+          // Tutto bianco intorno: sfondo bianco sull'area + niente griglia.
+          {
+            updateSheetProperties: {
+              properties: {
+                sheetId: statsId,
+                gridProperties: { hideGridlines: true },
+              },
+              fields: "gridProperties.hideGridlines",
+            },
+          },
+          {
+            repeatCell: {
+              range: {
+                sheetId: statsId,
+                startRowIndex: 0,
+                endRowIndex: 80,
+                startColumnIndex: 0,
+                endColumnIndex: 26,
+              },
+              cell: { userEnteredFormat: { backgroundColor: WHITE } },
+              fields: "userEnteredFormat.backgroundColor",
+            },
+          },
           // Cleanup banda titolo dei run precedenti: annulla il merge e
           // ripristina lo sfondo bianco sulla riga 1.
           {
