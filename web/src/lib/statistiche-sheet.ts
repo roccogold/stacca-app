@@ -785,7 +785,7 @@ export async function applyStatisticheTab(): Promise<
       requestBody: {
         requests: [
           barChart({
-            title: "Ore per lavorazione",
+            title: "Ore x Lavorazione",
             dataSheetId: dataId,
             labelCol: 0,
             valueCol: 1,
@@ -794,7 +794,7 @@ export async function applyStatisticheTab(): Promise<
             anchor: { sheetId: statsId, row: 9, col: 0 },
           }),
           pieChart({
-            title: "Ore per settore",
+            title: "Ore x Settore",
             dataSheetId: dataId,
             labelCol: 3,
             valueCol: 4,
@@ -802,7 +802,7 @@ export async function applyStatisticheTab(): Promise<
             anchor: { sheetId: statsId, row: 9, col: 7 },
           }),
           barChart({
-            title: "Ore per luogo",
+            title: "Ore x Luogo",
             dataSheetId: dataId,
             labelCol: 6,
             valueCol: 7,
@@ -811,7 +811,7 @@ export async function applyStatisticheTab(): Promise<
             anchor: { sheetId: statsId, row: 26, col: 0 },
           }),
           columnChart({
-            title: "Ore per mese",
+            title: "Ore x Mese",
             dataSheetId: dataId,
             labelCol: 9,
             valueCol: 10,
@@ -820,7 +820,7 @@ export async function applyStatisticheTab(): Promise<
             anchor: { sheetId: statsId, row: 26, col: 7 },
           }),
           stackedColumnChart({
-            title: "Stagionalità (mese × settore)",
+            title: "Stagionalità (Mese × Settore)",
             dataSheetId: dataId,
             domainCol: 36, // AK = mese capitalizzato ("Giu")
             seriesCols: [27, 28, 29, 30, 31, 32, 33, 34], // AB…AI (max 8 settori)
