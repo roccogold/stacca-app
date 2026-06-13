@@ -578,12 +578,18 @@ export async function applyStatisticheTab(): Promise<
               range: {
                 sheetId: statsId,
                 startRowIndex: 0,
-                endRowIndex: 80,
+                endRowIndex: 200,
                 startColumnIndex: 0,
                 endColumnIndex: 26,
               },
-              cell: { userEnteredFormat: { backgroundColor: WHITE } },
-              fields: "userEnteredFormat.backgroundColor",
+              cell: {
+                userEnteredFormat: {
+                  backgroundColor: WHITE,
+                  horizontalAlignment: "LEFT",
+                },
+              },
+              fields:
+                "userEnteredFormat(backgroundColor,horizontalAlignment)",
             },
           },
           // Cleanup banda titolo dei run precedenti: annulla il merge e
@@ -745,12 +751,13 @@ export async function applyStatisticheTab(): Promise<
               },
             },
           })),
-          // Tab color olive + posiziona "Statistiche" come 2° foglio
-          // (subito dopo "Ore Totali", indice 0).
+          // Nessun colore tab + posiziona "Statistiche" come 2° foglio
+          // (subito dopo "Ore Totali", indice 0). I campi tabColor* nel mask
+          // senza valore azzerano il colore.
           {
             updateSheetProperties: {
-              properties: { sheetId: statsId, tabColor: OLIVE, index: 1 },
-              fields: "tabColor,index",
+              properties: { sheetId: statsId, index: 1 },
+              fields: "index,tabColor,tabColorStyle",
             },
           },
           {
