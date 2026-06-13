@@ -313,8 +313,10 @@ export async function applyStatisticheTab(): Promise<
       `&IF(${MNUM}>0${S}" and month(A) = "&(${MNUM}-1)${S}"")` +
       `&IF(${EMP}="${ALL}"${S}""${S}" and B = '"&${EMP}&"'")`;
 
+    // NB: headers=0 (ultimo arg QUERY) è essenziale: con una sola riga dati
+    // l'auto-detect la scambierebbe per intestazione → "Nessun dato".
     const groupQuery = (col: string, label: string) =>
-      `=IFERROR(QUERY(${M}!$A$2:$M${S} "select ${col}, sum(E) "&${whereClause}&" group by ${col} order by sum(E) desc label ${col} '${label}', sum(E) 'Ore'")${S}"Nessun dato")`;
+      `=IFERROR(QUERY(${M}!$A$2:$M${S} "select ${col}, sum(E) "&${whereClause}&" group by ${col} order by sum(E) desc label ${col} '${label}', sum(E) 'Ore'"${S}0)${S}"Nessun dato")`;
 
     const lavorazioneQuery = groupQuery("F", "Lavorazione");
     const settoreQuery = groupQuery("M", "Settore");
