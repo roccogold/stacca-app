@@ -639,7 +639,7 @@ export async function applyStatisticheTab(): Promise<
               fields: "pixelSize",
             },
           },
-          // Etichette filtri (Anno/Mese/Dipendente) in grassetto.
+          // Filtri (etichette A + valori B) in grassetto, stesso colore ink.
           {
             repeatCell: {
               range: {
@@ -647,9 +647,13 @@ export async function applyStatisticheTab(): Promise<
                 startRowIndex: 1,
                 endRowIndex: 4,
                 startColumnIndex: 0,
-                endColumnIndex: 1,
+                endColumnIndex: 2,
               },
-              cell: { userEnteredFormat: { textFormat: { bold: true } } },
+              cell: {
+                userEnteredFormat: {
+                  textFormat: { bold: true, foregroundColor: INK },
+                },
+              },
               fields: "userEnteredFormat.textFormat",
             },
           },
