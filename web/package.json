@@ -18,6 +18,7 @@
     "sheets:clear-user": "npx tsx prisma/clear-google-sheets-user.ts",
     "sheets:sync-presenze": "npx tsx prisma/sync-presenze-sheets.ts",
     "sheets:ore-totali-layout": "npx tsx prisma/apply-ore-totali-layout.ts",
+    "sheets:statistiche": "npx tsx prisma/apply-statistiche-tab.ts",
     "db:clear-data": "npx tsx prisma/clear-data.ts",
     "db:unlock-month": "npx tsx prisma/unlock-month.ts"
   },
