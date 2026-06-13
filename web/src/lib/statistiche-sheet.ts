@@ -41,6 +41,23 @@ const MONTHS_IT = [
   "Dic",
 ];
 
+const MONTHS_FULL = [
+  "Gennaio",
+  "Febbraio",
+  "Marzo",
+  "Aprile",
+  "Maggio",
+  "Giugno",
+  "Luglio",
+  "Agosto",
+  "Settembre",
+  "Ottobre",
+  "Novembre",
+  "Dicembre",
+];
+
+const ALL = "Tutti"; // valore "nessun filtro" per Mese e Dipendente
+
 type Sheets = ReturnType<typeof google.sheets>;
 
 function getSheetsClient(config: { email: string; key: string }): Sheets {
@@ -281,23 +298,37 @@ export async function applyStatisticheTab(): Promise<
       requestBody: { ranges: [`${STATS_TAB}!A1:Z200`, `${DATA_TAB}!A1:Z200`] },
     });
 
-    // Riferimento all'anno selezionato (cella B3 del tab Statistiche).
-    const YEAR = `${STATS_TAB}!$B$3`;
-    // NB: le virgole DENTRO la stringa QUERY (select…, label…) sono linguaggio
-    // QUERY e restano virgole; solo i separatori di argomenti usano S.
-    const range = (col: string) =>
-      `${M}!$A$2:$M${S} "select ${col}, sum(E) where K='Voce' and A >= date '"&${YEAR}&"-01-01' and A <= date '"&${YEAR}&"-12-31' group by ${col} order by sum(E) desc`;
+    // Celle filtro sul tab visibile.
+    const YEAR = `${STATS_TAB}!$B$2`; // anno (numero)
+    const EMP = `${STATS_TAB}!$B$4`; // dipendente ("Tutti" = tutti)
+    // Helper nel tab nascosto:
+    const MNUM = `${q(DATA_TAB)}!$T$1`; // mese selezionato come numero (0 = tutti)
+    const EMPCRIT = `${q(DATA_TAB)}!$T$2`; // criterio dipendente per SUMIFS
 
-    const lavorazioneQuery = `=IFERROR(QUERY(${range("F")} label F 'Lavorazione', sum(E) 'Ore'")${S} "Nessun dato")`;
-    const settoreQuery = `=IFERROR(QUERY(${range("M")} label M 'Settore', sum(E) 'Ore'")${S} "Nessun dato")`;
-    const luogoQuery = `=IFERROR(QUERY(${range("G")} label G 'Luogo', sum(E) 'Ore'")${S} "Nessun dato")`;
+    // Clausola WHERE dinamica condivisa da tutte le QUERY. Le virgole DENTRO la
+    // stringa QUERY sono linguaggio QUERY; i separatori di argomenti usano S.
+    // NB: in QUERY month() è 0-based (gennaio = 0) → uso MNUM-1.
+    const whereClause =
+      `"where K='Voce' and year(A) = "&${YEAR}` +
+      `&IF(${MNUM}>0${S}" and month(A) = "&(${MNUM}-1)${S}"")` +
+      `&IF(${EMP}="${ALL}"${S}""${S}" and B = '"&${EMP}&"'")`;
+
+    const groupQuery = (col: string, label: string) =>
+      `=IFERROR(QUERY(${M}!$A$2:$M${S} "select ${col}, sum(E) "&${whereClause}&" group by ${col} order by sum(E) desc label ${col} '${label}', sum(E) 'Ore'")${S}"Nessun dato")`;
+
+    const lavorazioneQuery = groupQuery("F", "Lavorazione");
+    const settoreQuery = groupQuery("M", "Settore");
+    const luogoQuery = groupQuery("G", "Luogo");
 
     // Tab nascosto: formule che alimentano i grafici.
-    //  A:B lavorazione · D:E settore · G:H luogo · J:K mesi · M lista anni
+    //  A:B lavorazione · D:E settore · G:H luogo · J:K mesi · M anni · N dipendenti
+    //  P:Q settore grezzo · R mesi · T helper (T1 mese#, T2 criterio dip.)
+    // Il trend mensile rispetta Anno + Dipendente (non il filtro Mese: mostra
+    // sempre tutti i 12 mesi dell'anno).
     const monthLabels = MONTHS_IT.map((m) => [m]);
     const monthValues = MONTHS_IT.map(
       (_, i) =>
-        `=SUMIFS(${M}!$E$2:$E${S}${M}!$I$2:$I${S}DATE(${YEAR}${S}${i + 1}${S}1)${S}${M}!$K$2:$K${S}"Voce")`,
+        `=SUMIFS(${M}!$E$2:$E${S}${M}!$I$2:$I${S}DATE(${YEAR}${S}${i + 1}${S}1)${S}${M}!$K$2:$K${S}"Voce"${S}${M}!$B$2:$B${S}${EMPCRIT})`,
     );
 
     await sheets.spreadsheets.values.batchUpdate({
@@ -339,6 +370,35 @@ export async function applyStatisticheTab(): Promise<
               ],
             ],
           },
+          // Lista dipendenti: "Tutti" + nomi distinti con voci.
+          { range: `${DATA_TAB}!N1:N2`, values: [["Dipendenti"], [ALL]] },
+          {
+            range: `${DATA_TAB}!N3`,
+            values: [
+              [
+                `=IFERROR(SORT(UNIQUE(FILTER(${M}!B2:B${S}(${M}!B2:B<>"")*(${M}!K2:K="Voce")))${S}1${S}TRUE)${S}"")`,
+              ],
+            ],
+          },
+          // Lista mesi per il menu: "Tutti" + Gennaio…Dicembre.
+          {
+            range: `${DATA_TAB}!R1:R14`,
+            values: [["Mesi"], [ALL], ...MONTHS_FULL.map((m) => [m])],
+          },
+          // Helper: T1 = numero mese selezionato (0 = tutti) · T2 = criterio
+          // dipendente per SUMIFS ("<>" = qualsiasi nome).
+          {
+            range: `${DATA_TAB}!T1`,
+            values: [
+              [
+                `=IFERROR(MATCH(${STATS_TAB}!$B$3${S}$R$2:$R$14${S}0)-1${S}0)`,
+              ],
+            ],
+          },
+          {
+            range: `${DATA_TAB}!T2`,
+            values: [[`=IF(${STATS_TAB}!$B$4="${ALL}"${S}"<>"${S}${STATS_TAB}!$B$4)`]],
+          },
         ],
       },
     });
@@ -349,31 +409,39 @@ export async function applyStatisticheTab(): Promise<
       requestBody: {
         valueInputOption: "USER_ENTERED",
         data: [
-          { range: `${STATS_TAB}!A3`, values: [["Anno"]] },
-          { range: `${STATS_TAB}!B3`, values: [[yearNow]] },
+          // Filtri (colonna A etichette, B menu a tendina).
+          { range: `${STATS_TAB}!A2:B4`, values: [
+            ["Anno", yearNow],
+            ["Mese", ALL],
+            ["Dipendente", ALL],
+          ] },
+          // KPI: etichette riga 6, valori riga 7.
           {
-            range: `${STATS_TAB}!A5:E5`,
+            range: `${STATS_TAB}!A6:E6`,
             values: [
-              ["Ore totali (anno)", "", "Media mensile", "", "Dipendenti attivi"],
+              ["Ore totali", "", "Media mensile", "", "Dipendenti attivi"],
             ],
           },
+          // Ore totali (filtrate per anno + mese + dipendente).
           {
-            range: `${STATS_TAB}!A6`,
+            range: `${STATS_TAB}!A7`,
             values: [
               [
-                `=SUMIFS(${M}!$E$2:$E${S}${M}!$A$2:$A${S}">="&DATE(${YEAR}${S}1${S}1)${S}${M}!$A$2:$A${S}"<="&DATE(${YEAR}${S}12${S}31)${S}${M}!$K$2:$K${S}"Voce")`,
+                `=IFERROR(SUM(QUERY(${M}!$A$2:$M${S} "select sum(E) "&${whereClause}&" label sum(E) ''"${S}0))${S}0)`,
               ],
             ],
           },
+          // Media mensile = media dei mesi con ore (trend = anno + dipendente).
           {
-            range: `${STATS_TAB}!C6`,
+            range: `${STATS_TAB}!C7`,
             values: [[`=IFERROR(AVERAGEIF(${q(DATA_TAB)}!$K$2:$K$13${S}">0")${S}0)`]],
           },
+          // Dipendenti attivi (con i filtri attivi).
           {
-            range: `${STATS_TAB}!E6`,
+            range: `${STATS_TAB}!E7`,
             values: [
               [
-                `=IFERROR(COUNTUNIQUE(FILTER(${M}!B2:B${S}(${M}!K2:K="Voce")*(YEAR(${M}!A2:A)=${YEAR})))${S}0)`,
+                `=IFERROR(COUNTUNIQUE(FILTER(${M}!B2:B${S}(${M}!K2:K="Voce")${S}(YEAR(${M}!A2:A)=${YEAR})${S}((${MNUM}=0)+(MONTH(${M}!A2:A)=${MNUM})>0)${S}((${EMP}="${ALL}")+(${M}!B2:B=${EMP})>0)))${S}0)`,
               ],
             ],
           },
@@ -447,13 +515,13 @@ export async function applyStatisticheTab(): Promise<
               fields: "pixelSize",
             },
           },
-          // "Anno" label + KPI label in grassetto.
+          // Etichette filtri (Anno/Mese/Dipendente) in grassetto.
           {
             repeatCell: {
               range: {
                 sheetId: statsId,
-                startRowIndex: 2,
-                endRowIndex: 3,
+                startRowIndex: 1,
+                endRowIndex: 4,
                 startColumnIndex: 0,
                 endColumnIndex: 1,
               },
@@ -461,24 +529,7 @@ export async function applyStatisticheTab(): Promise<
               fields: "userEnteredFormat.textFormat",
             },
           },
-          {
-            repeatCell: {
-              range: {
-                sheetId: statsId,
-                startRowIndex: 4,
-                endRowIndex: 5,
-                startColumnIndex: 0,
-                endColumnIndex: 5,
-              },
-              cell: {
-                userEnteredFormat: {
-                  textFormat: { bold: true, foregroundColor: TERRA },
-                },
-              },
-              fields: "userEnteredFormat.textFormat",
-            },
-          },
-          // Valori KPI grandi.
+          // Etichette KPI (riga 6) in terra.
           {
             repeatCell: {
               range: {
@@ -490,34 +541,54 @@ export async function applyStatisticheTab(): Promise<
               },
               cell: {
                 userEnteredFormat: {
+                  textFormat: { bold: true, foregroundColor: TERRA },
+                },
+              },
+              fields: "userEnteredFormat.textFormat",
+            },
+          },
+          // Valori KPI grandi (riga 7).
+          {
+            repeatCell: {
+              range: {
+                sheetId: statsId,
+                startRowIndex: 6,
+                endRowIndex: 7,
+                startColumnIndex: 0,
+                endColumnIndex: 5,
+              },
+              cell: {
+                userEnteredFormat: {
                   textFormat: { bold: true, fontSize: 18, foregroundColor: OLIVE },
                 },
               },
               fields: "userEnteredFormat.textFormat",
             },
           },
-          // Menu a tendina Anno su B3.
-          {
+          // Menu a tendina: Anno (B2), Mese (B3), Dipendente (B4).
+          ...[
+            { row: 1, src: `=${q(DATA_TAB)}!$M$2:$M$50` },
+            { row: 2, src: `=${q(DATA_TAB)}!$R$2:$R$14` },
+            { row: 3, src: `=${q(DATA_TAB)}!$N$2:$N$50` },
+          ].map(({ row, src }) => ({
             setDataValidation: {
               range: {
                 sheetId: statsId,
-                startRowIndex: 2,
-                endRowIndex: 3,
+                startRowIndex: row,
+                endRowIndex: row + 1,
                 startColumnIndex: 1,
                 endColumnIndex: 2,
               },
               rule: {
                 condition: {
                   type: "ONE_OF_RANGE",
-                  values: [
-                    { userEnteredValue: `=${q(DATA_TAB)}!$M$2:$M$50` },
-                  ],
+                  values: [{ userEnteredValue: src }],
                 },
                 showCustomUi: true,
                 strict: false,
               },
             },
-          },
+          })),
           // Tab color olive + nascondi tab dati.
           {
             updateSheetProperties: {
@@ -547,7 +618,7 @@ export async function applyStatisticheTab(): Promise<
             valueCol: 1,
             endRow: 200,
             color: OLIVE,
-            anchor: { sheetId: statsId, row: 7, col: 0 },
+            anchor: { sheetId: statsId, row: 9, col: 0 },
           }),
           pieChart({
             title: "Ore per settore",
@@ -555,7 +626,7 @@ export async function applyStatisticheTab(): Promise<
             labelCol: 3,
             valueCol: 4,
             endRow: 200,
-            anchor: { sheetId: statsId, row: 7, col: 7 },
+            anchor: { sheetId: statsId, row: 9, col: 7 },
           }),
           barChart({
             title: "Ore per luogo",
@@ -564,7 +635,7 @@ export async function applyStatisticheTab(): Promise<
             valueCol: 7,
             endRow: 200,
             color: TERRA,
-            anchor: { sheetId: statsId, row: 24, col: 0 },
+            anchor: { sheetId: statsId, row: 26, col: 0 },
           }),
           columnChart({
             title: "Ore per mese",
@@ -573,7 +644,7 @@ export async function applyStatisticheTab(): Promise<
             valueCol: 10,
             endRow: 13,
             color: OLIVE,
-            anchor: { sheetId: statsId, row: 24, col: 7 },
+            anchor: { sheetId: statsId, row: 26, col: 7 },
           }),
         ],
       },
