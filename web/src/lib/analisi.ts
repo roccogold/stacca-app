@@ -203,16 +203,21 @@ export function seasonalityByMonthSettore(
   return { data, settori };
 }
 
-/** Palette brand per le serie (settori) — olive/terra + tinte coordinate. */
+/**
+ * Palette brand per le serie (settori). Scala perceptualmente coerente in oklch
+ * (lightness/chroma simili, hue distinte) così le 8 serie restano nel mondo
+ * earthy del brand ma sono distinguibili a colpo d'occhio nel donut/stacked.
+ * Olive e terra restano i primi due (coerenti con OLIVE/TERRA in AnalisiClient).
+ */
 export const SETTORE_COLORS = [
-  "#3d4a35",
-  "#632e24",
-  "#7a6f3a",
-  "#4a6b57",
-  "#9c5a3c",
-  "#3f5a6b",
-  "#5a4a6b",
-  "#6b6b3a",
+  "oklch(0.50 0.07 120)", // olive (brand)
+  "oklch(0.48 0.11 35)", // terra (brand)
+  "oklch(0.62 0.10 75)", // ocra/senape
+  "oklch(0.60 0.07 150)", // salvia (verde chiaro, ≠ olive)
+  "oklch(0.58 0.12 50)", // ruggine
+  "oklch(0.55 0.07 230)", // blu polvere
+  "oklch(0.52 0.08 330)", // prugna
+  "oklch(0.63 0.09 95)", // oro
 ];
 
 export function computeKpis(entries: AnalisiEntry[]): Kpis {

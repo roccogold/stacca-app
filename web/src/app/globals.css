@@ -3354,17 +3354,31 @@ a.card {
 }
 
 .analisi-riepilogo__bar {
-  height: 6px;
-  margin: 6px 0 5px;
+  height: 7px;
+  margin: 7px 0 5px;
   border-radius: var(--r-pill);
-  background: var(--secondary);
+  background: color-mix(in oklab, var(--secondary) 70%, var(--card));
   overflow: hidden;
 }
 
 .analisi-riepilogo__bar-fill {
   height: 100%;
   border-radius: var(--r-pill);
-  background: var(--olive);
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--olive) 78%, white) 0%,
+    var(--olive) 100%
+  );
+  transition: width 0.35s ease;
+}
+
+/* Riga top: barra a piena saturazione (le altre ereditano il gradiente) */
+.analisi-riepilogo__row:first-child .analisi-riepilogo__bar-fill {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--olive) 88%, white) 0%,
+    var(--olive) 100%
+  );
 }
 
 .analisi-riepilogo__meta {
@@ -3428,6 +3442,13 @@ a.card {
 /* KPI hero (metrica grande in alto) */
 .analisi-hero {
   padding: 18px 20px;
+  /* alone soffuso olive in alto a dx → dà carattere al numerone */
+  background:
+    radial-gradient(
+      120% 140% at 100% 0%,
+      color-mix(in oklab, var(--olive) 9%, var(--card)) 0%,
+      var(--card) 60%
+    );
 }
 
 .analisi-hero__cap {
@@ -3553,4 +3574,11 @@ a.card {
   height: 9px;
   border-radius: 50%;
   flex: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.analisi-legend__pct {
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }

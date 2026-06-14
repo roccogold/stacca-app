@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import {
   Bar,
   BarChart,
@@ -110,9 +110,10 @@ function DonutChart({ data }: { data: GroupRow[] }) {
               nameKey="label"
               innerRadius={62}
               outerRadius={96}
-              paddingAngle={3}
-              cornerRadius={8}
-              stroke="none"
+              paddingAngle={0}
+              cornerRadius={0}
+              stroke="var(--card)"
+              strokeWidth={2}
               animationDuration={300}
               animationEasing="ease-out"
             >
@@ -132,27 +133,40 @@ function DonutChart({ data }: { data: GroupRow[] }) {
         </div>
       </div>
       <ul className="analisi-legend">
-        {rows.map((row, i) => (
-          <li key={row.label} className="analisi-legend__item">
-            <span
-              className="analisi-legend__dot"
-              style={{ background: SETTORE_COLORS[i % SETTORE_COLORS.length] }}
-            />
-            {row.label}
-          </li>
-        ))}
+        {rows.map((row, i) => {
+          const pct = total ? Math.round((row.hours / total) * 100) : 0;
+          return (
+            <li key={row.label} className="analisi-legend__item">
+              <span
+                className="analisi-legend__dot"
+                style={{ background: SETTORE_COLORS[i % SETTORE_COLORS.length] }}
+              />
+              <span className="analisi-legend__label">{row.label}</span>
+              <span className="analisi-legend__pct">{pct}%</span>
+            </li>
+          );
+        })}
       </ul>
     </>
   );
 }
 
 function TrendChart({ data }: { data: { label: string; hours: number }[] }) {
+  const gradId = useId().replace(/:/g, "");
   if (!data.some((d) => d.hours > 0)) {
     return <p className="analisi-empty">Nessun dato.</p>;
   }
+  // Mese di picco evidenziato; gli altri leggermente più tenui.
+  const peak = data.reduce((m, d) => Math.max(m, d.hours), 0);
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: -12 }}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="color-mix(in oklab, var(--olive) 78%, white)" />
+            <stop offset="100%" stopColor="var(--olive)" />
+          </linearGradient>
+        </defs>
         <XAxis
           dataKey="label"
           interval={0}
@@ -173,12 +187,19 @@ function TrendChart({ data }: { data: { label: string; hours: number }[] }) {
         />
         <Bar
           dataKey="hours"
-          fill={OLIVE}
+          fill={`url(#${gradId})`}
           radius={[10, 10, 0, 0]}
           maxBarSize={BAR_SIZE}
           animationDuration={250}
           animationEasing="ease-out"
-        />
+        >
+          {data.map((d) => (
+            <Cell
+              key={d.label}
+              fillOpacity={peak > 0 && d.hours === peak ? 1 : 0.55}
+            />
+          ))}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
@@ -213,6 +234,8 @@ function StackedChart({ data, settori }: Seasonality) {
               dataKey={s}
               stackId="a"
               fill={SETTORE_COLORS[i % SETTORE_COLORS.length]}
+              stroke="var(--card)"
+              strokeWidth={1}
               maxBarSize={BAR_SIZE}
               radius={i === settori.length - 1 ? [8, 8, 0, 0] : undefined}
               animationDuration={250}
