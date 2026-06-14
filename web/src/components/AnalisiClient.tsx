@@ -624,7 +624,7 @@ export function AnalisiClient({
             <TopKpi cap="Luogo top" row={byLuogo[0]} total={kpis.oreTotali} />
             <NumKpi
               value={formatHoursIt(kpis.mediaIntervento)}
-              label="Ore medie / intervento"
+              label="Ore medie / registrazione"
             />
             <NumKpi value={kpis.numInterventi} label="Registrazioni" />
           </div>
