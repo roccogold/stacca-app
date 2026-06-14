@@ -2801,7 +2801,22 @@ a.card {
 }
 
 .emp-area-filter {
+  position: relative;
   margin-bottom: 12px;
+}
+
+.emp-area-filter__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.emp-area-filter__select {
+  width: 100%;
+  padding-left: 42px;
 }
 
 .emp-search__icon {
@@ -3204,25 +3219,41 @@ a.card {
    Analisi (admin stats dashboard)
    ============================================ */
 
-.analisi-filtertop {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* Filtri analisi: riga singola scorrevole, ognuno con icona */
+.analisi-filters {
+  display: flex;
   gap: 10px;
   margin-bottom: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
-/* Settore (3° menu) a riga intera sotto Anno/Dipendente */
-.analisi-filtertop > .select:nth-child(3) {
-  grid-column: 1 / -1;
+.analisi-filters::-webkit-scrollbar {
+  display: none;
 }
 
-/* Font compatto sui filtri così entra anche "Tutti i dipendenti" */
-.analisi-filtertop .select {
+.analisi-filter {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.analisi-filter__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.analisi-filter__select {
+  width: auto;
   font-size: 14px;
-  padding-left: 14px;
+  padding-left: 42px;
   padding-right: 34px;
   background-position: right 12px center;
-  text-overflow: ellipsis;
 }
 
 /* Striscia pillole periodo (stile segmented, scorrevole) */
@@ -3584,4 +3615,180 @@ a.card {
   font-weight: 700;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Assistente Analisi (chat AI) ─────────────────────────────────────────── */
+.analisi-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.analisi-chat__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analisi-chat__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--stacca-olive) 14%, white);
+  color: var(--stacca-olive);
+}
+
+.analisi-chat__title {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.analisi-chat__badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--olive-fg);
+  background: var(--stacca-olive);
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+}
+
+.analisi-chat__intro {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.analisi-chat__log {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.analisi-chat__bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: var(--r-lg);
+  font-size: 15px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.analisi-chat__bubble--user {
+  align-self: flex-end;
+  background: var(--stacca-olive);
+  color: var(--olive-fg);
+  border-bottom-right-radius: var(--r-sm);
+}
+
+.analisi-chat__bubble--assistant {
+  align-self: flex-start;
+  background: var(--card-soft);
+  color: var(--ink);
+  border-bottom-left-radius: var(--r-sm);
+}
+
+.analisi-chat__bubble--typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.analisi-chat__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: analisi-chat-blink 1.2s infinite ease-in-out;
+}
+
+.analisi-chat__dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.analisi-chat__dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes analisi-chat-blink {
+  0%, 80%, 100% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.analisi-chat__error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--destructive);
+}
+
+.analisi-chat__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.analisi-chat__chip {
+  border: 1px solid color-mix(in oklab, var(--stacca-olive) 35%, white);
+  background: transparent;
+  color: var(--stacca-olive);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s ease;
+}
+
+.analisi-chat__chip:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--stacca-olive) 10%, white);
+}
+
+.analisi-chat__chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.analisi-chat__form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analisi-chat__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.analisi-chat__send {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--stacca-olive);
+  color: var(--olive-fg);
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: var(--shadow);
+  transition: opacity 0.15s ease;
+}
+
+.analisi-chat__send:disabled {
+  opacity: 0.45;
+  cursor: default;
 }

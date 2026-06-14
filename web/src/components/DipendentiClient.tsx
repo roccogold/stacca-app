@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Ban,
+  Briefcase,
   Check,
   ChevronDown,
   Copy,
@@ -498,21 +499,24 @@ export function DipendentiClient({
         </div>
 
         {areas.length > 0 && (
-          <select
-            className="select emp-area-filter"
-            value={areaFilter ?? ""}
-            onChange={(e) =>
-              setAreaFilter(e.target.value === "" ? null : e.target.value)
-            }
-            aria-label="Filtra per settore"
-          >
-            <option value="">Tutti i settori</option>
-            {areas.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
+          <div className="emp-area-filter">
+            <Briefcase size={18} className="emp-area-filter__icon" aria-hidden />
+            <select
+              className="select emp-area-filter__select"
+              value={areaFilter ?? ""}
+              onChange={(e) =>
+                setAreaFilter(e.target.value === "" ? null : e.target.value)
+              }
+              aria-label="Filtra per settore"
+            >
+              <option value="">Tutti i settori</option>
+              {areas.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
 
         {bannerError && <p className="field-error">{bannerError}</p>}

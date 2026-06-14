@@ -34,4 +34,6 @@ export const RATE_LIMITS = {
   login: { limit: 10, windowMs: 15 * 60 * 1000 },
   forgotPassword: { limit: 5, windowMs: 15 * 60 * 1000 },
   admin: { limit: 60, windowMs: 5 * 60 * 1000 },
+  // Assistente AI: chiamate a pagamento → limite più stretto per contenere i costi.
+  ai: { limit: 20, windowMs: 5 * 60 * 1000 },
 } as const;

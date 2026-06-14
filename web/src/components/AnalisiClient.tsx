@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState, type ReactNode } from "react";
+import { Briefcase, Calendar, Users } from "lucide-react";
 import {
   Bar,
   type BarRectangleItem,
@@ -36,6 +37,7 @@ import {
   type Seasonality,
 } from "@/lib/analisi";
 import { formatHoursIt, romeCalendarParts } from "@/lib/format";
+import { AnalisiChat } from "@/components/AnalisiChat";
 
 const OLIVE = "#3d4a35"; // --stacca-olive
 const INK = "#2a2520"; // --stacca-ink
@@ -518,52 +520,63 @@ export function AnalisiClient({
         <h1 className="h1">Analisi</h1>
       </header>
 
+      <AnalisiChat users={employees} />
+
       <section className="block">
-        <div className="analisi-filtertop">
-          <select
-            className="select"
-            aria-label="Anno"
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
+        <div className="analisi-filters">
+          <label className="analisi-filter">
+            <Calendar className="analisi-filter__icon" size={18} aria-hidden />
+            <select
+              className="select analisi-filter__select"
+              aria-label="Anno"
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <select
-            className="select"
-            aria-label="Dipendente"
-            value={userId ?? ""}
-            onChange={(e) =>
-              setUserId(e.target.value === "" ? null : e.target.value)
-            }
-          >
-            <option value="">Tutti i dipendenti</option>
-            {employees.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.displayName}
-              </option>
-            ))}
-          </select>
+          <label className="analisi-filter">
+            <Users className="analisi-filter__icon" size={18} aria-hidden />
+            <select
+              className="select analisi-filter__select"
+              aria-label="Dipendente"
+              value={userId ?? ""}
+              onChange={(e) =>
+                setUserId(e.target.value === "" ? null : e.target.value)
+              }
+            >
+              <option value="">Tutti i dipendenti</option>
+              {employees.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.displayName}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <select
-            className="select"
-            aria-label="Settore"
-            value={settore ?? ""}
-            onChange={(e) =>
-              setSettore(e.target.value === "" ? null : e.target.value)
-            }
-          >
-            <option value="">Tutti i settori</option>
-            {settori.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+          <label className="analisi-filter">
+            <Briefcase className="analisi-filter__icon" size={18} aria-hidden />
+            <select
+              className="select analisi-filter__select"
+              aria-label="Settore"
+              value={settore ?? ""}
+              onChange={(e) =>
+                setSettore(e.target.value === "" ? null : e.target.value)
+              }
+            >
+              <option value="">Tutti i settori</option>
+              {settori.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="analisi-pills" role="tablist" aria-label="Periodo">

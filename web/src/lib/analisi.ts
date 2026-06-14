@@ -26,6 +26,8 @@ export type Filters = {
   month: number | null; // 1..12, oppure null = "Tutti"
   userId: string | null; // id utente, oppure null = "Tutti"
   settore?: string | null; // nome settore, oppure null/undefined = "Tutti"
+  mansione?: string | null; // nome lavorazione, oppure null/undefined = "Tutte"
+  luogo?: string | null; // nome luogo, oppure null/undefined = "Tutti"
 };
 
 export type GroupRow = {
@@ -80,6 +82,8 @@ export function filterEntries(
     if (f.userId != null && e.userId !== f.userId) return false;
     if (f.settore != null && (e.area.trim() || EMPTY_SETTORE) !== f.settore)
       return false;
+    if (f.mansione != null && e.mansione.trim() !== f.mansione) return false;
+    if (f.luogo != null && e.luogo.trim() !== f.luogo) return false;
     return true;
   });
 }

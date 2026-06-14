@@ -26,6 +26,7 @@
     "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
     "@prisma/client": "5.22.0",
     "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
