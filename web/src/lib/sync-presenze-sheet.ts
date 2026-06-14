@@ -84,7 +84,8 @@ async function ensurePresenzeTab(
   return id;
 }
 
-const PRESENZE_COL_WIDTHS = [96, 88, 56, 110, 128, 148, 200, 108, 72];
+// Ordine colonne: Data, Giorno, Mese, Ore, Settore, Lavorazione, Luogo, Note, Stato.
+const PRESENZE_COL_WIDTHS = [96, 88, 108, 56, 110, 128, 148, 200, 72];
 
 async function applyPresenzeTabFormatting(
   sheets: ReturnType<typeof getSheetsClient>,
@@ -228,6 +229,21 @@ async function applyPresenzeTabFormatting(
       },
     });
   }
+
+  // Azienda / Dipendente (etichette in A1:A2) in grassetto.
+  requests.push({
+    repeatCell: {
+      range: {
+        sheetId: tabSheetId,
+        startRowIndex: 0,
+        endRowIndex: 2,
+        startColumnIndex: 0,
+        endColumnIndex: 1,
+      },
+      cell: { userEnteredFormat: { textFormat: { bold: true } } },
+      fields: "userEnteredFormat.textFormat",
+    },
+  });
 
   const batchSize = 80;
   for (let i = 0; i < requests.length; i += batchSize) {

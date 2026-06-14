@@ -83,7 +83,7 @@ export function buildPresenzeSheetValues(
     ["Dipendente", user.displayName],
     [],
     [],
-    ["Data", "Giorno", "Ore (h)", "Settore", "Lavorazione", "Luogo", "Note", "Mese", "Stato"],
+    ["Data", "Giorno", "Mese", "Ore (h)", "Settore", "Lavorazione", "Luogo", "Note", "Stato"],
     [],
   ];
 
@@ -100,7 +100,8 @@ export function buildPresenzeSheetValues(
 
     const [y, m] = block.month.split("-").map(Number);
     const monthLabel = monthTitle(y, m - 1);
-    const stato = block.stato === "Chiuso" ? "Chiuso" : "Bozza";
+    // Etichetta mostrata: Inviato (mese chiuso) / Non inviato (bozza).
+    const stato = block.stato === "Chiuso" ? "Inviato" : "Non inviato";
 
     lines.push([`MESE: ${monthLabel}`, "", "", "", "", "", "", "", stato]);
 
@@ -114,12 +115,12 @@ export function buildPresenzeSheetValues(
       lines.push([
         formatDateItFromISO(e.date),
         formatWeekdayNameFromISO(e.date),
+        monthLabel,
         Math.round(e.hours * 100) / 100,
         e.area,
         e.mansione,
         e.luogo,
         e.note ?? "",
-        monthLabel,
         stato,
       ]);
     }
