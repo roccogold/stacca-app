@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Ban,
-  Briefcase,
   Check,
   ChevronDown,
   Copy,
   KeyRound,
+  Layers,
   Pencil,
   RotateCcw,
   Search,
@@ -500,7 +500,7 @@ export function DipendentiClient({
 
         {areas.length > 0 && (
           <div className="emp-area-filter">
-            <Briefcase size={18} className="emp-area-filter__icon" aria-hidden />
+            <Layers size={18} className="emp-area-filter__icon" aria-hidden />
             <select
               className="select emp-area-filter__select"
               value={areaFilter ?? ""}

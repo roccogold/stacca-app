@@ -3628,7 +3628,15 @@ a.card {
 .analisi-chat__head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.analisi-chat__brand {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .analisi-chat__icon {
@@ -3640,12 +3648,32 @@ a.card {
   border-radius: 50%;
   background: color-mix(in oklab, var(--stacca-olive) 14%, white);
   color: var(--stacca-olive);
+  flex-shrink: 0;
 }
 
 .analisi-chat__title {
   font-weight: 800;
   letter-spacing: 0.3px;
   color: var(--stacca-olive);
+}
+
+.analisi-chat__model {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--card-soft);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.analisi-chat__model svg {
+  flex-shrink: 0;
 }
 
 .analisi-chat__intro {

@@ -16,12 +16,13 @@ import {
   type AnalisiEntry,
   type AnalisiUser,
 } from "@/lib/analisi";
+import { ANALISI_CHAT_MODEL } from "@/lib/analisi-chat";
 
 export const dynamic = "force-dynamic";
 
 // Haiku 4.5: il più rapido/economico, sufficiente per tradurre la domanda e
 // riassumere numeri già calcolati dal codice (tool use → conti esatti).
-const MODEL = "claude-haiku-4-5";
+const MODEL = ANALISI_CHAT_MODEL;
 const MAX_TURNS = 5; // tetto sui giri di tool-use per evitare loop/costi
 const MAX_MESSAGES = 16; // storico conversazione accettato dal client
 const MAX_LEN = 1000; // lunghezza max di un singolo messaggio utente

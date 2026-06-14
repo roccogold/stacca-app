@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState, type ReactNode } from "react";
-import { Briefcase, Calendar, Users } from "lucide-react";
+import { Calendar, Layers, Users } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -213,7 +213,7 @@ function HBarChart({ rows }: { rows: GroupRow[] }) {
             <LabelList
               dataKey="hours"
               position="right"
-              formatter={(value: number) => formatHoursIt(Number(value))}
+              formatter={(value) => formatHoursIt(Number(value))}
               style={{ fontSize: 11, fontWeight: 600, fill: INK }}
             />
           </Bar>
@@ -633,7 +633,7 @@ export function AnalisiClient({
           </label>
 
           <label className="analisi-filter">
-            <Briefcase className="analisi-filter__icon" size={16} aria-hidden />
+            <Layers className="analisi-filter__icon" size={16} aria-hidden />
             <select
               className="select analisi-filter__select"
               aria-label="Settore"
