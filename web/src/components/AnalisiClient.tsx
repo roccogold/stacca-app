@@ -3,17 +3,18 @@
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { Briefcase, Calendar, Users } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   Bar,
   type BarRectangleItem,
   BarChart,
   CartesianGrid,
   Cell,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
+  LabelList,
   Rectangle,
+  ReferenceLine,
   ResponsiveContainer,
+  Text as RechartsText,
   Tooltip,
   XAxis,
   YAxis,
@@ -41,6 +42,7 @@ import { AnalisiChat } from "@/components/AnalisiChat";
 
 const OLIVE = "#3d4a35"; // --stacca-olive
 const INK = "#2a2520"; // --stacca-ink
+const OCRA = "oklch(0.62 0.10 75)"; // ocra/senape (linea media)
 
 const MONTHS_FULL = [
   "Gennaio",
@@ -59,6 +61,7 @@ const MONTHS_FULL = [
 
 const COLLAPSE_LIMIT = 5; // liste riepilogo: top 5, poi toggle "Mostra tutte"
 const BAR_SIZE = 26; // barre slanciate = look più leggero
+const HBAR_LABEL_WIDTH = 120; // colonna etichette fissa: barre allineate tra grafici
 
 type TipItem = { name?: string | number; value?: number | string; color?: string };
 
@@ -102,54 +105,104 @@ function ChartTooltip({
   );
 }
 
-function DonutChart({ data }: { data: GroupRow[] }) {
-  if (data.length === 0) return <p className="analisi-empty">Nessun dato.</p>;
-  const rows = data.slice(0, 8);
-  const total = rows.reduce((s, r) => s + r.hours, 0);
+/** Tick asse Y allineato a sinistra (etichette in colonna), con a capo. */
+function HBarYTick(props: {
+  x?: number;
+  y?: number;
+  width?: number;
+  payload?: { value?: string | number };
+}) {
+  const { y = 0, width = 0, payload } = props;
+  return (
+    <RechartsText
+      x={0}
+      y={y}
+      width={width}
+      textAnchor="start"
+      verticalAnchor="middle"
+      style={{ fontSize: 12, fill: INK }}
+    >
+      {String(payload?.value ?? "")}
+    </RechartsText>
+  );
+}
+
+/** Barre orizzontali ordinate (ore desc): confronto immediato tra voci. */
+function HBarChart({ rows }: { rows: GroupRow[] }) {
+  const [expanded, setExpanded] = useState(false);
+  if (rows.length === 0) return <p className="analisi-empty">Nessun dato.</p>;
+  const collapsible = rows.length > COLLAPSE_LIMIT;
+  const visible = expanded ? rows : rows.slice(0, COLLAPSE_LIMIT);
+  const height = visible.length * 42 + 30;
+  // Larghezza fissa della colonna etichette: così l'inizio barre/linee è
+  // allineato tra tutti i grafici a barre (Luogo, Dipendente, Settore…).
+  const yWidth = HBAR_LABEL_WIDTH;
   return (
     <>
-      <div className="analisi-donut">
-        <ResponsiveContainer width="100%" height={220}>
-          <PieChart>
-            <Pie
-              data={rows}
-              dataKey="hours"
-              nameKey="label"
-              innerRadius={62}
-              outerRadius={96}
-              paddingAngle={0}
-              cornerRadius={0}
-              stroke="var(--card)"
-              strokeWidth={2}
-              animationDuration={300}
-              animationEasing="ease-out"
-            >
-              {rows.map((row, i) => (
-                <Cell
-                  key={row.label}
-                  fill={SETTORE_COLORS[i % SETTORE_COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<ChartTooltip />} animationDuration={200} />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-      <ul className="analisi-legend">
-        {rows.map((row, i) => {
-          const pct = total ? Math.round((row.hours / total) * 100) : 0;
-          return (
-            <li key={row.label} className="analisi-legend__item">
-              <span
-                className="analisi-legend__dot"
-                style={{ background: SETTORE_COLORS[i % SETTORE_COLORS.length] }}
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart
+          layout="vertical"
+          data={visible}
+          margin={{ top: 4, right: 64, bottom: 4, left: 0 }}
+          barCategoryGap={12}
+        >
+          <CartesianGrid
+            horizontal={false}
+            stroke="var(--border)"
+            strokeDasharray="3 3"
+          />
+          <XAxis
+            type="number"
+            tick={{ fontSize: 11, fill: INK }}
+            tickLine={false}
+            axisLine={false}
+            allowDecimals={false}
+          />
+          <YAxis
+            type="category"
+            dataKey="label"
+            width={yWidth}
+            tick={<HBarYTick width={yWidth - 8} />}
+            tickLine={false}
+            axisLine={false}
+          />
+          <Tooltip
+            cursor={{ fill: "rgba(0,0,0,0.04)" }}
+            content={<ChartTooltip />}
+            animationDuration={200}
+          />
+          <Bar
+            dataKey="hours"
+            radius={[0, 8, 8, 0]}
+            maxBarSize={22}
+            animationDuration={250}
+            animationEasing="ease-out"
+          >
+            {visible.map((r, i) => (
+              <Cell
+                key={r.label}
+                fill={SETTORE_COLORS[i % SETTORE_COLORS.length]}
               />
-              <span className="analisi-legend__label">{row.label}</span>
-              <span className="analisi-legend__pct">{pct}%</span>
-            </li>
-          );
-        })}
-      </ul>
+            ))}
+            <LabelList
+              dataKey="hours"
+              position="right"
+              formatter={(value) => formatHoursIt(Number(value))}
+              style={{ fontSize: 11, fontWeight: 600, fill: INK }}
+            />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+      {collapsible ? (
+        <button
+          type="button"
+          className="analisi-expand"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "Mostra meno" : `Mostra tutte (${rows.length})`}
+        </button>
+      ) : null}
     </>
   );
 }
@@ -161,6 +214,13 @@ function TrendChart({ data }: { data: { label: string; hours: number }[] }) {
   }
   // Mese di picco evidenziato; gli altri leggermente più tenui.
   const peak = data.reduce((m, d) => Math.max(m, d.hours), 0);
+  // Media calcolata sui soli mesi con attività (così non viene diluita dai mesi vuoti).
+  const active = data.filter((d) => d.hours > 0);
+  const media =
+    active.length > 0
+      ? active.reduce((s, d) => s + d.hours, 0) / active.length
+      : 0;
+  const showMedia = active.length >= 2;
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: -12 }}>
@@ -188,6 +248,22 @@ function TrendChart({ data }: { data: { label: string; hours: number }[] }) {
           content={<ChartTooltip />}
           animationDuration={200}
         />
+        {showMedia ? (
+          <ReferenceLine
+            y={media}
+            stroke={OCRA}
+            strokeWidth={1.5}
+            strokeDasharray="5 4"
+            ifOverflow="extendDomain"
+            label={{
+              value: `media ${formatHoursIt(media)}`,
+              position: "insideTopRight",
+              fill: OCRA,
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          />
+        ) : null}
         <Bar
           dataKey="hours"
           fill={`url(#${gradId})`}
@@ -277,8 +353,9 @@ function StackedChart({ data, settori }: Seasonality) {
   );
 }
 
-/** Andamento mensile per settore: una linea per area → picchi/stagionalità. */
+/** Andamento mensile per settore: area sfumata per area → picchi/stagionalità. */
 function SettoreLinesChart({ data, settori }: Seasonality) {
+  const baseId = useId().replace(/:/g, "");
   const hasData =
     settori.length > 0 &&
     data.some((row) => settori.some((s) => Number(row[s]) > 0));
@@ -286,7 +363,25 @@ function SettoreLinesChart({ data, settori }: Seasonality) {
   return (
     <>
       <ResponsiveContainer width="100%" height={260}>
-        <LineChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: -12 }}>
+        <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: -12 }}>
+          <defs>
+            {settori.map((s, i) => {
+              const color = SETTORE_COLORS[i % SETTORE_COLORS.length];
+              return (
+                <linearGradient
+                  key={s}
+                  id={`${baseId}-${i}`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop offset="0%" stopColor={color} stopOpacity={0.26} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+                </linearGradient>
+              );
+            })}
+          </defs>
           <CartesianGrid
             vertical={false}
             stroke="var(--border)"
@@ -309,12 +404,13 @@ function SettoreLinesChart({ data, settori }: Seasonality) {
           {settori.map((s, i) => {
             const color = SETTORE_COLORS[i % SETTORE_COLORS.length];
             return (
-              <Line
+              <Area
                 key={s}
                 type="monotone"
                 dataKey={s}
                 stroke={color}
                 strokeWidth={2.5}
+                fill={`url(#${baseId}-${i})`}
                 dot={{ r: 2.5, strokeWidth: 0, fill: color }}
                 activeDot={{ r: 4 }}
                 animationDuration={300}
@@ -322,7 +418,7 @@ function SettoreLinesChart({ data, settori }: Seasonality) {
               />
             );
           })}
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
       <ul className="analisi-legend">
         {settori.map((s, i) => (
@@ -335,55 +431,6 @@ function SettoreLinesChart({ data, settori }: Seasonality) {
           </li>
         ))}
       </ul>
-    </>
-  );
-}
-
-function RiepilogoList({ rows }: { rows: GroupRow[] }) {
-  const [expanded, setExpanded] = useState(false);
-  if (rows.length === 0) return <p className="analisi-empty">Nessun dato.</p>;
-  const total = rows.reduce((s, r) => s + r.hours, 0);
-  // Oltre 5 voci la lista diventa lunghissima: mostra le top 5 + toggle "espandi".
-  const collapsible = rows.length > COLLAPSE_LIMIT;
-  const visible = expanded ? rows : rows.slice(0, COLLAPSE_LIMIT);
-  return (
-    <>
-      <ul className="analisi-riepilogo">
-        {visible.map((r) => {
-          const pct = total ? Math.round((r.hours / total) * 100) : 0;
-          return (
-            <li key={r.label} className="analisi-riepilogo__row">
-              <div className="analisi-riepilogo__top">
-                <span className="analisi-riepilogo__label">{r.label}</span>
-                <span className="analisi-riepilogo__hours">
-                  {formatHoursIt(r.hours)}
-                </span>
-              </div>
-              <div className="analisi-riepilogo__bar">
-                <div
-                  className="analisi-riepilogo__bar-fill"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <div className="analisi-riepilogo__meta">
-                {r.count} {r.count === 1 ? "registrazione" : "registrazioni"} ·
-                media{" "}
-                {formatHoursIt(r.avg)} · {pct}%
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      {collapsible ? (
-        <button
-          type="button"
-          className="analisi-expand"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((v) => !v)}
-        >
-          {expanded ? "Mostra meno" : `Mostra tutte (${rows.length})`}
-        </button>
-      ) : null}
     </>
   );
 }
@@ -520,12 +567,12 @@ export function AnalisiClient({
         <h1 className="h1">Analisi</h1>
       </header>
 
-      <AnalisiChat users={employees} />
+      <AnalisiChat />
 
       <section className="block">
         <div className="analisi-filters">
           <label className="analisi-filter">
-            <Calendar className="analisi-filter__icon" size={18} aria-hidden />
+            <Calendar className="analisi-filter__icon" size={16} aria-hidden />
             <select
               className="select analisi-filter__select"
               aria-label="Anno"
@@ -541,7 +588,7 @@ export function AnalisiClient({
           </label>
 
           <label className="analisi-filter">
-            <Users className="analisi-filter__icon" size={18} aria-hidden />
+            <Users className="analisi-filter__icon" size={16} aria-hidden />
             <select
               className="select analisi-filter__select"
               aria-label="Dipendente"
@@ -560,7 +607,7 @@ export function AnalisiClient({
           </label>
 
           <label className="analisi-filter">
-            <Briefcase className="analisi-filter__icon" size={18} aria-hidden />
+            <Briefcase className="analisi-filter__icon" size={16} aria-hidden />
             <select
               className="select analisi-filter__select"
               aria-label="Settore"
@@ -653,19 +700,19 @@ export function AnalisiClient({
       ) : (
         <>
           <ChartCard title="Ore per Lavorazione" hint={monthName ?? undefined}>
-            <RiepilogoList rows={byLav} />
+            <HBarChart rows={byLav} />
           </ChartCard>
 
           <ChartCard title="Ore per Luogo" hint={monthName ?? undefined}>
-            <RiepilogoList rows={byLuogo} />
+            <HBarChart rows={byLuogo} />
           </ChartCard>
 
           <ChartCard title="Ore per Dipendente" hint={monthName ?? undefined}>
-            <RiepilogoList rows={byDip} />
+            <HBarChart rows={byDip} />
           </ChartCard>
 
           <ChartCard title="Ore per Settore" hint={monthName ?? undefined}>
-            <DonutChart data={bySettore} />
+            <HBarChart rows={bySettore} />
           </ChartCard>
 
           <ChartCard title="Ore per Mese" hint="anno intero">

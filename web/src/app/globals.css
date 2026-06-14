@@ -3222,26 +3222,20 @@ a.card {
 /* Filtri analisi: riga singola scorrevole, ognuno con icona */
 .analisi-filters {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 12px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.analisi-filters::-webkit-scrollbar {
-  display: none;
 }
 
 .analisi-filter {
   position: relative;
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
 }
 
 .analisi-filter__icon {
   position: absolute;
-  left: 14px;
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
@@ -3249,11 +3243,12 @@ a.card {
 }
 
 .analisi-filter__select {
-  width: auto;
-  font-size: 14px;
-  padding-left: 42px;
-  padding-right: 34px;
-  background-position: right 12px center;
+  width: 100%;
+  font-size: 12px;
+  padding-left: 32px;
+  padding-right: 26px;
+  background-position: right 9px center;
+  text-overflow: ellipsis;
 }
 
 /* Striscia pillole periodo (stile segmented, scorrevole) */
@@ -3621,7 +3616,8 @@ a.card {
 .analisi-chat {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  padding: 14px 16px;
 }
 
 .analisi-chat__head {
@@ -3634,31 +3630,22 @@ a.card {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: color-mix(in oklab, var(--stacca-olive) 14%, white);
   color: var(--stacca-olive);
 }
 
 .analisi-chat__title {
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.analisi-chat__badge {
-  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.5px;
-  color: var(--olive-fg);
-  background: var(--stacca-olive);
-  padding: 2px 7px;
-  border-radius: var(--r-pill);
+  letter-spacing: 0.3px;
+  color: var(--stacca-olive);
 }
 
 .analisi-chat__intro {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-muted);
 }
 
@@ -3673,9 +3660,9 @@ a.card {
 
 .analisi-chat__bubble {
   max-width: 85%;
-  padding: 10px 14px;
+  padding: 9px 13px;
   border-radius: var(--r-lg);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
@@ -3735,16 +3722,16 @@ a.card {
 .analisi-chat__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .analisi-chat__chip {
   border: 1px solid color-mix(in oklab, var(--stacca-olive) 35%, white);
   background: transparent;
   color: var(--stacca-olive);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 7px 13px;
+  padding: 6px 11px;
   border-radius: var(--r-pill);
   cursor: pointer;
   touch-action: manipulation;
@@ -3769,12 +3756,14 @@ a.card {
 .analisi-chat__input {
   flex: 1;
   min-width: 0;
+  height: 44px;
+  font-size: 13px;
 }
 
 .analisi-chat__send {
   flex: none;
-  width: var(--tap);
-  height: var(--tap);
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

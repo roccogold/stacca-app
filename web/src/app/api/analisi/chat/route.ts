@@ -32,6 +32,17 @@ function topLabels(rows: { label: string }[], n = 50): string[] {
   return rows.slice(0, n).map((r) => r.label);
 }
 
+/** La bolla chat mostra testo semplice: togli eventuale Markdown residuo. */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1") // **grassetto**
+    .replace(/__(.*?)__/g, "$1") // __grassetto__
+    .replace(/(^|\s)\*(?=\S)(.*?)\*/g, "$1$2") // *corsivo*
+    .replace(/`([^`]+)`/g, "$1") // `code`
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "") // # titoli
+    .replace(/^\s*[-*]\s+/gm, "• "); // - elenco → bullet semplice
+}
+
 /** Aggregati esatti per un set di filtri — è ciò che Claude riceve dal tool. */
 function queryDati(
   entries: AnalisiEntry[],
@@ -143,6 +154,7 @@ function buildSystemPrompt(
     "",
     "REGOLE:",
     "- Per QUALSIASI numero usa lo strumento query_dati. Non inventare e non calcolare a mente.",
+    "- Rispondi in testo semplice, SENZA Markdown: niente asterischi (**), cancelletti o elenchi puntati. Per enfatizzare un numero scrivilo e basta.",
     "- Le ore vanno scritte in formato italiano (es. 142 ore, 8,5 ore).",
     "- Se la domanda non riguarda i dati delle ore lavorate, dillo gentilmente.",
     "- Se un nome è ambiguo o non trovi il dipendente, chiedi di precisare invece di indovinare.",
@@ -263,7 +275,7 @@ export async function POST(req: Request) {
           .join("\n")
           .trim();
         return NextResponse.json({
-          reply: reply || "Non sono riuscito a rispondere. Riprova.",
+          reply: reply ? stripMarkdown(reply) : "Non sono riuscito a rispondere. Riprova.",
         });
       }
 

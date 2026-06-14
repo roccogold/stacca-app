@@ -1,27 +1,22 @@
 "use client";
 
-import { ArrowUp, Sparkles } from "lucide-react";
+import { ArrowUp, Bot } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { AnalisiUser } from "@/lib/analisi";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
-function buildSuggestions(employees: AnalisiUser[]): string[] {
-  const name = employees[0]?.displayName.split(" ")[0];
-  return [
-    "In che mese si lavora di più?",
-    name ? `Quante ore ha fatto ${name} questo mese?` : "Quante ore sono state fatte questo mese?",
-    "Qual è il settore più attivo quest'anno?",
-  ];
-}
+const SUGGESTIONS = [
+  "In quale luogo si è lavorato di più quest'anno?",
+  "Quali sono le 3 lavorazioni principali questo mese?",
+];
 
-export function AnalisiChat({ users }: { users: AnalisiUser[] }) {
+export function AnalisiChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const suggestions = buildSuggestions(users);
+  const suggestions = SUGGESTIONS;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -67,15 +62,14 @@ export function AnalisiChat({ users }: { users: AnalisiUser[] }) {
       <div className="card analisi-chat">
         <div className="analisi-chat__head">
           <span className="analisi-chat__icon" aria-hidden>
-            <Sparkles size={16} />
+            <Bot size={18} />
           </span>
-          <span className="analisi-chat__title">Assistente Analisi</span>
-          <span className="analisi-chat__badge">AI</span>
+          <span className="analisi-chat__title">Staccai</span>
         </div>
 
         {isEmpty ? (
           <p className="analisi-chat__intro">
-            Fai una domanda sui dati delle ore: ti rispondo con numeri esatti.
+            Fai una domanda sui dati delle ore, ti rispondo con numeri esatti.
           </p>
         ) : (
           <div className="analisi-chat__log" ref={scrollRef}>
@@ -137,7 +131,7 @@ export function AnalisiChat({ users }: { users: AnalisiUser[] }) {
             aria-label="Invia"
             disabled={loading || !input.trim()}
           >
-            <ArrowUp size={18} />
+            <ArrowUp size={16} />
           </button>
         </form>
       </div>
