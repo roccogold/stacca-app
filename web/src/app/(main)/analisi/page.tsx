@@ -5,12 +5,14 @@ import type { AnalisiEntry, AnalisiUser } from "@/lib/analisi";
 
 export const dynamic = "force-dynamic";
 
+// Pagina admin-only ma FUORI dal gruppo (admin): è un tab a sé nella bottom
+// nav (accanto ad Admin), non una sotto-scheda di AdminTabs. requireAdmin
+// reindirizza i non-admin.
 export default async function AnalisiPage() {
   await requireAdmin();
 
   // Dataset piccolo (una sola azienda): carico tutte le voci e aggrego
-  // client-side per filtri istantanei. Se un giorno cresce, filtrare qui per
-  // anno (where: { date: { startsWith: anno } }).
+  // client-side per filtri istantanei. Se cresce, filtrare qui per anno.
   const [entries, users] = await Promise.all([
     prisma.timeEntry.findMany({
       select: {

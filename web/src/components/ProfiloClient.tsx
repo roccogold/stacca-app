@@ -50,7 +50,7 @@ export function ProfiloClient({ firstName }: Props) {
   return (
     <>
       <header className="page-header page-header--loose">
-        <h1 className="h1">Ciao, {firstName}</h1>
+        <h1 className="h1">Ciao {firstName}</h1>
       </header>
 
       <section className="block">

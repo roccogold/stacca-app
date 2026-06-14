@@ -1,6 +1,13 @@
 "use client";
 
-import { Calendar, Home, User, UserCog, type LucideIcon } from "lucide-react";
+import {
+  BarChart3,
+  Calendar,
+  Home,
+  User,
+  UserCog,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,14 +29,21 @@ const adminTab: Tab = {
   href: "/dipendenti",
   label: "Admin",
   icon: UserCog,
-  // Admin hub spans several routes (Dipendenti / Settori / Lavorazioni / Luoghi /
-  // Analisi); keep the single bottom tab highlighted on all of them.
+  // Admin hub spans several routes (Dipendenti / Settori / Lavorazioni / Luoghi);
+  // keep the single bottom tab highlighted on all of them.
   match: (p) =>
     p.startsWith("/dipendenti") ||
     p.startsWith("/aree") ||
     p.startsWith("/lavorazioni") ||
-    p.startsWith("/luoghi") ||
-    p.startsWith("/analisi"),
+    p.startsWith("/luoghi"),
+};
+
+// Analisi: tab admin-only a sé, accanto ad Admin.
+const analisiTab: Tab = {
+  href: "/analisi",
+  label: "Analisi",
+  icon: BarChart3,
+  match: (p) => p.startsWith("/analisi"),
 };
 
 // Profilo stays last in the bar; the admin tab slots in just before it.
@@ -55,7 +69,9 @@ function TabIcon({ Icon }: { Icon: LucideIcon }) {
 export function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   const [popHref, setPopHref] = useState<string | null>(null);
-  const tabs = isAdmin ? [...baseTabs, adminTab, profiloTab] : [...baseTabs, profiloTab];
+  const tabs = isAdmin
+    ? [...baseTabs, adminTab, analisiTab, profiloTab]
+    : [...baseTabs, profiloTab];
 
   return (
     <nav className="bottom-nav" aria-label="Navigazione principale">
@@ -79,9 +95,6 @@ export function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
               }}
             >
               <span className="bottom-nav__tab">
-                {active ? (
-                  <span className="bottom-nav__indicator" aria-hidden />
-                ) : null}
                 <span
                   className="bottom-nav__icon"
                   onAnimationEnd={() => setPopHref(null)}

@@ -8,7 +8,6 @@ const TABS = [
   { href: "/aree", label: "Settori" },
   { href: "/lavorazioni", label: "Lavorazioni" },
   { href: "/luoghi", label: "Luoghi" },
-  { href: "/analisi", label: "Analisi" },
 ];
 
 export function AdminTabs() {

@@ -25,6 +25,7 @@ export type Filters = {
   year: number;
   month: number | null; // 1..12, oppure null = "Tutti"
   userId: string | null; // id utente, oppure null = "Tutti"
+  settore?: string | null; // nome settore, oppure null/undefined = "Tutti"
 };
 
 export type GroupRow = {
@@ -36,6 +37,8 @@ export type GroupRow = {
 
 export type Kpis = {
   oreTotali: number;
+  numInterventi: number; // n° voci nel set filtrato
+  mediaIntervento: number; // oreTotali / numInterventi (0-safe)
   dipendentiAttivi: number; // userId distinti nel set filtrato
   giorniLavorati: number; // date distinte nel set filtrato
   mediaGiornaliera: number; // oreTotali / giorniLavorati (0-safe)
@@ -75,6 +78,8 @@ export function filterEntries(
     if (e.date.slice(0, 4) !== yearStr) return false;
     if (f.month != null && Number(e.date.slice(5, 7)) !== f.month) return false;
     if (f.userId != null && e.userId !== f.userId) return false;
+    if (f.settore != null && (e.area.trim() || EMPTY_SETTORE) !== f.settore)
+      return false;
     return true;
   });
 }
@@ -124,6 +129,92 @@ export function hoursByDipendente(
   return groupSum(entries, (e) => names.get(e.userId) ?? "Sconosciuto");
 }
 
+export function hoursBySettore(entries: AnalisiEntry[]): GroupRow[] {
+  return groupSum(entries, (e) => e.area);
+}
+
+export const MONTHS_SHORT = [
+  "Gen",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mag",
+  "Giu",
+  "Lug",
+  "Ago",
+  "Set",
+  "Ott",
+  "Nov",
+  "Dic",
+];
+
+/**
+ * Andamento mensile: 12 righe (Gen…Dic) con le ore sommate. `entries` è già
+ * filtrato per anno (+ dipendente); il filtro Mese NON si applica qui.
+ */
+export function monthlyTrend(
+  entries: AnalisiEntry[],
+): { label: string; hours: number }[] {
+  const sums = new Array(12).fill(0);
+  for (const e of entries) {
+    const m = Number(e.date.slice(5, 7));
+    if (m >= 1 && m <= 12) sums[m - 1] += e.hours;
+  }
+  return MONTHS_SHORT.map((label, i) => ({
+    label,
+    hours: Math.round(sums[i] * 100) / 100,
+  }));
+}
+
+export type Seasonality = {
+  data: Array<Record<string, number | string>>; // { mese, <settore>: ore, … }
+  settori: string[]; // serie ordinate per ore desc
+};
+
+/**
+ * Stagionalità mese × settore per il grafico a colonne impilate. `entries` già
+ * filtrato per anno (+ dipendente). 12 righe (Gen…Dic), una serie per settore.
+ */
+export function seasonalityByMonthSettore(
+  entries: AnalisiEntry[],
+): Seasonality {
+  const totals = new Map<string, number>();
+  const byMonth: Array<Map<string, number>> = Array.from(
+    { length: 12 },
+    () => new Map(),
+  );
+  for (const e of entries) {
+    const m = Number(e.date.slice(5, 7));
+    if (m < 1 || m > 12) continue;
+    const s = e.area.trim() || EMPTY_SETTORE;
+    totals.set(s, (totals.get(s) ?? 0) + e.hours);
+    byMonth[m - 1].set(s, (byMonth[m - 1].get(s) ?? 0) + e.hours);
+  }
+  const settori = [...totals.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "it"))
+    .map(([s]) => s);
+  const data = MONTHS_SHORT.map((label, i) => {
+    const row: Record<string, number | string> = { mese: label };
+    for (const s of settori) {
+      row[s] = Math.round((byMonth[i].get(s) ?? 0) * 100) / 100;
+    }
+    return row;
+  });
+  return { data, settori };
+}
+
+/** Palette brand per le serie (settori) — olive/terra + tinte coordinate. */
+export const SETTORE_COLORS = [
+  "#3d4a35",
+  "#632e24",
+  "#7a6f3a",
+  "#4a6b57",
+  "#9c5a3c",
+  "#3f5a6b",
+  "#5a4a6b",
+  "#6b6b3a",
+];
+
 export function computeKpis(entries: AnalisiEntry[]): Kpis {
   let oreTotali = 0;
   const users = new Set<string>();
@@ -134,8 +225,11 @@ export function computeKpis(entries: AnalisiEntry[]): Kpis {
     days.add(e.date);
   }
   const giorniLavorati = days.size;
+  const numInterventi = entries.length;
   return {
     oreTotali,
+    numInterventi,
+    mediaIntervento: numInterventi ? oreTotali / numInterventi : 0,
     dipendentiAttivi: users.size,
     giorniLavorati,
     mediaGiornaliera: giorniLavorati ? oreTotali / giorniLavorati : 0,

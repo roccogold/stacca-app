@@ -805,7 +805,7 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
 }
 
 .bottom-nav__inner--admin {
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
 }
 
 .bottom-nav__item {
@@ -3199,15 +3199,53 @@ a.card {
    Analisi (admin stats dashboard)
    ============================================ */
 
-.analisi-filters {
+.analisi-filtertop {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  margin-bottom: 12px;
 }
 
-/* Dipendente: riga intera sotto Anno/Mese */
-.analisi-filters > .select:last-child {
+/* Settore (3° menu) a riga intera sotto Anno/Dipendente */
+.analisi-filtertop > .select:nth-child(3) {
   grid-column: 1 / -1;
+}
+
+/* Striscia pillole periodo (stile segmented, scorrevole) */
+.analisi-pills {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 4px;
+  background: var(--card-soft);
+  border-radius: var(--r-pill);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.analisi-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.analisi-pill {
+  flex: none;
+  padding: 7px 15px;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.analisi-pill--active {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow);
 }
 
 .analisi-kpis {
@@ -3249,4 +3287,248 @@ a.card {
 /* Non far sforare l'SVG oltre la cornice 28rem */
 .analisi-chart-card .recharts-responsive-container {
   max-width: 100%;
+}
+
+.analisi-hint {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+/* Liste riepilogo (ore, interventi, media, %) */
+.analisi-riepilogo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.analisi-riepilogo__row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.analisi-riepilogo__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.analisi-riepilogo__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.analisi-riepilogo__label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.analisi-riepilogo__hours {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.analisi-riepilogo__bar {
+  height: 6px;
+  margin: 6px 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--secondary);
+  overflow: hidden;
+}
+
+.analisi-riepilogo__bar-fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--olive);
+}
+
+.analisi-riepilogo__meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Card analisi morbide: niente bordo netto, ombra soffusa, angoli ampi */
+.analisi-chart-card,
+.analisi-kpi,
+.analisi-hero {
+  border: none;
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow);
+}
+
+/* Tooltip fluido */
+.analisi-tip {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.analisi-tip__title {
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.analisi-tip__val {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.analisi-tip__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.analisi-tip__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.analisi-tip__name {
+  color: var(--text-muted);
+}
+
+.analisi-tip__rowval {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* KPI hero (metrica grande in alto) */
+.analisi-hero {
+  padding: 18px 20px;
+}
+
+.analisi-hero__cap {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.analisi-hero__row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin-top: 6px;
+}
+
+.analisi-hero__num {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.analisi-delta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.analisi-delta--up {
+  background: color-mix(in oklab, var(--olive) 16%, white);
+  color: var(--olive);
+}
+
+.analisi-delta--down {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.analisi-delta__cmp {
+  font-weight: 500;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* KPI "top" (lavorazione/luogo) */
+.analisi-kpi__cap {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.analisi-kpi__name {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.analisi-kpi__sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Donut con totale al centro */
+.analisi-donut {
+  position: relative;
+}
+
+.analisi-donut__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  gap: 2px;
+}
+
+.analisi-donut__total {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.analisi-donut__cap {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.analisi-legend {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.analisi-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.analisi-legend__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
 }
