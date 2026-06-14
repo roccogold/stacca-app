@@ -3211,6 +3211,15 @@ a.card {
   grid-column: 1 / -1;
 }
 
+/* Font compatto sui filtri così entra anche "Tutti i dipendenti" */
+.analisi-filtertop .select {
+  font-size: 14px;
+  padding-left: 14px;
+  padding-right: 34px;
+  background-position: right 12px center;
+  text-overflow: ellipsis;
+}
+
 /* Striscia pillole periodo (stile segmented, scorrevole) */
 .analisi-pills {
   display: flex;
@@ -3287,6 +3296,17 @@ a.card {
 /* Non far sforare l'SVG oltre la cornice 28rem */
 .analisi-chart-card .recharts-responsive-container {
   max-width: 100%;
+}
+
+/* Niente contorno blu di focus quando si tocca un grafico (wrapper, surface,
+   o le singole barre/settori) */
+.recharts-responsive-container :focus,
+.recharts-responsive-container :focus-visible,
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-wrapper :focus,
+.recharts-wrapper :focus-visible {
+  outline: none;
 }
 
 .analisi-hint {
@@ -3479,6 +3499,8 @@ a.card {
 .analisi-kpi__sub {
   font-size: 12px;
   color: var(--text-muted);
+  margin-top: auto; /* ancora la riga "ore · %" in fondo → allineata tra le card */
+  padding-top: 6px;
 }
 
 /* Donut con totale al centro */

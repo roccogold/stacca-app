@@ -5,7 +5,6 @@ import {
   Bar,
   BarChart,
   Cell,
-  LabelList,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -34,7 +33,6 @@ import {
 import { formatHoursIt, romeCalendarParts } from "@/lib/format";
 
 const OLIVE = "#3d4a35"; // --stacca-olive
-const TERRA = "#632e24"; // --stacca-terra
 const INK = "#2a2520"; // --stacca-ink
 
 const MONTHS_FULL = [
@@ -54,7 +52,6 @@ const MONTHS_FULL = [
 
 const MAX_BARS = 12;
 const BAR_SIZE = 26; // barre slanciate = look più leggero
-const labelHours = (v: unknown): string => formatHoursIt(Number(v));
 
 type TipItem = { name?: string | number; value?: number | string; color?: string };
 
@@ -95,55 +92,6 @@ function ChartTooltip({
         </div>
       )}
     </div>
-  );
-}
-
-function ChartBars({ data, color }: { data: GroupRow[]; color: string }) {
-  if (data.length === 0) return <p className="analisi-empty">Nessun dato.</p>;
-  const rows = data.slice(0, MAX_BARS);
-  const height = Math.max(120, rows.length * 40);
-  return (
-    <ResponsiveContainer width="100%" height={height}>
-      <BarChart
-        layout="vertical"
-        data={rows}
-        margin={{ top: 4, right: 64, bottom: 4, left: 0 }}
-        barCategoryGap={10}
-      >
-        <XAxis type="number" hide />
-        <YAxis
-          type="category"
-          dataKey="label"
-          width={104}
-          tick={{ fontSize: 12, fill: INK }}
-          tickLine={false}
-          axisLine={false}
-        />
-        <Tooltip
-          cursor={{ fill: "rgba(0,0,0,0.04)" }}
-          content={<ChartTooltip />}
-          animationDuration={200}
-          animationEasing="ease-out"
-        />
-        <Bar
-          dataKey="hours"
-          radius={[0, 12, 12, 0]}
-          maxBarSize={BAR_SIZE}
-          animationDuration={250}
-          animationEasing="ease-out"
-        >
-          {rows.map((row) => (
-            <Cell key={row.label} fill={color} />
-          ))}
-          <LabelList
-            dataKey="hours"
-            position="right"
-            formatter={labelHours}
-            style={{ fill: INK, fontSize: 12, fontWeight: 600 }}
-          />
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
   );
 }
 
@@ -572,15 +520,15 @@ export function AnalisiClient({
       ) : (
         <>
           <ChartCard title="Ore per Lavorazione" hint={monthName ?? undefined}>
-            <ChartBars data={byLav} color={OLIVE} />
+            <RiepilogoList rows={byLav} />
           </ChartCard>
 
           <ChartCard title="Ore per Luogo" hint={monthName ?? undefined}>
-            <ChartBars data={byLuogo} color={TERRA} />
+            <RiepilogoList rows={byLuogo} />
           </ChartCard>
 
           <ChartCard title="Ore per Dipendente" hint={monthName ?? undefined}>
-            <ChartBars data={byDip} color={OLIVE} />
+            <RiepilogoList rows={byDip} />
           </ChartCard>
 
           <ChartCard title="Ore per Settore" hint={monthName ?? undefined}>
@@ -593,14 +541,6 @@ export function AnalisiClient({
 
           <ChartCard title="Stagionalità (Mese × Settore)" hint="anno intero">
             <StackedChart data={stagionalita.data} settori={stagionalita.settori} />
-          </ChartCard>
-
-          <ChartCard title="Riepilogo per Lavorazione" hint={monthName ?? undefined}>
-            <RiepilogoList rows={byLav} />
-          </ChartCard>
-
-          <ChartCard title="Riepilogo per Luogo" hint={monthName ?? undefined}>
-            <RiepilogoList rows={byLuogo} />
           </ChartCard>
         </>
       )}
