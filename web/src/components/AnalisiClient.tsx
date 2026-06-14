@@ -4,7 +4,10 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 import {
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -50,7 +53,7 @@ const MONTHS_FULL = [
   "Dicembre",
 ];
 
-const MAX_BARS = 12;
+const COLLAPSE_LIMIT = 5; // liste riepilogo: top 5, poi toggle "Mostra tutte"
 const BAR_SIZE = 26; // barre slanciate = look più leggero
 
 type TipItem = { name?: string | number; value?: number | string; color?: string };
@@ -127,10 +130,6 @@ function DonutChart({ data }: { data: GroupRow[] }) {
             <Tooltip content={<ChartTooltip />} animationDuration={200} />
           </PieChart>
         </ResponsiveContainer>
-        <div className="analisi-donut__center">
-          <span className="analisi-donut__total">{formatHoursIt(total)}</span>
-          <span className="analisi-donut__cap">totale</span>
-        </div>
       </div>
       <ul className="analisi-legend">
         {rows.map((row, i) => {
@@ -259,33 +258,113 @@ function StackedChart({ data, settori }: Seasonality) {
   );
 }
 
+/** Andamento mensile per settore: una linea per area → picchi/stagionalità. */
+function SettoreLinesChart({ data, settori }: Seasonality) {
+  const hasData =
+    settori.length > 0 &&
+    data.some((row) => settori.some((s) => Number(row[s]) > 0));
+  if (!hasData) return <p className="analisi-empty">Nessun dato.</p>;
+  return (
+    <>
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: -12 }}>
+          <CartesianGrid
+            vertical={false}
+            stroke="var(--border)"
+            strokeDasharray="3 3"
+          />
+          <XAxis
+            dataKey="mese"
+            interval={0}
+            tick={{ fontSize: 11, fill: INK }}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis
+            width={32}
+            tick={{ fontSize: 11, fill: INK }}
+            tickLine={false}
+            axisLine={false}
+          />
+          <Tooltip content={<ChartTooltip />} animationDuration={200} />
+          {settori.map((s, i) => {
+            const color = SETTORE_COLORS[i % SETTORE_COLORS.length];
+            return (
+              <Line
+                key={s}
+                type="monotone"
+                dataKey={s}
+                stroke={color}
+                strokeWidth={2.5}
+                dot={{ r: 2.5, strokeWidth: 0, fill: color }}
+                activeDot={{ r: 4 }}
+                animationDuration={300}
+                animationEasing="ease-out"
+              />
+            );
+          })}
+        </LineChart>
+      </ResponsiveContainer>
+      <ul className="analisi-legend">
+        {settori.map((s, i) => (
+          <li key={s} className="analisi-legend__item">
+            <span
+              className="analisi-legend__dot"
+              style={{ background: SETTORE_COLORS[i % SETTORE_COLORS.length] }}
+            />
+            {s}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 function RiepilogoList({ rows }: { rows: GroupRow[] }) {
+  const [expanded, setExpanded] = useState(false);
   if (rows.length === 0) return <p className="analisi-empty">Nessun dato.</p>;
   const total = rows.reduce((s, r) => s + r.hours, 0);
+  // Oltre 5 voci la lista diventa lunghissima: mostra le top 5 + toggle "espandi".
+  const collapsible = rows.length > COLLAPSE_LIMIT;
+  const visible = expanded ? rows : rows.slice(0, COLLAPSE_LIMIT);
   return (
-    <ul className="analisi-riepilogo">
-      {rows.slice(0, MAX_BARS).map((r) => {
-        const pct = total ? Math.round((r.hours / total) * 100) : 0;
-        return (
-          <li key={r.label} className="analisi-riepilogo__row">
-            <div className="analisi-riepilogo__top">
-              <span className="analisi-riepilogo__label">{r.label}</span>
-              <span className="analisi-riepilogo__hours">{formatHoursIt(r.hours)}</span>
-            </div>
-            <div className="analisi-riepilogo__bar">
-              <div
-                className="analisi-riepilogo__bar-fill"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <div className="analisi-riepilogo__meta">
-              {r.count} {r.count === 1 ? "intervento" : "interventi"} · media{" "}
-              {formatHoursIt(r.avg)} · {pct}%
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      <ul className="analisi-riepilogo">
+        {visible.map((r) => {
+          const pct = total ? Math.round((r.hours / total) * 100) : 0;
+          return (
+            <li key={r.label} className="analisi-riepilogo__row">
+              <div className="analisi-riepilogo__top">
+                <span className="analisi-riepilogo__label">{r.label}</span>
+                <span className="analisi-riepilogo__hours">
+                  {formatHoursIt(r.hours)}
+                </span>
+              </div>
+              <div className="analisi-riepilogo__bar">
+                <div
+                  className="analisi-riepilogo__bar-fill"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <div className="analisi-riepilogo__meta">
+                {r.count} {r.count === 1 ? "intervento" : "interventi"} · media{" "}
+                {formatHoursIt(r.avg)} · {pct}%
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {collapsible ? (
+        <button
+          type="button"
+          className="analisi-expand"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "Mostra meno" : `Mostra tutte (${rows.length})`}
+        </button>
+      ) : null}
+    </>
   );
 }
 
@@ -564,6 +643,13 @@ export function AnalisiClient({
 
           <ChartCard title="Stagionalità (Mese × Settore)" hint="anno intero">
             <StackedChart data={stagionalita.data} settori={stagionalita.settori} />
+          </ChartCard>
+
+          <ChartCard title="Andamento per Settore" hint="anno intero">
+            <SettoreLinesChart
+              data={stagionalita.data}
+              settori={stagionalita.settori}
+            />
           </ChartCard>
         </>
       )}

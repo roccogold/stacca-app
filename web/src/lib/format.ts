@@ -64,15 +64,20 @@ export function formatHoursDecimalIt(n: number): string {
   });
 }
 
+/** Migliaia con virgola, es. 1234 → "1,234", 23236 → "23,236" (richiesta utente). */
+function groupHours(h: number): string {
+  return h.toLocaleString("en-US");
+}
+
 /** e.g. "8 ore", "5 ore 3 min", "45 min" — nbsp keeps duration on one line in UI */
 export function formatHoursIt(n: number): string {
   const totalMin = Math.round(n * 60);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   if (totalMin <= 0) return `0${nbsp}ore`;
-  if (m === 0) return `${h.toLocaleString(it)}${nbsp}ore`;
+  if (m === 0) return `${groupHours(h)}${nbsp}ore`;
   if (h === 0) return `${m}${nbsp}min`;
-  return `${h.toLocaleString(it)}${nbsp}ore${nbsp}${m}${nbsp}min`;
+  return `${groupHours(h)}${nbsp}ore${nbsp}${m}${nbsp}min`;
 }
 
 export function parseHoursInput(s: string): number | null {

@@ -3386,6 +3386,27 @@ a.card {
   color: var(--text-muted);
 }
 
+/* Toggle "Mostra tutte / Mostra meno" sotto le liste lunghe */
+.analisi-expand {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px;
+  border: none;
+  background: var(--card-soft);
+  border-radius: var(--r-pill);
+  color: var(--olive);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s ease;
+}
+
+.analisi-expand:active {
+  background: var(--secondary);
+}
+
 /* Card analisi morbide: niente bordo netto, ombra soffusa, angoli ampi */
 .analisi-chart-card,
 .analisi-kpi,
@@ -3524,32 +3545,8 @@ a.card {
   padding-top: 6px;
 }
 
-/* Donut con totale al centro */
 .analisi-donut {
   position: relative;
-}
-
-.analisi-donut__center {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  gap: 2px;
-}
-
-.analisi-donut__total {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.analisi-donut__cap {
-  font-size: 11px;
-  color: var(--text-muted);
 }
 
 .analisi-legend {
@@ -3558,6 +3555,7 @@ a.card {
   padding: 0;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px 14px;
 }
 
