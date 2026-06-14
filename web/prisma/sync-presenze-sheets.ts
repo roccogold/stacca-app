@@ -1,5 +1,5 @@
 /**
- * Backfill tab "Presenze [Nome]" for every worker with at least one entry.
+ * Backfill tab "Ore [Nome]" for every worker with at least one entry.
  * Run: npm run sheets:sync-presenze
  */
 import { syncEmployeePresenzeTab } from "../src/lib/sync-presenze-sheet";

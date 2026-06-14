@@ -16,8 +16,11 @@ export type PresenzeMonthBlock = {
 
 /** Prefix without trailing space — a single space is always added before the name. */
 export function presenzeTabPrefix(): string {
-  return process.env.GOOGLE_SHEETS_PRESENZE_TAB_PREFIX?.trim() || "Presenze";
+  return process.env.GOOGLE_SHEETS_PRESENZE_TAB_PREFIX?.trim() || "Ore";
 }
+
+/** Prefissi usati in passato: i tab vengono rinominati al prefisso attuale. */
+const LEGACY_TAB_PREFIXES = ["Presenze"];
 
 function companyLabel(): string {
   return process.env.GOOGLE_SHEETS_COMPANY_NAME?.trim() || "Corzano e Paterno";
@@ -35,15 +38,24 @@ export function employeePresenzeTabName(
   return sanitizeSheetTabTitle(`${presenzeTabPrefix()} ${name}`);
 }
 
-/** Old tabs when prefix had no trailing space (e.g. PresenzeRocco). */
-export function legacyPresenzeTabName(
+/**
+ * Nomi tab vecchi da rinominare al nome attuale ("Ore [Nome]"): i prefissi
+ * storici ("Presenze [Nome]", "Presenze[Nome]") e la variante incollata del
+ * prefisso attuale ("Ore[Nome]"). Esclude il nome canonico.
+ */
+export function legacyPresenzeTabNames(
   user: Pick<User, "displayName" | "handle">,
-): string | null {
-  const glued = sanitizeSheetTabTitle(
-    `${presenzeTabPrefix()}${user.displayName.trim()}`,
-  );
+): string[] {
+  const name = user.displayName.trim();
   const canonical = employeePresenzeTabName(user);
-  return glued === canonical ? null : glued;
+  const candidates = [
+    ...LEGACY_TAB_PREFIXES.flatMap((p) => [
+      sanitizeSheetTabTitle(`${p} ${name}`),
+      sanitizeSheetTabTitle(`${p}${name}`),
+    ]),
+    sanitizeSheetTabTitle(`${presenzeTabPrefix()}${name}`),
+  ];
+  return [...new Set(candidates)].filter((c) => c !== canonical);
 }
 
 export function isPresenzeBlankRow(row: (string | number)[]): boolean {
@@ -60,7 +72,7 @@ export function isPresenzeColumnHeaderRow(row: (string | number)[]): boolean {
 }
 
 /**
- * Tab Presenze [Nome]: una riga per ogni lavorazione, con spaziatura tra sezioni.
+ * Tab Ore [Nome]: una riga per ogni lavorazione, con spaziatura tra sezioni.
  */
 export function buildPresenzeSheetValues(
   user: Pick<User, "displayName">,

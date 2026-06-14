@@ -8,7 +8,7 @@ import {
   isPresenzeBlankRow,
   isPresenzeColumnHeaderRow,
   isPresenzeMonthBandRow,
-  legacyPresenzeTabName,
+  legacyPresenzeTabNames,
   type PresenzeMonthBlock,
 } from "@/lib/presenze-sheet";
 import { prisma } from "@/lib/prisma";
@@ -345,8 +345,7 @@ export async function syncEmployeePresenzeTab(
   const values = buildPresenzeSheetValues(user, blocks);
   const tab = employeePresenzeTabName(user);
   const sheets = getSheetsClient(creds);
-  const legacy = legacyPresenzeTabName(user);
-  if (legacy) {
+  for (const legacy of legacyPresenzeTabNames(user)) {
     await renamePresenzeTabIfExists(sheets, sheetId, legacy, tab);
   }
   const written = await writePresenzeTab(tab, values);
