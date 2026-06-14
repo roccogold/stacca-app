@@ -1607,10 +1607,11 @@ input, select, textarea { font-family: inherit; font-size: 16px; }
   font-weight: 700;
 }
 
-/* Giorno con ore registrate: numero verde oliva in grassetto (ex pallino).
+/* Giorno con ore registrate: numero verde salvia in grassetto (come la serie
+   "salvia" in Analisi), più chiaro dell'oliva così si stacca bene dal nero.
    Dopo la regola "oggi" così, se oggi ha anche ore, vince il verde. */
 .cal-cell--has:not(.cal-cell--selected) .cal-cell__num {
-  color: var(--stacca-olive);
+  color: oklch(0.6 0.07 150);
   font-weight: 700;
 }
 
