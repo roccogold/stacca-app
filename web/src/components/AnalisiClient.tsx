@@ -61,7 +61,16 @@ const MONTHS_FULL = [
 
 const COLLAPSE_LIMIT = 5; // liste riepilogo: top 5, poi toggle "Mostra tutte"
 const BAR_SIZE = 26; // barre slanciate = look più leggero
-const HBAR_LABEL_WIDTH = 96; // colonna etichette fissa: barre allineate tra grafici
+
+/** Gap fisso tra fine etichetta e inizio barra (né troppo largo né sovrapposto). */
+const HBAR_LABEL_GAP = 8;
+
+/** Larghezza colonna etichette in base al testo più lungo + gap prima delle barre. */
+function hBarYAxisWidth(labels: string[]): number {
+  const maxLen = Math.max(...labels.map((l) => l.length), 1);
+  const textW = Math.ceil(maxLen * 6.5 + 2);
+  return Math.min(124, Math.max(40, textW + HBAR_LABEL_GAP));
+}
 
 type TipItem = { name?: string | number; value?: number | string; color?: string };
 
@@ -105,19 +114,18 @@ function ChartTooltip({
   );
 }
 
-/** Tick asse Y allineato a sinistra (etichette in colonna), con a capo. */
+/** Tick asse Y: etichette allineate a sinistra. */
 function HBarYTick(props: {
   x?: number;
   y?: number;
   width?: number;
   payload?: { value?: string | number };
 }) {
-  const { y = 0, width = 0, payload } = props;
+  const { y = 0, payload } = props;
   return (
     <RechartsText
       x={0}
       y={y}
-      width={width}
       textAnchor="start"
       verticalAnchor="middle"
       style={{ fontSize: 12, fill: INK }}
@@ -154,9 +162,7 @@ function HBarChart({ rows }: { rows: GroupRow[] }) {
   const collapsible = rows.length > COLLAPSE_LIMIT;
   const visible = expanded ? rows : rows.slice(0, COLLAPSE_LIMIT);
   const height = visible.length * 42 + 30;
-  // Larghezza fissa della colonna etichette: così l'inizio barre/linee è
-  // allineato tra tutti i grafici a barre (Luogo, Dipendente, Settore…).
-  const yWidth = HBAR_LABEL_WIDTH;
+  const yWidth = hBarYAxisWidth(visible.map((r) => r.label));
   // % sul totale di tutte le voci (non solo le visibili), mostrata su hover.
   const total = rows.reduce((s, r) => s + r.hours, 0);
   const chartData = visible.map((r) => ({
@@ -169,7 +175,7 @@ function HBarChart({ rows }: { rows: GroupRow[] }) {
         <BarChart
           layout="vertical"
           data={chartData}
-          margin={{ top: 4, right: 72, bottom: 4, left: 0 }}
+          margin={{ top: 4, right: 52, bottom: 4, left: 0 }}
           barCategoryGap={12}
         >
           <CartesianGrid
@@ -188,7 +194,8 @@ function HBarChart({ rows }: { rows: GroupRow[] }) {
             type="category"
             dataKey="label"
             width={yWidth}
-            tick={<HBarYTick width={yWidth - 4} />}
+            tick={<HBarYTick />}
+            tickMargin={4}
             tickLine={false}
             axisLine={false}
           />
