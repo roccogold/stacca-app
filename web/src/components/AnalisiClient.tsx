@@ -62,14 +62,44 @@ const MONTHS_FULL = [
 const COLLAPSE_LIMIT = 5; // liste riepilogo: top 5, poi toggle "Mostra tutte"
 const BAR_SIZE = 26; // barre slanciate = look più leggero
 
-/** Gap fisso tra fine etichetta e inizio barra (né troppo largo né sovrapposto). */
-const HBAR_LABEL_GAP = 8;
+/** Gap fisso tra fine etichetta e inizio barra. */
+const HBAR_LABEL_GAP = 6;
+const HBAR_LABEL_FONT = 11;
+const HBAR_VALUE_FONT = 10;
+/** ~px per carattere a 11px (font ridotto → colonna più stretta). */
+const HBAR_CHAR_PX = 5.5;
+/** Oltre questa lunghezza, l'etichetta va a capo su uno spazio. */
+const HBAR_MAX_LINE_CHARS = 14;
+const HBAR_LINE_HEIGHT = HBAR_LABEL_FONT + 3;
 
-/** Larghezza colonna etichette in base al testo più lungo + gap prima delle barre. */
+/** Spezza l'etichetta a capo sulle parole (es. "Anfiteatro Lato" / "Bosco"). */
+function wrapHBarLabel(label: string, maxChars = HBAR_MAX_LINE_CHARS): string[] {
+  const t = label.trim();
+  if (t.length <= maxChars) return [t];
+  const cut = t.lastIndexOf(" ", maxChars);
+  if (cut <= 0) {
+    return [t.slice(0, maxChars), ...wrapHBarLabel(t.slice(maxChars).trim(), maxChars)];
+  }
+  const head = t.slice(0, cut);
+  const tail = t.slice(cut + 1).trim();
+  return tail.length <= maxChars ? [head, tail] : [head, ...wrapHBarLabel(tail, maxChars)];
+}
+
+/** Larghezza colonna: basata sulla riga più lunga dopo l'eventuale a capo. */
 function hBarYAxisWidth(labels: string[]): number {
-  const maxLen = Math.max(...labels.map((l) => l.length), 1);
-  const textW = Math.ceil(maxLen * 6.5 + 2);
-  return Math.min(124, Math.max(40, textW + HBAR_LABEL_GAP));
+  if (labels.length === 0) return 48;
+  let maxLineLen = 1;
+  for (const l of labels) {
+    for (const line of wrapHBarLabel(l)) {
+      maxLineLen = Math.max(maxLineLen, line.length);
+    }
+  }
+  const textW = Math.ceil(maxLineLen * HBAR_CHAR_PX + 2);
+  return Math.min(96, Math.max(36, textW + HBAR_LABEL_GAP));
+}
+
+function hBarRowHeight(label: string): number {
+  return wrapHBarLabel(label).length > 1 ? 46 : 38;
 }
 
 type TipItem = { name?: string | number; value?: number | string; color?: string };
@@ -114,7 +144,7 @@ function ChartTooltip({
   );
 }
 
-/** Tick asse Y: etichette allineate a sinistra. */
+/** Tick asse Y: etichette a sinistra, a capo automatico se troppo lunghe. */
 function HBarYTick(props: {
   x?: number;
   y?: number;
@@ -122,16 +152,39 @@ function HBarYTick(props: {
   payload?: { value?: string | number };
 }) {
   const { y = 0, payload } = props;
+  const lines = wrapHBarLabel(String(payload?.value ?? ""));
+
+  if (lines.length === 1) {
+    return (
+      <RechartsText
+        x={0}
+        y={y}
+        textAnchor="start"
+        verticalAnchor="middle"
+        style={{ fontSize: HBAR_LABEL_FONT, fill: INK }}
+      >
+        {lines[0]}
+      </RechartsText>
+    );
+  }
+
+  const blockH = (lines.length - 1) * HBAR_LINE_HEIGHT + HBAR_LABEL_FONT;
+  const startY = y - blockH / 2 + HBAR_LABEL_FONT * 0.85;
+
   return (
-    <RechartsText
+    <text
       x={0}
-      y={y}
+      y={startY}
       textAnchor="start"
-      verticalAnchor="middle"
-      style={{ fontSize: 12, fill: INK }}
+      fontSize={HBAR_LABEL_FONT}
+      fill={INK}
     >
-      {String(payload?.value ?? "")}
-    </RechartsText>
+      {lines.map((line, i) => (
+        <tspan key={i} x={0} dy={i === 0 ? 0 : HBAR_LINE_HEIGHT}>
+          {line}
+        </tspan>
+      ))}
+    </text>
   );
 }
 
@@ -156,13 +209,21 @@ function HBarTooltip({
 }
 
 /** Barre orizzontali ordinate (ore desc): confronto immediato tra voci. */
-function HBarChart({ rows }: { rows: GroupRow[] }) {
+function HBarChart({
+  rows,
+  yAxisWidth,
+}: {
+  rows: GroupRow[];
+  /** Larghezza condivisa tra tutti i grafici → barre partono sulla stessa colonna. */
+  yAxisWidth: number;
+}) {
   const [expanded, setExpanded] = useState(false);
   if (rows.length === 0) return <p className="analisi-empty">Nessun dato.</p>;
   const collapsible = rows.length > COLLAPSE_LIMIT;
   const visible = expanded ? rows : rows.slice(0, COLLAPSE_LIMIT);
-  const height = visible.length * 42 + 30;
-  const yWidth = hBarYAxisWidth(visible.map((r) => r.label));
+  const height =
+    visible.reduce((sum, r) => sum + hBarRowHeight(r.label), 0) + 28;
+  const yWidth = yAxisWidth;
   // % sul totale di tutte le voci (non solo le visibili), mostrata su hover.
   const total = rows.reduce((s, r) => s + r.hours, 0);
   const chartData = visible.map((r) => ({
@@ -175,8 +236,8 @@ function HBarChart({ rows }: { rows: GroupRow[] }) {
         <BarChart
           layout="vertical"
           data={chartData}
-          margin={{ top: 4, right: 52, bottom: 4, left: 0 }}
-          barCategoryGap={12}
+          margin={{ top: 4, right: 48, bottom: 4, left: 0 }}
+          barCategoryGap={10}
         >
           <CartesianGrid
             horizontal={false}
@@ -185,7 +246,7 @@ function HBarChart({ rows }: { rows: GroupRow[] }) {
           />
           <XAxis
             type="number"
-            tick={{ fontSize: 11, fill: INK }}
+            tick={{ fontSize: HBAR_VALUE_FONT, fill: INK }}
             tickLine={false}
             axisLine={false}
             allowDecimals={false}
@@ -221,7 +282,7 @@ function HBarChart({ rows }: { rows: GroupRow[] }) {
               dataKey="hours"
               position="right"
               formatter={(value) => formatHoursIt(Number(value))}
-              style={{ fontSize: 11, fontWeight: 600, fill: INK }}
+              style={{ fontSize: HBAR_VALUE_FONT, fontWeight: 600, fill: INK }}
             />
           </Bar>
         </BarChart>
@@ -569,6 +630,16 @@ export function AnalisiClient({
     [filtered, users],
   );
   const bySettore = useMemo(() => hoursBySettore(filtered), [filtered]);
+  // Stessa colonna etichette su tutti i grafici a barre → inizio barre allineato.
+  const hBarYWidth = useMemo(() => {
+    const labels = [
+      ...byLav.map((r) => r.label),
+      ...byLuogo.map((r) => r.label),
+      ...byDip.map((r) => r.label),
+      ...bySettore.map((r) => r.label),
+    ];
+    return hBarYAxisWidth(labels);
+  }, [byLav, byLuogo, byDip, bySettore]);
   const trend = useMemo(() => monthlyTrend(filteredYear), [filteredYear]);
   const stagionalita = useMemo(
     () => seasonalityByMonthSettore(filteredYear),
@@ -733,19 +804,19 @@ export function AnalisiClient({
       ) : (
         <>
           <ChartCard title="Ore per Lavorazione" hint={monthName ?? undefined}>
-            <HBarChart rows={byLav} />
+            <HBarChart rows={byLav} yAxisWidth={hBarYWidth} />
           </ChartCard>
 
           <ChartCard title="Ore per Luogo" hint={monthName ?? undefined}>
-            <HBarChart rows={byLuogo} />
+            <HBarChart rows={byLuogo} yAxisWidth={hBarYWidth} />
           </ChartCard>
 
           <ChartCard title="Ore per Dipendente" hint={monthName ?? undefined}>
-            <HBarChart rows={byDip} />
+            <HBarChart rows={byDip} yAxisWidth={hBarYWidth} />
           </ChartCard>
 
           <ChartCard title="Ore per Settore" hint={monthName ?? undefined}>
-            <HBarChart rows={bySettore} />
+            <HBarChart rows={bySettore} yAxisWidth={hBarYWidth} />
           </ChartCard>
 
           <ChartCard title="Ore per Mese" hint="anno intero">

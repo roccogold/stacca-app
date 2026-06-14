@@ -3454,8 +3454,8 @@ a.card {
 
 /* Grafici: meno padding orizzontale → barre più larghe */
 .analisi-chart-card {
-  padding-left: 14px;
-  padding-right: 12px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 /* Tooltip fluido */
