@@ -80,6 +80,7 @@ export function DipendentiClient({
   const [users, setUsers] = useState<Employee[]>(sortEmployees(initialUsers));
   const areaName = (id: string) => areas.find((a) => a.id === id)?.name ?? "";
   const [search, setSearch] = useState("");
+  const [areaFilter, setAreaFilter] = useState<string | null>(null);
   const [showDisabled, setShowDisabled] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -451,10 +452,18 @@ export function DipendentiClient({
     !q ||
     fullName(u).toLowerCase().includes(q) ||
     (u.email ?? "").toLowerCase().includes(q);
-  const activeList = users.filter((u) => !u.disabled && matchesQuery(u));
-  const disabledList = users.filter((u) => u.disabled && matchesQuery(u));
+  const matchesArea = (u: Employee) =>
+    areaFilter == null || u.areaIds.includes(areaFilter);
+  const activeList = users.filter(
+    (u) => !u.disabled && matchesQuery(u) && matchesArea(u),
+  );
+  const disabledList = users.filter(
+    (u) => u.disabled && matchesQuery(u) && matchesArea(u),
+  );
   const nothing = activeList.length === 0 && disabledList.length === 0;
   const disabledOpen = showDisabled || q.length > 0;
+  const filtering = q.length > 0 || areaFilter != null;
+  const visibleCount = activeList.length + disabledList.length;
 
   return (
     <>
@@ -471,7 +480,9 @@ export function DipendentiClient({
 
       <section className="block block--spaced">
         <h2 className="section-title section-title--inset">
-          {users.length} {users.length === 1 ? "persona" : "persone"}
+          {filtering
+            ? `${visibleCount} di ${users.length}`
+            : `${users.length} ${users.length === 1 ? "persona" : "persone"}`}
         </h2>
 
         <div className="emp-search">
@@ -485,6 +496,24 @@ export function DipendentiClient({
             aria-label="Cerca dipendente"
           />
         </div>
+
+        {areas.length > 0 && (
+          <select
+            className="select emp-area-filter"
+            value={areaFilter ?? ""}
+            onChange={(e) =>
+              setAreaFilter(e.target.value === "" ? null : e.target.value)
+            }
+            aria-label="Filtra per settore"
+          >
+            <option value="">Tutti i settori</option>
+            {areas.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        )}
 
         {bannerError && <p className="field-error">{bannerError}</p>}
 
