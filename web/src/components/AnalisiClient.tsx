@@ -61,7 +61,7 @@ const MONTHS_FULL = [
 
 const COLLAPSE_LIMIT = 5; // liste riepilogo: top 5, poi toggle "Mostra tutte"
 const BAR_SIZE = 26; // barre slanciate = look più leggero
-const HBAR_LABEL_WIDTH = 120; // colonna etichette fissa: barre allineate tra grafici
+const HBAR_LABEL_WIDTH = 96; // colonna etichette fissa: barre allineate tra grafici
 
 type TipItem = { name?: string | number; value?: number | string; color?: string };
 
@@ -127,6 +127,26 @@ function HBarYTick(props: {
   );
 }
 
+/** Tooltip barre orizzontali: ore + % sul totale (visibile su hover). */
+function HBarTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload?: GroupRow & { pct?: number } }>;
+}) {
+  const row = payload?.[0]?.payload;
+  if (!active || !row) return null;
+  return (
+    <div className="analisi-tip">
+      <div className="analisi-tip__title">{row.label}</div>
+      <div className="analisi-tip__val">
+        {formatHoursIt(row.hours)} · {row.pct ?? 0}%
+      </div>
+    </div>
+  );
+}
+
 /** Barre orizzontali ordinate (ore desc): confronto immediato tra voci. */
 function HBarChart({ rows }: { rows: GroupRow[] }) {
   const [expanded, setExpanded] = useState(false);
@@ -137,13 +157,19 @@ function HBarChart({ rows }: { rows: GroupRow[] }) {
   // Larghezza fissa della colonna etichette: così l'inizio barre/linee è
   // allineato tra tutti i grafici a barre (Luogo, Dipendente, Settore…).
   const yWidth = HBAR_LABEL_WIDTH;
+  // % sul totale di tutte le voci (non solo le visibili), mostrata su hover.
+  const total = rows.reduce((s, r) => s + r.hours, 0);
+  const chartData = visible.map((r) => ({
+    ...r,
+    pct: total ? Math.round((r.hours / total) * 100) : 0,
+  }));
   return (
     <>
       <ResponsiveContainer width="100%" height={height}>
         <BarChart
           layout="vertical"
-          data={visible}
-          margin={{ top: 4, right: 64, bottom: 4, left: 0 }}
+          data={chartData}
+          margin={{ top: 4, right: 72, bottom: 4, left: 0 }}
           barCategoryGap={12}
         >
           <CartesianGrid
@@ -162,13 +188,13 @@ function HBarChart({ rows }: { rows: GroupRow[] }) {
             type="category"
             dataKey="label"
             width={yWidth}
-            tick={<HBarYTick width={yWidth - 8} />}
+            tick={<HBarYTick width={yWidth - 4} />}
             tickLine={false}
             axisLine={false}
           />
           <Tooltip
             cursor={{ fill: "rgba(0,0,0,0.04)" }}
-            content={<ChartTooltip />}
+            content={<HBarTooltip />}
             animationDuration={200}
           />
           <Bar
@@ -187,7 +213,7 @@ function HBarChart({ rows }: { rows: GroupRow[] }) {
             <LabelList
               dataKey="hours"
               position="right"
-              formatter={(value) => formatHoursIt(Number(value))}
+              formatter={(value: number) => formatHoursIt(Number(value))}
               style={{ fontSize: 11, fontWeight: 600, fill: INK }}
             />
           </Bar>

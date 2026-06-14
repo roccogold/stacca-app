@@ -3219,16 +3219,21 @@ a.card {
    Analisi (admin stats dashboard)
    ============================================ */
 
-/* Filtri analisi: riga singola scorrevole, ognuno con icona */
+/* Filtri analisi: 2 righe — Anno + Dipendente sopra, Settore a tutta larghezza */
 .analisi-filters {
-  display: flex;
+  display: grid;
+  grid-template-columns: 104px 1fr;
   gap: 8px;
   margin-bottom: 12px;
 }
 
+/* Settore (3° filtro) su riga intera sotto Anno/Dipendente */
+.analisi-filter:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
 .analisi-filter {
   position: relative;
-  flex: 1 1 0;
   min-width: 0;
   display: flex;
 }
@@ -3244,10 +3249,10 @@ a.card {
 
 .analisi-filter__select {
   width: 100%;
-  font-size: 12px;
-  padding-left: 32px;
-  padding-right: 26px;
-  background-position: right 9px center;
+  font-size: 14px;
+  padding-left: 36px;
+  padding-right: 30px;
+  background-position: right 11px center;
   text-overflow: ellipsis;
 }
 
