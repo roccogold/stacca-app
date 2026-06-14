@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, type ReactNode } from "react";
 import {
   Bar,
+  type BarRectangleItem,
   BarChart,
   CartesianGrid,
   Cell,
@@ -10,6 +11,7 @@ import {
   LineChart,
   Pie,
   PieChart,
+  Rectangle,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -204,6 +206,21 @@ function TrendChart({ data }: { data: { label: string; hours: number }[] }) {
   );
 }
 
+/**
+ * Shape per le barre impilate: arrotonda solo il segmento più in alto
+ * effettivamente presente in quel mese (l'ultima serie spesso è 0, quindi
+ * il top "vero" cambia per colonna). `idx` = posizione della serie nello stack.
+ */
+function stackTopShape(settori: string[], idx: number) {
+  return function StackBar(props: BarRectangleItem) {
+    const payload = props.payload as Record<string, number | string> | undefined;
+    const isTop = settori
+      .slice(idx + 1)
+      .every((s) => Number(payload?.[s] ?? 0) <= 0);
+    return <Rectangle {...props} radius={isTop ? [8, 8, 0, 0] : 0} />;
+  };
+}
+
 function StackedChart({ data, settori }: Seasonality) {
   const hasData =
     settori.length > 0 &&
@@ -236,7 +253,7 @@ function StackedChart({ data, settori }: Seasonality) {
               stroke="var(--card)"
               strokeWidth={1}
               maxBarSize={BAR_SIZE}
-              radius={i === settori.length - 1 ? [8, 8, 0, 0] : undefined}
+              shape={stackTopShape(settori, i)}
               animationDuration={250}
               animationEasing="ease-out"
             />
@@ -347,7 +364,8 @@ function RiepilogoList({ rows }: { rows: GroupRow[] }) {
                 />
               </div>
               <div className="analisi-riepilogo__meta">
-                {r.count} {r.count === 1 ? "intervento" : "interventi"} · media{" "}
+                {r.count} {r.count === 1 ? "registrazione" : "registrazioni"} ·
+                media{" "}
                 {formatHoursIt(r.avg)} · {pct}%
               </div>
             </li>
@@ -608,7 +626,7 @@ export function AnalisiClient({
               value={formatHoursIt(kpis.mediaIntervento)}
               label="Ore medie / intervento"
             />
-            <NumKpi value={kpis.numInterventi} label="Interventi" />
+            <NumKpi value={kpis.numInterventi} label="Registrazioni" />
           </div>
         </section>
       ) : null}
