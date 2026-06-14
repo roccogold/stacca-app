@@ -609,7 +609,7 @@ export function AnalisiClient({
               >
                 {deltaPct >= 0 ? "▲" : "▼"} {Math.abs(deltaPct)}%
                 <span className="analisi-delta__cmp">
-                  {month != null ? "vs mese prec." : "vs anno prec."}
+                  {month != null ? "vs mese precedente" : "vs anno precedente"}
                 </span>
               </span>
             ) : null}
