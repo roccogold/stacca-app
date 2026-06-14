@@ -3194,3 +3194,59 @@ a.card {
   font-weight: 600;
   color: var(--warning-soft);
 }
+
+/* ============================================
+   Analisi (admin stats dashboard)
+   ============================================ */
+
+.analisi-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Dipendente: riga intera sotto Anno/Mese */
+.analisi-filters > .select:last-child {
+  grid-column: 1 / -1;
+}
+
+.analisi-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.analisi-kpi {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.analisi-kpi__num {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.analisi-kpi__label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.analisi-chart-card .card-title {
+  margin-bottom: 12px;
+}
+
+.analisi-empty {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Non far sforare l'SVG oltre la cornice 28rem */
+.analisi-chart-card .recharts-responsive-container {
+  max-width: 100%;
+}

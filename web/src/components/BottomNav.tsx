@@ -22,13 +22,14 @@ const adminTab: Tab = {
   href: "/dipendenti",
   label: "Admin",
   icon: UserCog,
-  // Admin hub spans three routes (Dipendenti / Lavorazioni / Luoghi); keep the
-  // single bottom tab highlighted on all of them.
+  // Admin hub spans several routes (Dipendenti / Settori / Lavorazioni / Luoghi /
+  // Analisi); keep the single bottom tab highlighted on all of them.
   match: (p) =>
     p.startsWith("/dipendenti") ||
     p.startsWith("/aree") ||
     p.startsWith("/lavorazioni") ||
-    p.startsWith("/luoghi"),
+    p.startsWith("/luoghi") ||
+    p.startsWith("/analisi"),
 };
 
 // Profilo stays last in the bar; the admin tab slots in just before it.
